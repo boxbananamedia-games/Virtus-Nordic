@@ -1,7 +1,7 @@
 {
-  "og_title": null,
-  "og_description": null,
-  "og_image_url": null,
-  "favicon_url": null,
+  "og_title": "Virtus Nordic — Mobilapplikationer der får din forretning til at vokse",
+  "og_description": "Boutique-udviklingsstudie i Aalborg. Skræddersyede apps, systemintegration og AI-agenter til danske virksomheder.",
+  "og_image_url": "/og-image.png",
+  "favicon_url": "/favicon.png",
   "og_video_url": null
 }
