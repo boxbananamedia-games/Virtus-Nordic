@@ -15,7 +15,7 @@ export type Content = {
   nav: { home: string; about: string; services: string; contact: string; cta: string };
   hero: { tagline: string; ctaPrimary: string; ctaSecondary: string; scroll: string };
   intro: { quote: string; p1: string; p2: string };
-  craft: { label: string; headline: string; body: string };
+  craft: { label: string; headline: string; body: string; captions: string[] };
   servicesTeaser: { label: string; headline: string; sub: string };
   services: {
     label: string;
@@ -88,9 +88,16 @@ export const content: Record<Lang, Content> = {
       p2: "Ethvert samarbejde starter med at forstå din forretning. Teknologien kommer bagefter.",
     },
     craft: {
-      label: "Håndværket",
-      headline: "Bygget op — lag for lag",
-      body: "Hver app vi bygger, vokser ud af din forretning — ikke ud af en skabelon. Scroll, og se idéen tage form.",
+      label: "Virkeligheden",
+      headline: "Din kunde er altid lige der — på skærmen",
+      body: "På cafeen, i toget, ved skrivebordet, sent om aftenen. Scroll for at følge med.",
+      captions: [
+        "Den gennemsnitlige person tjekker sin telefon over 90 gange om dagen.",
+        "Vi bruger næsten 4 timer om dagen med blikket på en skærm.",
+        "Næsten hver anden føler sig utryg uden sin telefon inden for rækkevidde.",
+        "Næsten halvdelen af os sover med telefonen inden for armslængde.",
+        "Dine kunder er allerede der. Er du?",
+      ],
     },
     servicesTeaser: {
       label: "Det vi laver",
@@ -230,9 +237,16 @@ export const content: Record<Lang, Content> = {
       p2: "Every engagement begins with understanding your business first. Technology follows from there.",
     },
     craft: {
-      label: "The craft",
-      headline: "Built up — layer by layer",
-      body: "Every app we build grows out of your business — not out of a template. Scroll, and watch the idea take shape.",
+      label: "The reality",
+      headline: "Your customer is always right there — on the screen",
+      body: "At the café, on the train, at the desk, late at night. Scroll to follow along.",
+      captions: [
+        "The average person checks their phone over 90 times a day.",
+        "We spend nearly 4 hours a day looking at a screen.",
+        "Nearly 1 in 2 people feel uneasy without their phone nearby.",
+        "Almost half of us sleep with our phone within arm's reach.",
+        "Your customers are already there. Are you?",
+      ],
     },
     servicesTeaser: {
       label: "What we do",

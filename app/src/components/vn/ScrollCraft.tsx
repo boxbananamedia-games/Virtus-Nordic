@@ -16,6 +16,8 @@ export const CRAFT_FRAME_COUNT = 96;
 export const CRAFT_FRAME_W = 1568;
 export const CRAFT_FRAME_H = 882;
 
+const CAPTION_COUNT = 5;
+
 const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
 const POSTER = framePath(CRAFT_FRAME_COUNT - 1);
 
@@ -27,6 +29,8 @@ export function ScrollCraft() {
   const loadedRef = useRef<boolean[]>([]);
   const lastDrawnRef = useRef(-1);
   const targetRef = useRef(0);
+  const captionIdxRef = useRef(0);
+  const [caption, setCaption] = useState(0);
   const [staticMode, setStaticMode] = useState(false);
 
   useEffect(() => {
@@ -117,6 +121,11 @@ export function ScrollCraft() {
         const frame = Math.round(p * (CRAFT_FRAME_COUNT - 1));
         targetRef.current = frame;
         draw(frame);
+        const ci = Math.min(CAPTION_COUNT - 1, Math.floor(p * CAPTION_COUNT));
+        if (ci !== captionIdxRef.current) {
+          captionIdxRef.current = ci;
+          setCaption(ci);
+        }
       });
     };
     onScroll();
@@ -149,14 +158,19 @@ export function ScrollCraft() {
         </div>
 
         {staticMode ? (
-          <img
-            src={POSTER}
-            alt=""
-            className="w-full max-w-4xl"
-            width={CRAFT_FRAME_W}
-            height={CRAFT_FRAME_H}
-            loading="lazy"
-          />
+          <>
+            <img
+              src={POSTER}
+              alt=""
+              className="w-full max-w-4xl"
+              width={CRAFT_FRAME_W}
+              height={CRAFT_FRAME_H}
+              loading="lazy"
+            />
+            <p className="mt-6 max-w-2xl text-center font-display text-lg italic text-navy/85 md:text-xl">
+              {t.craft.captions[t.craft.captions.length - 1]}
+            </p>
+          </>
         ) : (
           <>
             <canvas
@@ -167,6 +181,17 @@ export function ScrollCraft() {
               style={{ maxHeight: "58vh", objectFit: "contain" }}
               aria-hidden="true"
             />
+            <div className="relative mt-6 h-16 w-full max-w-2xl text-center md:h-14" aria-live="polite">
+              {t.craft.captions.map((c, i) => (
+                <p
+                  key={i}
+                  className="absolute inset-0 font-display text-lg italic leading-snug text-navy/85 transition-opacity duration-500 md:text-xl"
+                  style={{ opacity: caption === i ? 1 : 0 }}
+                >
+                  {c}
+                </p>
+              ))}
+            </div>
             <noscript>
               <img src={POSTER} alt="" className="w-full max-w-4xl" />
             </noscript>

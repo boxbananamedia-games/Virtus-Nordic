@@ -3,12 +3,10 @@ import type { CSSProperties } from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
 import {
-  GrowthIntro,
   Reveal,
   RibbonWave,
-  RootSprig,
   WaveDivider,
-  useGrowthIntro,
+  WaveMark,
   useSectionProgress,
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
@@ -27,16 +25,12 @@ const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
 function Index() {
   const { t } = useLang();
-  const { stage, skipped } = useGrowthIntro();
-  const grown = stage !== "roots";
   const [processRef, processProgress] = useSectionProgress<HTMLDivElement>();
 
   const book = `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(t.contact.mailSubject)}`;
 
   return (
-    <div data-grown={grown ? 1 : 0} className={skipped ? "no-anim" : ""}>
-      <GrowthIntro stage={stage} />
-
+    <div>
       {/* ═══ HERO ═══ */}
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
         <span className="ghost-mono top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[38vw] md:text-[26rem]">
@@ -47,19 +41,19 @@ function Index() {
         <RibbonWave side="right" draw className="pointer-events-none absolute right-[2%] top-1/2 hidden h-[78vh] w-16 -translate-y-1/2 lg:block xl:w-20" />
 
         <div className="relative z-10">
-          <p className="grow font-display text-lg font-medium uppercase tracking-[0.5em] text-teal-1" style={d(0.05)}>
+          <p className="enter font-display text-lg font-medium uppercase tracking-[0.5em] text-teal-1" style={d(0.05)}>
             VN
           </p>
           <h1
-            className="grow mt-4 font-display text-[clamp(2.9rem,9vw,6.2rem)] font-semibold leading-[1.02] text-navy"
+            className="enter mt-4 font-display text-[clamp(2.9rem,9vw,6.2rem)] font-semibold leading-[1.02] text-navy"
             style={d(0.15)}
           >
             Virtus Nordic
           </h1>
-          <p className="grow mx-auto mt-5 max-w-xl text-base tracking-[0.06em] text-navy/75 md:text-lg" style={d(0.3)}>
+          <p className="enter mx-auto mt-5 max-w-xl text-base tracking-[0.06em] text-navy/75 md:text-lg" style={d(0.3)}>
             {t.hero.tagline}
           </p>
-          <div className="grow mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
+          <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
             <a href={book} className="btn btn-fill">
               {t.hero.ctaPrimary}
             </a>
@@ -69,7 +63,7 @@ function Index() {
           </div>
         </div>
 
-        <div className="grow absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={d(0.7)}>
+        <div className="enter absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={d(0.7)}>
           <span className="text-[0.65rem] uppercase tracking-[0.3em] text-navy/50">{t.hero.scroll}</span>
           <span className="block h-12 w-px bg-gradient-to-b from-teal-1/70 to-transparent" />
         </div>
@@ -118,7 +112,7 @@ function Index() {
           {t.services.items.map((item, i) => (
             <Reveal key={item.title} delay={0.08 * i}>
               <div className="srv-card h-full">
-                <RootSprig className="h-11 w-11" />
+                <WaveMark className="h-11 w-11" />
                 <h3 className="mt-5 font-display text-xl font-semibold text-navy">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-navy/70">{item.teaser}</p>
               </div>

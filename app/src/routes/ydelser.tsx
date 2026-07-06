@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
-import { Reveal, RootSprig, WaveDivider } from "../components/vn/visuals";
+import { Reveal, WaveDivider, WaveMark } from "../components/vn/visuals";
 
 export const Route = createFileRoute("/ydelser")({
   head: () => ({
@@ -36,7 +36,7 @@ function Services() {
               <article className={`grid gap-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-14 ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
                 <div className="md:[direction:ltr]">
                   <div className="flex items-start gap-5">
-                    <RootSprig className="h-12 w-12 shrink-0" />
+                    <WaveMark className="h-12 w-12 shrink-0" />
                     <div>
                       <span className="font-display text-sm font-semibold tracking-[0.25em] text-teal-1">
                         {String(i + 1).padStart(2, "0")}

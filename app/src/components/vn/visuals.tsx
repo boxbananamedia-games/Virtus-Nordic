@@ -75,15 +75,15 @@ export function WaveDivider({ className = "" }: { className?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Small root sprig — service cards / ornaments (draws on reveal)      */
+/* WaveMark — compact ribbon-wave ornament (cards / accents)           */
 /* ------------------------------------------------------------------ */
 
-export function RootSprig({ className = "" }: { className?: string }) {
+export function WaveMark({ className = "" }: { className?: string }) {
   const strokes = [
-    { d: "M24 46 C24 34 22 26 24 14 C25 8 26 6 24 2", c: "#1B6B6B", w: 2 },
-    { d: "M24 34 C18 30 12 28 6 20", c: "#3D8E8A", w: 1.6 },
-    { d: "M24 28 C30 24 36 22 42 14", c: "#6AB0A8", w: 1.6 },
-    { d: "M24 20 C20 16 17 12 16 6", c: "#C4AD90", w: 1.2 },
+    { d: "M2 30 C10 18 20 34 28 22 C34 14 40 26 46 18", c: "#1B6B6B", w: 2.4 },
+    { d: "M2 34 C11 24 21 38 30 27 C36 20 41 30 46 24", c: "#3D8E8A", w: 1.7 },
+    { d: "M2 26 C9 36 19 20 27 32 C33 40 40 28 46 34", c: "#6AB0A8", w: 1.3 },
+    { d: "M2 31 C12 27 22 33 32 28 C38 25 42 30 46 28", c: "#C4AD90", w: 1 },
   ];
   return (
     <svg viewBox="0 0 48 48" fill="none" aria-hidden="true" className={className}>
@@ -97,35 +97,6 @@ export function RootSprig({ className = "" }: { className?: string }) {
           pathLength={1}
           className="draw-path"
           style={{ "--d": `${0.15 + i * 0.14}s` } as CSSProperties}
-        />
-      ))}
-    </svg>
-  );
-}
-
-/* Larger root cluster used as ornament (contact page) */
-export function RootCluster({ className = "" }: { className?: string }) {
-  const strokes = [
-    { d: "M100 150 C98 118 104 92 100 62 C98 46 102 34 100 18", c: "#1C2835", w: 2.4 },
-    { d: "M100 120 C82 108 64 102 48 82 C40 72 38 62 32 52", c: "#1B6B6B", w: 2 },
-    { d: "M100 118 C118 104 136 100 152 80 C160 70 162 60 168 50", c: "#3D8E8A", w: 2 },
-    { d: "M100 90 C88 78 78 72 72 56", c: "#6AB0A8", w: 1.6 },
-    { d: "M100 88 C112 76 122 70 128 54", c: "#6AB0A8", w: 1.6 },
-    { d: "M100 60 C94 50 90 42 90 30", c: "#C4AD90", w: 1.3 },
-    { d: "M100 58 C106 48 110 40 110 28", c: "#C4AD90", w: 1.3 },
-  ];
-  return (
-    <svg viewBox="0 0 200 160" fill="none" aria-hidden="true" className={className}>
-      {strokes.map((s, i) => (
-        <path
-          key={i}
-          d={s.d}
-          stroke={s.c}
-          strokeWidth={s.w}
-          strokeLinecap="round"
-          pathLength={1}
-          className="draw-path"
-          style={{ "--d": `${0.1 + i * 0.12}s` } as CSSProperties}
         />
       ))}
     </svg>
@@ -181,144 +152,6 @@ export function Reveal({
     >
       {children}
     </Tag>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* GrowthIntro — the one continuous "grown, not loaded" sequence       */
-/* ------------------------------------------------------------------ */
-
-const INTRO_ROOTS: { d: string; c: string; w: number; delay: number; o?: number }[] = [
-  // main trunks rising from the bottom centre
-  { d: "M400 620 C392 540 410 470 398 400 C390 352 404 300 400 250", c: "#1C2835", w: 2.6, delay: 0 },
-  { d: "M330 620 C338 545 320 480 342 410 C356 364 368 320 384 268", c: "#1B6B6B", w: 2.2, delay: 0.12 },
-  { d: "M470 620 C462 545 480 480 458 410 C444 364 432 320 416 268", c: "#1B6B6B", w: 2.2, delay: 0.18 },
-  // secondary trunks
-  { d: "M255 620 C270 540 250 480 285 415 C310 368 336 330 366 285", c: "#3D8E8A", w: 1.8, delay: 0.28 },
-  { d: "M545 620 C530 540 550 480 515 415 C490 368 464 330 434 285", c: "#3D8E8A", w: 1.8, delay: 0.34 },
-  // branches
-  { d: "M342 470 C312 440 290 424 268 388", c: "#6AB0A8", w: 1.4, delay: 0.55 },
-  { d: "M458 470 C488 440 510 424 532 388", c: "#6AB0A8", w: 1.4, delay: 0.6 },
-  { d: "M398 430 C372 402 356 382 348 350", c: "#6AB0A8", w: 1.3, delay: 0.66 },
-  { d: "M398 428 C424 400 442 380 452 348", c: "#6AB0A8", w: 1.3, delay: 0.72 },
-  // fine tips reaching toward the mark
-  { d: "M285 415 C300 380 322 350 352 316", c: "#C4AD90", w: 1.1, delay: 0.85 },
-  { d: "M515 415 C500 380 478 350 448 316", c: "#C4AD90", w: 1.1, delay: 0.9 },
-  { d: "M366 285 C376 268 386 256 396 246", c: "#C4AD90", w: 1, delay: 1.0 },
-  { d: "M434 285 C424 268 414 256 404 246", c: "#C4AD90", w: 1, delay: 1.05 },
-];
-
-const INTRO_NODES: { cx: number; cy: number; r: number; c: string; delay: number }[] = [
-  { cx: 268, cy: 388, r: 3, c: "#3D8E8A", delay: 1.15 },
-  { cx: 532, cy: 388, r: 3, c: "#3D8E8A", delay: 1.2 },
-  { cx: 348, cy: 350, r: 2.4, c: "#6AB0A8", delay: 1.25 },
-  { cx: 452, cy: 348, r: 2.4, c: "#6AB0A8", delay: 1.3 },
-  { cx: 400, cy: 244, r: 3.4, c: "#1B6B6B", delay: 1.35 },
-];
-
-export type IntroStage = "roots" | "bloom" | "done";
-
-const SEEN_KEY = "vn-intro-seen";
-
-export function useGrowthIntro(): { stage: IntroStage; skipped: boolean } {
-  const [stage, setStage] = useState<IntroStage>("roots");
-  const [skipped, setSkipped] = useState(false);
-
-  useEffect(() => {
-    let seen = false;
-    let reduced = false;
-    try {
-      seen = window.sessionStorage.getItem(SEEN_KEY) === "1";
-    } catch {
-      /* ignore */
-    }
-    try {
-      reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    } catch {
-      /* ignore */
-    }
-
-    if (seen || reduced) {
-      setSkipped(true);
-      setStage("done");
-      return;
-    }
-
-    document.body.style.overflow = "hidden";
-
-    const finish = () => {
-      setStage("done");
-      document.body.style.overflow = "";
-      try {
-        window.sessionStorage.setItem(SEEN_KEY, "1");
-      } catch {
-        /* ignore */
-      }
-    };
-
-    const bloomTimer = window.setTimeout(() => setStage("bloom"), 2350);
-    const doneTimer = window.setTimeout(finish, 3150);
-
-    const skip = () => {
-      window.clearTimeout(bloomTimer);
-      window.clearTimeout(doneTimer);
-      finish();
-    };
-    window.addEventListener("pointerdown", skip);
-    window.addEventListener("keydown", skip);
-    window.addEventListener("wheel", skip, { passive: true });
-    window.addEventListener("touchmove", skip, { passive: true });
-
-    return () => {
-      window.clearTimeout(bloomTimer);
-      window.clearTimeout(doneTimer);
-      window.removeEventListener("pointerdown", skip);
-      window.removeEventListener("keydown", skip);
-      window.removeEventListener("wheel", skip);
-      window.removeEventListener("touchmove", skip);
-      document.body.style.overflow = "";
-    };
-  }, []);
-
-  return { stage, skipped };
-}
-
-export function GrowthIntro({ stage }: { stage: IntroStage }) {
-  if (stage === "done") return null;
-  return (
-    <div className={`intro-overlay ${stage === "bloom" ? "leaving" : ""}`} aria-hidden="true">
-      <svg className="intro-roots" viewBox="0 0 800 620" fill="none" preserveAspectRatio="xMidYMax meet">
-        {INTRO_ROOTS.map((r, i) => (
-          <path
-            key={i}
-            d={r.d}
-            stroke={r.c}
-            strokeWidth={r.w}
-            strokeLinecap="round"
-            opacity={r.o ?? 0.8}
-            pathLength={1}
-            className="root-line"
-            style={{ "--d": `${r.delay}s` } as CSSProperties}
-          />
-        ))}
-        {INTRO_NODES.map((n, i) => (
-          <circle
-            key={`n${i}`}
-            cx={n.cx}
-            cy={n.cy}
-            r={n.r}
-            fill={n.c}
-            opacity={0.75}
-            className="root-node"
-            style={{ "--d": `${n.delay}s` } as CSSProperties}
-          />
-        ))}
-      </svg>
-      <div className="intro-mark">
-        <span className="intro-vn">VN</span>
-        <span className="intro-word">Virtus Nordic</span>
-      </div>
-    </div>
   );
 }
 
