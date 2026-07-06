@@ -15,6 +15,7 @@ export type Content = {
   nav: { home: string; about: string; services: string; contact: string; cta: string };
   hero: { tagline: string; ctaPrimary: string; ctaSecondary: string; scroll: string };
   intro: { quote: string; p1: string; p2: string };
+  craft: { label: string; headline: string; body: string };
   servicesTeaser: { label: string; headline: string; sub: string };
   services: {
     label: string;
@@ -85,6 +86,11 @@ export const content: Record<Lang, Content> = {
       quote: "\u201cVi bygger de applikationer, din forretning fortjener — præcise, gennemtænkte og bygget til at holde.\u201d",
       p1: "Virtus Nordic er et boutique-udviklingsstudie baseret i Aalborg. Vi arbejder med lokale virksomheder, der forstår, at en gennemført app ikke er en udgift — det er infrastruktur.",
       p2: "Ethvert samarbejde starter med at forstå din forretning. Teknologien kommer bagefter.",
+    },
+    craft: {
+      label: "Håndværket",
+      headline: "Bygget op — lag for lag",
+      body: "Hver app vi bygger, vokser ud af din forretning — ikke ud af en skabelon. Scroll, og se idéen tage form.",
     },
     servicesTeaser: {
       label: "Det vi laver",
@@ -222,6 +228,11 @@ export const content: Record<Lang, Content> = {
       quote: "\u201cWe build the applications your business deserves — precise, purposeful, and built to last.\u201d",
       p1: "Virtus Nordic is a boutique mobile development studio based in Aalborg, Denmark. We work with local businesses who understand that a well-crafted application is not an expense — it is infrastructure.",
       p2: "Every engagement begins with understanding your business first. Technology follows from there.",
+    },
+    craft: {
+      label: "The craft",
+      headline: "Built up — layer by layer",
+      body: "Every app we build grows out of your business — not out of a template. Scroll, and watch the idea take shape.",
     },
     servicesTeaser: {
       label: "What we do",

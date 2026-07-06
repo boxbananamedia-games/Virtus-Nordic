@@ -11,6 +11,7 @@ import {
   useGrowthIntro,
   useSectionProgress,
 } from "../components/vn/visuals";
+import { ScrollCraft } from "../components/vn/ScrollCraft";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -93,6 +94,10 @@ function Index() {
           </div>
         </div>
       </section>
+
+      {/* ═══ CRAFT — 3D scroll animation ═══ */}
+      <WaveDivider />
+      <ScrollCraft />
 
       {/* ═══ SERVICES TEASER ═══ */}
       <WaveDivider />
