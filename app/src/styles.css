@@ -85,6 +85,61 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 .field::placeholder { color: rgba(28, 40, 53, 0.45); }
 .field:focus { border-color: var(--color-teal-2); background: rgba(255, 255, 255, 0.6); outline: none; }
 
+/* ---------- booking modal ---------- */
+.modal-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(28, 40, 53, 0.42);
+  backdrop-filter: blur(6px);
+  animation: veilIn 0.35s ease both;
+}
+.modal-card {
+  position: relative;
+  width: min(38rem, 100%);
+  max-height: min(88vh, 46rem);
+  overflow-y: auto;
+  background: var(--color-cream);
+  border: 1px solid rgba(28, 40, 53, 0.12);
+  box-shadow: 0 40px 90px -30px rgba(28, 40, 53, 0.55);
+  padding: 2.25rem 2rem;
+  animation: cardIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.modal-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 1.1rem;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: rgba(28, 40, 53, 0.55);
+  transition: color 0.25s ease, transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.modal-close:hover { color: var(--color-navy); transform: scale(1.12); }
+.form-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(28, 40, 53, 0.6);
+}
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+@keyframes veilIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(26px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .label-eyebrow {
   display: inline-block;
   font-size: 0.72rem;
@@ -281,7 +336,7 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .enter, .reveal, .film-caption, .ink-flank,
+  .enter, .reveal, .film-caption, .ink-flank, .modal-veil, .modal-card,
   .draw-path, .mobile-menu .nav-link {
     animation: none !important;
     transition: none !important;

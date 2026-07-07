@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { LanguageProvider } from "../lib/language";
 import { Nav, Footer } from "../components/vn/chrome";
+import { BookingProvider } from "../components/vn/BookingModal";
 // Page metadata (browser <title>/favicon + social og: tags) committed into the
 // repo and read at BUILD time — no runtime fetch.
 import appMetaJson from "../app-meta.json";
@@ -180,11 +181,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
+        <BookingProvider>
         <Nav />
         <main className="relative z-10">
           <Outlet />
         </main>
         <Footer />
+        </BookingProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

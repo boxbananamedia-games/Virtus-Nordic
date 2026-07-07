@@ -23,6 +23,8 @@ type AppEnv = {
   // .fetch(). See skills/containers.md.
   CONTAINER?: DurableObjectNamespace;
   HF_ENV?: string;
+  // Set via the platform secrets tool; enables booking notification emails.
+  RESEND_API_KEY?: string;
   APP_SLUG?: string;
 };
 

@@ -30,6 +30,24 @@ export type Content = {
     steps: { title: string; body: string }[];
   };
   ctaBand: { headline: string; sub: string; book: string; call: string };
+  booking: {
+    title: string;
+    intro: string;
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    date: string;
+    timeslot: string;
+    slots: { morning: string; afternoon: string };
+    message: string;
+    submit: string;
+    sending: string;
+    successTitle: string;
+    successBody: string;
+    error: string;
+    close: string;
+  };
   about: {
     label: string;
     headline: string;
@@ -169,6 +187,24 @@ export const content: Record<Lang, Content> = {
       sub: "Ingen forpligtelser, ingen standardsalgstale — bare en snak om den udfordring, du står med.",
       book: "Book et møde",
       call: `Ring på ${PHONE}`,
+    },
+    booking: {
+      title: "Book et møde",
+      intro: "Fortæl os lidt om dig — så vender vi tilbage og bekræfter tidspunktet.",
+      name: "Navn",
+      email: "E-mail",
+      phone: "Telefon",
+      company: "Virksomhed",
+      date: "Ønsket dato",
+      timeslot: "Tidsrum",
+      slots: { morning: "Formiddag (9–12)", afternoon: "Eftermiddag (12–16)" },
+      message: "Hvad vil du gerne tale om?",
+      submit: "Send booking",
+      sending: "Sender…",
+      successTitle: "Tak — din booking er modtaget",
+      successBody: "Vi vender tilbage til dig hurtigst muligt og bekræfter tidspunktet.",
+      error: "Noget gik galt. Prøv igen, eller ring til os direkte.",
+      close: "Luk",
     },
     about: {
       label: "Hvem vi er",
@@ -318,6 +354,24 @@ export const content: Record<Lang, Content> = {
       sub: "No obligation, no generic pitch — just a conversation about the problem you're trying to solve.",
       book: "Book a Meeting",
       call: `Call ${PHONE}`,
+    },
+    booking: {
+      title: "Book a meeting",
+      intro: "Tell us a little about you — we will get back to you and confirm the time.",
+      name: "Name",
+      email: "Email",
+      phone: "Phone",
+      company: "Company",
+      date: "Preferred date",
+      timeslot: "Time window",
+      slots: { morning: "Morning (9–12)", afternoon: "Afternoon (12–16)" },
+      message: "What would you like to talk about?",
+      submit: "Send booking",
+      sending: "Sending…",
+      successTitle: "Thank you — your booking is in",
+      successBody: "We will get back to you as soon as possible to confirm the time.",
+      error: "Something went wrong. Try again, or call us directly.",
+      close: "Close",
     },
     about: {
       label: "Who we are",

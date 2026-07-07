@@ -36,7 +36,10 @@ const CAPTION_POS: React.CSSProperties[] = [
 ];
 
 const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
-const POSTER = framePath(CRAFT_FRAME_COUNT - 1);
+/* Static-fallback poster: a cinematic beat (phone over linen, mid-zoom) —
+   never the final composite frame, which is a screenshot of this site and
+   reads as broken layout when shown as a still. */
+const POSTER = framePath(170);
 
 export function ScrollCraft() {
   const { t } = useLang();

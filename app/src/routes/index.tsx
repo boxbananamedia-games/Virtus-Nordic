@@ -10,6 +10,7 @@ import {
   useSectionProgress,
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
+import { useBooking } from "../components/vn/BookingModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,9 +26,8 @@ const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
 function Index() {
   const { t } = useLang();
+  const booking = useBooking();
   const [processRef, processProgress] = useSectionProgress<HTMLDivElement>();
-
-  const book = `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(t.contact.mailSubject)}`;
 
   return (
     <div>
@@ -47,9 +47,9 @@ function Index() {
             {t.hero.tagline}
           </p>
           <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
-            <a href={book} className="btn btn-fill">
+            <button type="button" onClick={booking.open} className="btn btn-fill">
               {t.hero.ctaPrimary}
-            </a>
+            </button>
             <Link to="/ydelser" className="btn btn-outline">
               {t.hero.ctaSecondary}
             </Link>
@@ -177,9 +177,9 @@ function Index() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-navy/75">{t.ctaBand.sub}</p>
           <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <a href={book} className="btn btn-fill">
+            <button type="button" onClick={booking.open} className="btn btn-fill">
               {t.ctaBand.book}
-            </a>
+            </button>
             <a href={CONTACT.PHONE_HREF} className="btn btn-outline">
               {t.ctaBand.call}
             </a>

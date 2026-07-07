@@ -3,13 +3,15 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../../lib/language";
 import { CONTACT } from "../../lib/content";
 import { InkDivider } from "./visuals";
+import { useBooking } from "./BookingModal";
 
-function bookHref(subject: string) {
+function unusedBookHref(subject: string) {
   return `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(subject)}`;
 }
 
 export function Nav() {
   const { lang, t, setLang } = useLang();
+  const booking = useBooking();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -69,9 +71,9 @@ export function Nav() {
 
           <div className="hidden items-center gap-5 md:flex">
             {LangToggle}
-            <a href={bookHref(t.contact.mailSubject)} className="btn btn-fill btn-sm">
+            <button type="button" onClick={booking.open} className="btn btn-fill btn-sm">
               {t.nav.cta}
-            </a>
+            </button>
           </div>
 
           <div className="flex items-center gap-4 md:hidden">
@@ -108,13 +110,17 @@ export function Nav() {
               {l.label}
             </Link>
           ))}
-          <a
-            href={bookHref(t.contact.mailSubject)}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              booking.open();
+            }}
             className="btn btn-fill"
             style={{ "--d": "0.4s" } as CSSProperties}
           >
             {t.nav.cta}
-          </a>
+          </button>
         </div>
       )}
     </>
