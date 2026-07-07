@@ -36,11 +36,6 @@ const CAPTION_POS: React.CSSProperties[] = [
 ];
 
 const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
-/* Static-fallback poster: a cinematic beat (phone over linen, mid-zoom) —
-   never the final composite frame, which is a screenshot of this site and
-   reads as broken layout when shown as a still. */
-const POSTER = framePath(170);
-
 export function ScrollCraft() {
   const { t } = useLang();
   const outerRef = useRef<HTMLElement | null>(null);
@@ -179,19 +174,11 @@ export function ScrollCraft() {
       </div>
 
       {staticMode ? (
-        <section className="relative h-[80vh] w-full overflow-hidden">
-          <img
-            src={POSTER}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            width={CRAFT_FRAME_W}
-            height={CRAFT_FRAME_H}
-            loading="lazy"
-          />
-          <p className="film-caption" data-on="true" style={CAPTION_POS[CAPTION_POS.length - 1]}>
+        <div className="mx-auto max-w-2xl px-5 pb-24 pt-2 text-center">
+          <p className="font-display text-2xl font-semibold italic leading-snug text-navy/85 md:text-3xl">
             {t.craft.captions[t.craft.captions.length - 1]}
           </p>
-        </section>
+        </div>
       ) : (
         <section ref={outerRef} className="relative" style={{ height: "600vh" }}>
           <div className="sticky top-0 h-screen w-full overflow-hidden">
@@ -216,7 +203,9 @@ export function ScrollCraft() {
               ))}
             </div>
             <noscript>
-              <img src={POSTER} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 text-center font-display text-2xl italic text-navy/85">
+                {t.craft.captions[t.craft.captions.length - 1]}
+              </p>
             </noscript>
           </div>
         </section>

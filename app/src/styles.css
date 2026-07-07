@@ -208,6 +208,19 @@ html:not(.js) .draw-path { stroke-dashoffset: 0; }
   mask-image: radial-gradient(ellipse 48% 46% at 50% 50%, black 40%, transparent 74%);
   opacity: 0.85;
 }
+.ink-stroke {
+  display: flex;
+  justify-content: center;
+  margin: 4.5rem auto 3rem;
+}
+.ink-stroke .ink-art {
+  width: min(560px, 72vw);
+  height: auto;
+  opacity: 0.85;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 14%, black 86%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 14%, black 86%, transparent);
+}
+
 @keyframes inkDrift {
   from { transform: translateY(-10px); }
   to { transform: translateY(10px); }

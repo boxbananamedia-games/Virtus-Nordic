@@ -6,6 +6,7 @@ import {
   Reveal,
   InkDivider,
   InkFlank,
+  InkStroke,
   SERVICE_ICONS,
   useSectionProgress,
 } from "../components/vn/visuals";
@@ -82,12 +83,12 @@ function Index() {
         </div>
       </section>
 
-      {/* ═══ CRAFT — 3D scroll animation ═══ */}
-      <InkDivider />
+      {/* ═══ CRAFT — the scroll film. A single quiet stroke separates it from
+          the intro; no divider below (the film ends on the site itself). ═══ */}
+      <InkStroke />
       <ScrollCraft />
 
       {/* ═══ SERVICES TEASER ═══ */}
-      <InkDivider />
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-end">
           <Reveal>
