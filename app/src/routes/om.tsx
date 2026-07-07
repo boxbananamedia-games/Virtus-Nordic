@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useLang } from "../lib/language";
 import { content } from "../lib/content";
-import { Reveal, RibbonWave, WaveDivider } from "../components/vn/visuals";
+import { InkDivider, InkFlank, Reveal } from "../components/vn/visuals";
 
 export const Route = createFileRoute("/om")({
   head: () => ({
@@ -17,8 +17,7 @@ function About() {
   const { t } = useLang();
   return (
     <div className="relative overflow-hidden">
-      <RibbonWave
-        side="right"
+      <InkFlank side="right"
         className="pointer-events-none absolute -right-4 top-40 hidden h-[70vh] w-14 opacity-70 lg:block"
       />
 
@@ -37,7 +36,7 @@ function About() {
         </Reveal>
       </section>
 
-      <WaveDivider />
+      <InkDivider />
 
       <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
         <Reveal>
@@ -51,7 +50,7 @@ function About() {
         </Reveal>
       </section>
 
-      <WaveDivider />
+      <InkDivider />
 
       <section className="mx-auto max-w-4xl px-5 py-14 pb-24 md:px-8 md:py-20">
         <Reveal>

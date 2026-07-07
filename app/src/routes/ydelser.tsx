@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
-import { Reveal, WaveDivider, WaveMark } from "../components/vn/visuals";
+import { InkDivider, Reveal, SERVICE_ICONS } from "../components/vn/visuals";
 
 export const Route = createFileRoute("/ydelser")({
   head: () => ({
@@ -31,12 +31,12 @@ function Services() {
       <div className="mx-auto max-w-5xl px-5 md:px-8">
         {t.services.items.map((item, i) => (
           <div key={item.title}>
-            <WaveDivider />
+            <InkDivider />
             <Reveal className="py-10 md:py-14">
               <article className={`grid gap-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-14 ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
                 <div className="md:[direction:ltr]">
                   <div className="flex items-start gap-5">
-                    <WaveMark className="h-12 w-12 shrink-0" />
+                    {(() => { const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length]; return <Icon className="h-12 w-12 shrink-0" />; })()}
                     <div>
                       <span className="font-display text-sm font-semibold tracking-[0.25em] text-teal-1">
                         {String(i + 1).padStart(2, "0")}
@@ -60,7 +60,7 @@ function Services() {
         ))}
       </div>
 
-      <WaveDivider />
+      <InkDivider />
       <section className="mx-auto max-w-3xl px-5 py-16 pb-24 text-center md:px-8 md:py-24">
         <Reveal>
           <h2 className="font-display text-3xl font-semibold leading-tight text-navy md:text-4xl">

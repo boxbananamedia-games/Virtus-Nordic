@@ -4,9 +4,9 @@ import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
 import {
   Reveal,
-  RibbonWave,
-  WaveDivider,
-  WaveMark,
+  InkDivider,
+  InkFlank,
+  SERVICE_ICONS,
   useSectionProgress,
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
@@ -33,17 +33,10 @@ function Index() {
     <div>
       {/* ═══ HERO ═══ */}
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
-        <span className="ghost-mono top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[38vw] md:text-[26rem]">
-          VN
-        </span>
-
-        <RibbonWave side="left" draw className="pointer-events-none absolute left-[2%] top-1/2 hidden h-[78vh] w-16 -translate-y-1/2 lg:block xl:w-20" />
-        <RibbonWave side="right" draw className="pointer-events-none absolute right-[2%] top-1/2 hidden h-[78vh] w-16 -translate-y-1/2 lg:block xl:w-20" />
+        <InkFlank side="left" className="pointer-events-none absolute left-0 top-1/2 hidden h-[86vh] w-auto -translate-y-1/2 lg:block" />
+        <InkFlank side="right" className="pointer-events-none absolute right-0 top-1/2 hidden h-[86vh] w-auto -translate-y-1/2 lg:block" />
 
         <div className="relative z-10">
-          <p className="enter font-display text-lg font-medium uppercase tracking-[0.5em] text-teal-1" style={d(0.05)}>
-            VN
-          </p>
           <h1
             className="enter mt-4 font-display text-[clamp(2.9rem,9vw,6.2rem)] font-semibold leading-[1.02] text-navy"
             style={d(0.15)}
@@ -70,7 +63,7 @@ function Index() {
       </section>
 
       {/* ═══ INTRO ═══ */}
-      <WaveDivider />
+      <InkDivider />
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="grid gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
@@ -90,11 +83,11 @@ function Index() {
       </section>
 
       {/* ═══ CRAFT — 3D scroll animation ═══ */}
-      <WaveDivider />
+      <InkDivider />
       <ScrollCraft />
 
       {/* ═══ SERVICES TEASER ═══ */}
-      <WaveDivider />
+      <InkDivider />
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-end">
           <Reveal>
@@ -112,7 +105,7 @@ function Index() {
           {t.services.items.map((item, i) => (
             <Reveal key={item.title} delay={0.08 * i}>
               <div className="srv-card h-full">
-                <WaveMark className="h-11 w-11" />
+                {(() => { const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length]; return <Icon className="h-11 w-11" />; })()}
                 <h3 className="mt-5 font-display text-xl font-semibold text-navy">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-navy/70">{item.teaser}</p>
               </div>
@@ -122,7 +115,7 @@ function Index() {
       </section>
 
       {/* ═══ PROCESS ═══ */}
-      <WaveDivider />
+      <InkDivider />
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <Reveal>
           <span className="label-eyebrow">{t.process.label}</span>
@@ -176,9 +169,8 @@ function Index() {
       </section>
 
       {/* ═══ CTA BAND ═══ */}
-      <WaveDivider />
+      <InkDivider />
       <section className="relative mx-auto max-w-4xl overflow-hidden px-5 py-20 text-center md:px-8 md:py-28">
-        <span className="ghost-mono left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem]">VN</span>
         <Reveal className="relative">
           <h2 className="font-display text-4xl font-semibold leading-tight text-navy md:text-5xl">
             {t.ctaBand.headline}

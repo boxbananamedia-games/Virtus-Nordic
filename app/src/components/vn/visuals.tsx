@@ -7,84 +7,41 @@ import {
 } from "react";
 
 /* ------------------------------------------------------------------ */
-/* Vertical ribbon wave — the four-tone brand motif flanking content   */
+/* Ink art — Nordic ink-wash pieces generated for the brand            */
 /* ------------------------------------------------------------------ */
 
-const WAVE_STROKES = [
-  { d: "M50 0 C18 75 82 155 50 230 C18 305 82 380 50 460 C18 520 80 545 50 560", c: "#1B6B6B", w: 9, o: 0.42 },
-  { d: "M50 0 C12 90 95 170 48 248 C10 325 95 405 48 485 C14 548 88 555 50 560", c: "#3D8E8A", w: 5.5, o: 0.52 },
-  { d: "M52 12 C36 95 72 168 58 245 C42 322 74 398 60 475 C44 542 76 550 50 560", c: "#6AB0A8", w: 3, o: 0.38 },
-  { d: "M44 8 C68 88 28 172 62 250 C88 328 32 408 68 486 C90 552 38 554 50 560", c: "#C4AD90", w: 1.8, o: 0.42 },
-];
-
-export function RibbonWave({
+export function InkFlank({
   side,
   className = "",
-  draw = false,
 }: {
   side: "left" | "right";
   className?: string;
-  draw?: boolean;
 }) {
   return (
-    <svg
-      viewBox="0 0 100 560"
-      fill="none"
+    <img
+      src="/art/ink-vertical.webp"
+      alt=""
       aria-hidden="true"
-      className={`wave-drift ${className}`}
+      loading="lazy"
+      className={`ink-art ink-flank ${className}`}
       style={side === "right" ? { transform: "scaleX(-1)" } : undefined}
-    >
-      {WAVE_STROKES.map((s, i) => (
-        <path
-          key={i}
-          d={s.d}
-          stroke={s.c}
-          strokeWidth={s.w}
-          strokeLinecap="round"
-          opacity={s.o}
-          pathLength={1}
-          className={draw ? "wave-draw" : undefined}
-          style={draw ? ({ "--d": `${0.9 + i * 0.18}s` } as CSSProperties) : undefined}
-        />
-      ))}
-    </svg>
+    />
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Horizontal wave divider between sections                            */
-/* ------------------------------------------------------------------ */
-
-const DIVIDER_STROKES = [
-  { d: "M0 30 C150 8 300 52 450 30 C600 8 750 52 900 30 C1050 8 1150 44 1240 30", c: "#1B6B6B", w: 3.5, o: 0.35 },
-  { d: "M0 34 C160 14 320 50 480 32 C640 14 800 50 960 32 C1090 18 1170 44 1240 34", c: "#3D8E8A", w: 2.2, o: 0.45 },
-  { d: "M0 26 C140 46 310 12 470 28 C630 46 790 12 950 28 C1080 40 1160 20 1240 26", c: "#6AB0A8", w: 1.4, o: 0.35 },
-  { d: "M0 32 C170 20 330 42 500 30 C670 20 830 42 1000 30 C1110 24 1180 38 1240 32", c: "#C4AD90", w: 1, o: 0.4 },
-];
-
-export function WaveDivider({ className = "" }: { className?: string }) {
+export function InkDivider({ className = "" }: { className?: string }) {
   return (
-    <div className={`overflow-hidden py-6 ${className}`} aria-hidden="true">
-      <svg viewBox="0 0 1240 60" fill="none" className="divider-drift mx-auto w-[110%] max-w-none -translate-x-[5%]">
-        {DIVIDER_STROKES.map((s, i) => (
-          <path key={i} d={s.d} stroke={s.c} strokeWidth={s.w} strokeLinecap="round" opacity={s.o} />
-        ))}
-      </svg>
+    <div className={`ink-divider ${className}`} aria-hidden="true">
+      <img src="/art/ink-horizontal.webp" alt="" loading="lazy" className="ink-art" />
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* WaveMark — compact ribbon-wave ornament (cards / accents)           */
+/* Service icons — line style in the four brand tones, draw on reveal  */
 /* ------------------------------------------------------------------ */
 
-export function WaveMark({ className = "" }: { className?: string }) {
-  const strokes = [
-    { d: "M2 30 C10 18 20 34 28 22 C34 14 40 26 46 18", c: "#1B6B6B", w: 2.4 },
-    { d: "M2 34 C11 24 21 38 30 27 C36 20 41 30 46 24", c: "#3D8E8A", w: 1.7 },
-    { d: "M2 26 C9 36 19 20 27 32 C33 40 40 28 46 34", c: "#6AB0A8", w: 1.3 },
-    { d: "M2 31 C12 27 22 33 32 28 C38 25 42 30 46 28", c: "#C4AD90", w: 1 },
-  ];
+function IconBase({ strokes, className }: { strokes: { d: string; c: string; w: number }[]; className?: string }) {
   return (
     <svg viewBox="0 0 48 48" fill="none" aria-hidden="true" className={className}>
       {strokes.map((s, i) => (
@@ -94,6 +51,7 @@ export function WaveMark({ className = "" }: { className?: string }) {
           stroke={s.c}
           strokeWidth={s.w}
           strokeLinecap="round"
+          strokeLinejoin="round"
           pathLength={1}
           className="draw-path"
           style={{ "--d": `${0.15 + i * 0.14}s` } as CSSProperties}
@@ -102,6 +60,65 @@ export function WaveMark({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+/* Custom code — angle brackets and slash */
+export function IconApp({ className = "" }: { className?: string }) {
+  return (
+    <IconBase
+      className={className}
+      strokes={[
+        { d: "M16 13 L7 24 L16 35", c: "#1B6B6B", w: 2.2 },
+        { d: "M32 13 L41 24 L32 35", c: "#3D8E8A", w: 2.2 },
+        { d: "M27 10 L21 38", c: "#C4AD90", w: 1.6 },
+      ]}
+    />
+  );
+}
+
+/* System integration — two interlocking links */
+export function IconIntegration({ className = "" }: { className?: string }) {
+  return (
+    <IconBase
+      className={className}
+      strokes={[
+        { d: "M22 18 h-7 a7 7 0 0 0 0 14 h7", c: "#1B6B6B", w: 2.2 },
+        { d: "M26 32 h7 a7 7 0 0 0 0 -14 h-7", c: "#3D8E8A", w: 2.2 },
+        { d: "M18 25 H30", c: "#C4AD90", w: 1.8 },
+      ]}
+    />
+  );
+}
+
+/* Agentic automations — a calm robot */
+export function IconAgent({ className = "" }: { className?: string }) {
+  return (
+    <IconBase
+      className={className}
+      strokes={[
+        { d: "M14 19 h20 a3 3 0 0 1 3 3 v12 a4 4 0 0 1 -4 4 H15 a4 4 0 0 1 -4 -4 V22 a3 3 0 0 1 3 -3 z", c: "#1B6B6B", w: 2 },
+        { d: "M24 19 V11", c: "#3D8E8A", w: 1.8 },
+        { d: "M24 9 a2 2 0 1 0 0.01 0", c: "#3D8E8A", w: 1.6 },
+        { d: "M19 27 v4 M29 27 v4", c: "#C4AD90", w: 2.2 },
+      ]}
+    />
+  );
+}
+
+/* Growth & optimisation — rising line with arrow */
+export function IconGrowth({ className = "" }: { className?: string }) {
+  return (
+    <IconBase
+      className={className}
+      strokes={[
+        { d: "M8 40 H40", c: "#C4AD90", w: 1.4 },
+        { d: "M10 33 L20 23 L26 28 L38 13", c: "#1B6B6B", w: 2.2 },
+        { d: "M30 13 H38 V21", c: "#3D8E8A", w: 1.8 },
+      ]}
+    />
+  );
+}
+
+export const SERVICE_ICONS = [IconApp, IconIntegration, IconAgent, IconGrowth];
 
 /* ------------------------------------------------------------------ */
 /* Reveal — IntersectionObserver scroll reveal wrapper                 */

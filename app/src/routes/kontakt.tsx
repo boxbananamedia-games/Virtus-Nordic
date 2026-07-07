@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
-import { Reveal, WaveMark } from "../components/vn/visuals";
+import { Reveal } from "../components/vn/visuals";
 
 export const Route = createFileRoute("/kontakt")({
   head: () => ({
@@ -74,9 +74,6 @@ function Contact() {
             </div>
           </Reveal>
 
-          <Reveal delay={0.3} className="mt-12 hidden md:block">
-            <WaveMark className="h-24 w-28 opacity-80" />
-          </Reveal>
         </div>
 
         <Reveal delay={0.1}>

@@ -13,14 +13,27 @@ import { useLang } from "../../lib/language";
  * Fallbacks: prefers-reduced-motion and no-JS both show the final still.
  */
 
-export const CRAFT_FRAME_COUNT = 142;
+export const CRAFT_FRAME_COUNT = 191;
 export const CRAFT_FRAME_W = 1568;
 export const CRAFT_FRAME_H = 882;
 
 /* Cumulative end-of-beat thresholds (share of total scrub) derived from the
-   six clip durations: cafe, train, intersection, window+bedroom (2 clips
-   share one caption), screen finale. */
-const CAPTION_ENDS = [0.127, 0.303, 0.43, 0.824, 1];
+   eight clip durations: cafe, train, intersection, window+bedroom (2 clips
+   share one caption), screen finale (3 clips). */
+const CAPTION_ENDS = [0.093, 0.223, 0.316, 0.611, 1];
+
+/* Deliberate in-film caption placements — one per beat, each clear of the
+   scene's main motif: cafe (subject right) -> lower-left; train (passengers
+   mid/low) -> top-left; intersection (crowd low) -> top-right; bedroom
+   (person right of centre) -> centre-left; finale -> lower-centre, fading
+   out before the site reveal completes. */
+const CAPTION_POS: React.CSSProperties[] = [
+  { left: "7%", bottom: "13%", textAlign: "left", maxWidth: "34rem" },
+  { left: "7%", top: "12%", textAlign: "left", maxWidth: "32rem" },
+  { right: "7%", top: "12%", textAlign: "right", maxWidth: "32rem" },
+  { left: "7%", top: "44%", textAlign: "left", maxWidth: "26rem" },
+  { left: "50%", bottom: "12%", transform: "translateX(-50%)", textAlign: "center", maxWidth: "38rem" },
+];
 
 const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
 const POSTER = framePath(CRAFT_FRAME_COUNT - 1);
@@ -35,6 +48,8 @@ export function ScrollCraft() {
   const targetRef = useRef(0);
   const captionIdxRef = useRef(0);
   const [caption, setCaption] = useState(0);
+  const finaleFadeRef = useRef(false);
+  const [finaleFaded, setFinaleFaded] = useState(false);
   const [staticMode, setStaticMode] = useState(false);
 
   useEffect(() => {
@@ -131,6 +146,11 @@ export function ScrollCraft() {
           captionIdxRef.current = ci;
           setCaption(ci);
         }
+        const faded = p > 0.955;
+        if (faded !== finaleFadeRef.current) {
+          finaleFadeRef.current = faded;
+          setFinaleFaded(faded);
+        }
       });
     };
     onScroll();
@@ -146,63 +166,58 @@ export function ScrollCraft() {
   }, []);
 
   return (
-    <section ref={outerRef} className="relative" style={{ height: staticMode ? "auto" : "500vh" }}>
-      <div
-        className={
-          staticMode
-            ? "flex flex-col items-center justify-center px-5 py-16"
-            : "sticky top-0 flex h-screen flex-col items-center justify-center overflow-hidden px-5"
-        }
-      >
-        <div className="mb-6 text-center">
-          <span className="label-eyebrow">{t.craft.label}</span>
-          <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-navy md:text-5xl">
-            {t.craft.headline}
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-navy/70 md:text-base">{t.craft.body}</p>
-        </div>
+    <>
+      <div className="mx-auto max-w-3xl px-5 pb-12 pt-20 text-center md:pt-28">
+        <span className="label-eyebrow">{t.craft.label}</span>
+        <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-navy md:text-5xl">
+          {t.craft.headline}
+        </h2>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-navy/70 md:text-base">{t.craft.body}</p>
+      </div>
 
-        {staticMode ? (
-          <>
-            <img
-              src={POSTER}
-              alt=""
-              className="craft-frame w-full max-w-4xl"
-              width={CRAFT_FRAME_W}
-              height={CRAFT_FRAME_H}
-              loading="lazy"
-            />
-            <p className="mt-6 max-w-2xl text-center font-display text-lg italic text-navy/85 md:text-xl">
-              {t.craft.captions[t.craft.captions.length - 1]}
-            </p>
-          </>
-        ) : (
-          <>
+      {staticMode ? (
+        <section className="relative h-[80vh] w-full overflow-hidden">
+          <img
+            src={POSTER}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            width={CRAFT_FRAME_W}
+            height={CRAFT_FRAME_H}
+            loading="lazy"
+          />
+          <p className="film-caption" data-on="true" style={CAPTION_POS[CAPTION_POS.length - 1]}>
+            {t.craft.captions[t.craft.captions.length - 1]}
+          </p>
+        </section>
+      ) : (
+        <section ref={outerRef} className="relative" style={{ height: "600vh" }}>
+          <div className="sticky top-0 h-screen w-full overflow-hidden">
             <canvas
               ref={canvasRef}
               width={CRAFT_FRAME_W}
               height={CRAFT_FRAME_H}
-              className="craft-frame w-full max-w-4xl"
-              style={{ maxHeight: "58vh", objectFit: "contain" }}
+              className="h-full w-full"
+              style={{ objectFit: "cover" }}
               aria-hidden="true"
             />
-            <div className="relative mt-6 h-16 w-full max-w-2xl text-center md:h-14" aria-live="polite">
+            <div aria-live="polite">
               {t.craft.captions.map((c, i) => (
                 <p
                   key={i}
-                  className="craft-caption absolute inset-0 font-display text-lg italic leading-snug text-navy/85 md:text-xl"
-                  data-on={caption === i ? "true" : "false"}
+                  className="film-caption"
+                  data-on={caption === i && !(i === t.craft.captions.length - 1 && finaleFaded) ? "true" : "false"}
+                  style={CAPTION_POS[i]}
                 >
                   {c}
                 </p>
               ))}
             </div>
             <noscript>
-              <img src={POSTER} alt="" className="w-full max-w-4xl" />
+              <img src={POSTER} alt="" className="absolute inset-0 h-full w-full object-cover" />
             </noscript>
-          </>
-        )}
-      </div>
-    </section>
+          </div>
+        </section>
+      )}
+    </>
   );
 }

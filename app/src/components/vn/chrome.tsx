@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../../lib/language";
 import { CONTACT } from "../../lib/content";
-import { WaveDivider } from "./visuals";
+import { InkDivider } from "./visuals";
 
 function bookHref(subject: string) {
   return `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(subject)}`;
@@ -57,9 +57,6 @@ export function Nav() {
         <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-5 md:px-8">
           <Link to="/" className="flex items-baseline gap-3" aria-label="Virtus Nordic">
             <span className="font-display text-2xl font-semibold leading-none text-navy">VN</span>
-            <span className="hidden font-display text-[0.95rem] font-medium uppercase tracking-[0.35em] text-navy sm:inline">
-              Virtus Nordic
-            </span>
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
@@ -128,12 +125,11 @@ export function Footer() {
   const { t } = useLang();
   return (
     <footer className="relative mt-4">
-      <WaveDivider />
+      <InkDivider />
       <div className="mx-auto max-w-6xl px-5 pb-10 pt-2 md:px-8">
         <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div>
-            <p className="font-display text-3xl font-semibold text-navy">VN</p>
-            <p className="mt-1 font-display text-sm font-medium uppercase tracking-[0.35em] text-navy">
+            <p className="font-display text-lg font-medium uppercase tracking-[0.35em] text-navy">
               Virtus Nordic
             </p>
             <p className="mt-3 max-w-xs text-sm text-navy/60">{t.footer.tagline}</p>

@@ -84,8 +84,8 @@ export const content: Record<Lang, Content> = {
     },
     intro: {
       quote: "\u201cVi bygger de applikationer, din forretning fortjener — præcise, gennemtænkte og bygget til at holde.\u201d",
-      p1: "Virtus Nordic er et boutique-udviklingsstudie baseret i Aalborg. Vi arbejder med lokale virksomheder, der forstår, at en gennemført app ikke er en udgift — det er infrastruktur.",
-      p2: "Ethvert samarbejde starter med at forstå din forretning. Teknologien kommer bagefter.",
+      p1: "Virtus Nordic er et udviklingsstudie baseret i Aalborg. Vi arbejder med lokale virksomheder, der forstår, at en gennemført app ikke er en luksus — det er infrastruktur.",
+      p2: "Ethvert samarbejde starter med at forstå din forretning dybt og omfattende, og nøjagtigt hvad der gør den unik. Teknologien kommer bagefter.",
     },
     craft: {
       label: "Virkeligheden",
@@ -110,7 +110,7 @@ export const content: Record<Lang, Content> = {
       items: [
         {
           title: "Skræddersyede apps",
-          teaser: "Bygget helt fra bunden efter, hvordan din forretning rent faktisk fungerer. Ingen overflødige funktioner, ingen kompromiser.",
+          teaser: "Kode bygget helt fra bunden efter, hvordan din forretning rent faktisk fungerer. Ingen overflødige funktioner, ingen kompromiser.",
           paras: [
             "iOS- og Android-applikationer bygget helt fra bunden efter din faktiske arbejdsgang. Ingen overflødige skabeloner, ingen unødvendige funktioner — bare den app, din forretning har brug for, for at fungere bedre.",
           ],
@@ -124,7 +124,7 @@ export const content: Record<Lang, Content> = {
         },
         {
           title: "Agentic Automations",
-          teaser: "Software, der fungerer som ekstra medarbejdere: den læser, vurderer og handler selv — også mens du sover.",
+          teaser: "Software, der fungerer som ekstra medarbejdere: de læser, vurderer og handler selv — også mens du sover.",
           paras: [
             "De fleste programmer venter på, at du fortæller dem, hvad de skal gøre. Det gør en agent ikke — den læser, hvad der kommer ind, vurderer, hvad der skal ske, og handler selv, ligesom en god medarbejder ville gøre.",
             "Forestil dig: en kunde skriver en mail klokken 23:47 og spørger, om du har tid næste tirsdag. Normalt ville den mail ligge, til du tjekker den næste morgen — og kunden har måske allerede booket et andet sted. Med en agent, der overvåger din indbakke, bliver beskeden læst på sekunder, tjekket op mod din faktiske kalender, besvaret på kundens eget sprog, og bookes ind — inden du overhovedet er vågnet. Intet mistet kundeemne, ingen morgenstress.",
@@ -152,7 +152,7 @@ export const content: Record<Lang, Content> = {
         },
         {
           title: "Design",
-          body: "Hvert skærmbillede designes med fokus på klarhed og hastighed, og finpudses sammen med dig, indtil det er rigtigt.",
+          body: "Hver side designes med fokus på klarhed, skønhed og hastighed, og finpudses sammen med dig, indtil det er rigtigt.",
         },
         {
           title: "Udvikling",
