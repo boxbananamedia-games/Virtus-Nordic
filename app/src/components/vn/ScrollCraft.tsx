@@ -2,21 +2,25 @@ import { useEffect, useRef, useState } from "react";
 import { useLang } from "../../lib/language";
 
 /**
- * ScrollCraft — the 3D scroll animation section.
+ * ScrollCraft — "The reality" scroll film.
  *
- * A Seedance 2.0 master clip (4K) is pre-sliced into a WebP frame sequence at
- * build time. Scroll position through this (tall) section scrubs the sequence
- * on a <canvas>, Apple-product-page style. The clip's cream studio background
- * matches the site background, so the render appears to float in the page.
+ * Six chained Seedance 2.0 clips (cafe -> train -> intersection -> window ->
+ * bedroom -> phone screen) pre-sliced into a WebP frame sequence. Scroll
+ * position through this tall section scrubs the sequence on a <canvas>,
+ * Apple-product-page style. The final frames crossfade into real screenshots
+ * of this site, so the film ends on Virtus Nordic — on the phone.
  *
  * Fallbacks: prefers-reduced-motion and no-JS both show the final still.
  */
 
-export const CRAFT_FRAME_COUNT = 96;
+export const CRAFT_FRAME_COUNT = 142;
 export const CRAFT_FRAME_W = 1568;
 export const CRAFT_FRAME_H = 882;
 
-const CAPTION_COUNT = 5;
+/* Cumulative end-of-beat thresholds (share of total scrub) derived from the
+   six clip durations: cafe, train, intersection, window+bedroom (2 clips
+   share one caption), screen finale. */
+const CAPTION_ENDS = [0.127, 0.303, 0.43, 0.824, 1];
 
 const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
 const POSTER = framePath(CRAFT_FRAME_COUNT - 1);
@@ -121,7 +125,8 @@ export function ScrollCraft() {
         const frame = Math.round(p * (CRAFT_FRAME_COUNT - 1));
         targetRef.current = frame;
         draw(frame);
-        const ci = Math.min(CAPTION_COUNT - 1, Math.floor(p * CAPTION_COUNT));
+        let ci = 0;
+        while (ci < CAPTION_ENDS.length - 1 && p >= CAPTION_ENDS[ci]) ci += 1;
         if (ci !== captionIdxRef.current) {
           captionIdxRef.current = ci;
           setCaption(ci);
@@ -141,7 +146,7 @@ export function ScrollCraft() {
   }, []);
 
   return (
-    <section ref={outerRef} className="relative" style={{ height: staticMode ? "auto" : "300vh" }}>
+    <section ref={outerRef} className="relative" style={{ height: staticMode ? "auto" : "500vh" }}>
       <div
         className={
           staticMode
@@ -162,7 +167,7 @@ export function ScrollCraft() {
             <img
               src={POSTER}
               alt=""
-              className="w-full max-w-4xl"
+              className="craft-frame w-full max-w-4xl"
               width={CRAFT_FRAME_W}
               height={CRAFT_FRAME_H}
               loading="lazy"
@@ -177,7 +182,7 @@ export function ScrollCraft() {
               ref={canvasRef}
               width={CRAFT_FRAME_W}
               height={CRAFT_FRAME_H}
-              className="w-full max-w-4xl"
+              className="craft-frame w-full max-w-4xl"
               style={{ maxHeight: "58vh", objectFit: "contain" }}
               aria-hidden="true"
             />
@@ -185,8 +190,8 @@ export function ScrollCraft() {
               {t.craft.captions.map((c, i) => (
                 <p
                   key={i}
-                  className="absolute inset-0 font-display text-lg italic leading-snug text-navy/85 transition-opacity duration-500 md:text-xl"
-                  style={{ opacity: caption === i ? 1 : 0 }}
+                  className="craft-caption absolute inset-0 font-display text-lg italic leading-snug text-navy/85 md:text-xl"
+                  data-on={caption === i ? "true" : "false"}
                 >
                   {c}
                 </p>

@@ -56,16 +56,19 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
   text-transform: uppercase;
   padding: 0.95rem 2.1rem;
   border: 1px solid var(--color-navy);
-  transition: background-color 0.35s ease, color 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
+  transition: background-color 0.4s cubic-bezier(0.32, 0.72, 0, 1), color 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
 }
+.btn:active { transform: translateY(0) scale(0.98); transition-duration: 0.12s; }
 .btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--color-teal-2);
   outline-offset: 3px;
 }
 .btn-fill { background: var(--color-navy); color: var(--color-cream); }
-.btn-fill:hover { background: var(--color-teal-1); border-color: var(--color-teal-1); transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(28, 40, 53, 0.45); }
+.btn-fill:hover { background: var(--color-teal-1); border-color: var(--color-teal-1); transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(27, 107, 107, 0.55), 0 3px 8px -4px rgba(28, 40, 53, 0.25); }
 .btn-outline { background: transparent; color: var(--color-navy); }
-.btn-outline:hover { background: var(--color-navy); color: var(--color-cream); transform: translateY(-2px); }
+.btn-outline:hover { background: var(--color-navy); color: var(--color-cream); transform: translateY(-2px); box-shadow: 0 14px 30px -16px rgba(28, 40, 53, 0.5); }
 .btn-sm { padding: 0.6rem 1.35rem; font-size: 0.72rem; }
 
 .field {
@@ -177,6 +180,7 @@ html:not(.js) .wave-draw { animation: none; stroke-dashoffset: 0; }
   transition: transform 0.35s ease;
 }
 .nav-link:hover::after, .nav-link[data-active="true"]::after { transform: scaleX(1); }
+.nav-link { transition: color 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
 
 .lang-btn {
   font-size: 0.72rem;
@@ -202,21 +206,25 @@ html:not(.js) .wave-draw { animation: none; stroke-dashoffset: 0; }
   animation: menuIn 0.35s ease both;
 }
 @keyframes menuIn { from { opacity: 0; } to { opacity: 1; } }
-.mobile-menu .nav-link { font-size: 1.05rem; animation: sprout 0.6s cubic-bezier(0.22,1,0.36,1) var(--d, 0s) both; }
+.mobile-menu .nav-link { font-size: 1.05rem; animation: enterUp 0.6s cubic-bezier(0.22,1,0.36,1) var(--d, 0s) both; }
 
 /* ---------- cards ---------- */
 .srv-card {
   border: 1px solid rgba(28, 40, 53, 0.14);
   background: rgba(255, 255, 255, 0.22);
   padding: 2.2rem 1.9rem;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease, border-color 0.45s ease, background-color 0.45s ease;
+  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.5s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.5s ease, background-color 0.5s ease;
+  will-change: transform;
 }
 .srv-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-5px) scale(1.005);
   border-color: rgba(27, 107, 107, 0.45);
   background: rgba(255, 255, 255, 0.42);
-  box-shadow: 0 24px 44px -28px rgba(28, 40, 53, 0.4);
+  box-shadow: 0 30px 60px -34px rgba(28, 40, 53, 0.45), 0 4px 14px -8px rgba(28, 40, 53, 0.18);
 }
+.srv-card svg { transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); }
+.srv-card:hover svg { transform: translateX(5px); }
 
 .ghost-mono {
   position: absolute;
@@ -245,10 +253,26 @@ html:not(.js) .wave-draw { animation: none; stroke-dashoffset: 0; }
 }
 .step-num[data-lit="true"] { background: var(--color-teal-1); border-color: var(--color-teal-1); color: var(--color-cream); }
 
+/* ---------- scroll film ---------- */
+.craft-frame {
+  border-radius: 18px;
+  border: 1px solid rgba(28, 40, 53, 0.1);
+  box-shadow: 0 40px 90px -46px rgba(28, 40, 53, 0.5), 0 6px 22px -14px rgba(28, 40, 53, 0.22);
+  background: rgba(28, 40, 53, 0.04);
+}
+.craft-caption {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.55s cubic-bezier(0.32, 0.72, 0, 1), transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.craft-caption[data-on="true"] { opacity: 1; transform: translateY(0); }
+
+::selection { background: rgba(61, 142, 138, 0.28); }
+
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .enter, .reveal,
+  .enter, .reveal, .craft-caption,
   .wave-draw, .wave-drift, .wave-drift-slow, .divider-drift, .draw-path, .mobile-menu .nav-link {
     animation: none !important;
     transition: none !important;
