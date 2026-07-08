@@ -238,6 +238,46 @@ Useful client calls:
 - `list(opts)` reads the generation feed; handle typed `not_supported` for
   filters the backend route cannot support.
 
+### Generation shape and preview URLs
+
+A `Generation` (from `@higgsfield/fnf/client`) is what `submit`/`wait`/`get`/
+`list` return. The fields a UI actually reads:
+
+```ts
+interface Generation {
+  id: string
+  model: string            // == jobSetType, e.g. 'gpt_image_2'
+  type: OutputType         // 'image' | 'video'
+  status: GenerationStatus
+  input: GenerationInput   // input.prompt?.instruction is the prompt text
+  results?: GenerationResults  // present ONLY once completed with an output
+  failReason?: string
+  createdAt?: number       // epoch; may be seconds OR ms
+}
+
+// results is a single object, NOT an array:
+interface GenerationResults {
+  rawUrl: string           // full-quality image or video
+  minUrl?: string          // downscaled still (images)
+  thumbnailUrl?: string    // poster / thumb
+}
+```
+
+- `GenerationStatus`: `'pending' | 'waiting' | 'queued' | 'in_progress' |
+  'ip_detect' | 'completed' | 'failed' | 'nsfw' | 'canceled' | 'ip_detected'`.
+  Terminal = `completed | failed | nsfw | canceled | ip_detected` (`isTerminal(status)`).
+- **Picking the display URL — do NOT hand-roll it.** Use the exported selectors:
+  `getPreviewUrl(generation)` (precedence `minUrl → thumbnailUrl → rawUrl`) for
+  grids/cards, `getRawUrl(generation)` for full-quality, and
+  `getJobPhase(generation)` → `'progress' | 'completed' | 'failed'` for state UI.
+- `results` is `undefined` until `status === 'completed'` with a `result_url`.
+  A completed generation with no `rawUrl` must render an explicit
+  "preview unavailable" state with refresh — never a blank card.
+- In the generated app, `app/src/lib/higgsfield-generation-results.ts` wraps this:
+  `selectGenerationMedia(generation)` returns a discriminated union
+  (`{ kind: 'image' | 'video' | 'empty', … }`) with `previewUrl`/`rawUrl`/
+  `posterUrl` already resolved — compose result cards from it, not from raw fields.
+
 When regenerating, submit the parsed read-model input back through the same
 client and registry:
 
