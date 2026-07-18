@@ -5,13 +5,12 @@ import { CONTACT, content } from "../lib/content";
 import {
   Reveal,
   InkDivider,
-  InkFlank,
-  InkStroke,
   SERVICE_ICONS,
   useSectionProgress,
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
 import { useBooking } from "../components/vn/BookingModal";
+import { Rivers } from "../components/vn/Rivers";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,8 +33,7 @@ function Index() {
     <div>
       {/* ═══ HERO ═══ */}
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
-        <InkFlank side="left" className="pointer-events-none absolute left-0 top-1/2 hidden h-[86vh] w-auto -translate-y-1/2 lg:block" />
-        <InkFlank side="right" className="pointer-events-none absolute right-0 top-1/2 hidden h-[86vh] w-auto -translate-y-1/2 lg:block" />
+        <Rivers />
 
         <div className="relative z-10">
           <h1
@@ -44,7 +42,7 @@ function Index() {
           >
             Virtus Nordic
           </h1>
-          <p className="enter mx-auto mt-5 max-w-xl text-base tracking-[0.06em] text-navy/75 md:text-lg" style={d(0.3)}>
+          <p className="enter mx-auto mt-5 max-w-2xl font-medium text-[1.05rem] tracking-[0.06em] text-navy/90 md:text-xl" style={d(0.3)}>
             {t.hero.tagline}
           </p>
           <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
@@ -83,9 +81,7 @@ function Index() {
         </div>
       </section>
 
-      {/* ═══ CRAFT — the scroll film. A single quiet stroke separates it from
-          the intro; no divider below (the film ends on the site itself). ═══ */}
-      <InkStroke />
+      {/* ═══ CRAFT — the scroll film. ═══ */}
       <ScrollCraft />
 
       {/* ═══ SERVICES TEASER ═══ */}

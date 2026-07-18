@@ -74,6 +74,18 @@ function Contact() {
             </div>
           </Reveal>
 
+          <Reveal delay={0.25} className="mt-12">
+            <img
+              src="/alexander.webp"
+              alt={`${t.contact.founderName}, ${t.contact.founderRole} — Virtus Nordic`}
+              width={900}
+              height={1123}
+              loading="lazy"
+              className="founder-photo"
+            />
+            <p className="mt-4 font-display text-lg font-medium text-navy">{t.contact.founderName}</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-teal-1">{t.contact.founderRole}</p>
+          </Reveal>
         </div>
 
         <Reveal delay={0.1}>

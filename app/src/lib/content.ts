@@ -62,6 +62,8 @@ export type Content = {
   contact: {
     headline: string;
     sub: string;
+    founderName: string;
+    founderRole: string;
     emailLabel: string;
     phoneLabel: string;
     basedLabel: string;
@@ -76,7 +78,7 @@ export const content: Record<Lang, Content> = {
   da: {
     meta: {
       home: {
-        title: "Virtus Nordic — Mobilapplikationer der får din forretning til at vokse",
+        title: "Virtus Nordic — Mobilapplikationer og redskaber der får din forretning til at vokse",
         description:
           "Boutique-udviklingsstudie i Aalborg. Skræddersyede apps, systemintegration og AI-agenter til danske virksomheder.",
       },
@@ -95,7 +97,7 @@ export const content: Record<Lang, Content> = {
     },
     nav: { home: "Forside", about: "Om os", services: "Ydelser", contact: "Kontakt", cta: "Book et møde" },
     hero: {
-      tagline: "Mobilapplikationer der får din forretning til at vokse",
+      tagline: "Mobilapplikationer og redskaber der får din forretning til at vokse",
       ctaPrimary: "Book et møde",
       ctaSecondary: "Se vores ydelser",
       scroll: "Scroll",
@@ -110,10 +112,10 @@ export const content: Record<Lang, Content> = {
       headline: "Din kunde er altid lige der — på skærmen",
       body: "På cafeen, i toget, ved skrivebordet, sent om aftenen. Scroll for at følge med.",
       captions: [
-        "Den gennemsnitlige person tjekker sin telefon over 90 gange om dagen.",
-        "Vi bruger næsten 4 timer om dagen med blikket på en skærm.",
-        "Næsten hver anden føler sig utryg uden sin telefon inden for rækkevidde.",
-        "Næsten halvdelen af os sover med telefonen inden for armslængde.",
+        "Danskerne bruger 4,4 timer om dagen foran en skærm — og det er kun i fritiden.",
+        "Det svarer til over 1.600 timer om året. Næsten et helt arbejdsår.",
+        "Hver tredje dansker føler sig afhængig af sin telefon. Blandt de unge: fire ud af ti.",
+        "I gennemsnit bruger en dansker 8,6 år af sit liv foran mobilskærmen.",
         "Dine kunder er allerede der. Er du?",
       ],
     },
@@ -220,6 +222,8 @@ export const content: Record<Lang, Content> = {
     contact: {
       headline: "Lad os tale sammen",
       sub: "Fortæl os om din forretning, og hvad du gerne vil løse. Vi vender personligt tilbage — ikke med et standardsvar.",
+      founderName: "Alexander Estrada Magnussen",
+      founderRole: "Stifter",
       emailLabel: "Email",
       phoneLabel: "Telefon",
       basedLabel: "Baseret i",
@@ -237,7 +241,7 @@ export const content: Record<Lang, Content> = {
     },
     footer: {
       rights: "Alle rettigheder forbeholdes",
-      tagline: "Mobilapplikationer der får din forretning til at vokse",
+      tagline: "Mobilapplikationer og redskaber der får din forretning til at vokse",
     },
   },
   en: {
@@ -277,10 +281,10 @@ export const content: Record<Lang, Content> = {
       headline: "Your customer is always right there — on the screen",
       body: "At the café, on the train, at the desk, late at night. Scroll to follow along.",
       captions: [
-        "The average person checks their phone over 90 times a day.",
-        "We spend nearly 4 hours a day looking at a screen.",
-        "Nearly 1 in 2 people feel uneasy without their phone nearby.",
-        "Almost half of us sleep with our phone within arm's reach.",
+        "Danes spend 4.4 hours a day in front of a screen — and that's leisure time alone.",
+        "That adds up to over 1,600 hours a year. Nearly a full working year.",
+        "One in three Danes feels addicted to their phone. Among young adults: four in ten.",
+        "The average Dane spends 8.6 years of their life looking at a phone screen.",
         "Your customers are already there. Are you?",
       ],
     },
@@ -387,6 +391,8 @@ export const content: Record<Lang, Content> = {
     contact: {
       headline: "Let's talk",
       sub: "Tell us about your business and what you're trying to solve. We'll get back to you personally — not a form-letter reply.",
+      founderName: "Alexander Estrada Magnussen",
+      founderRole: "Founder",
       emailLabel: "Email",
       phoneLabel: "Phone",
       basedLabel: "Based in",

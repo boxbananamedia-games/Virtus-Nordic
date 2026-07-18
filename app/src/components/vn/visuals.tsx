@@ -29,14 +29,6 @@ export function InkFlank({
   );
 }
 
-export function InkStroke({ className = "" }: { className?: string }) {
-  return (
-    <div className={`ink-stroke ${className}`} aria-hidden="true">
-      <img src="/art/ink-stroke.webp" alt="" loading="lazy" className="ink-art" />
-    </div>
-  );
-}
-
 export function InkDivider({ className = "" }: { className?: string }) {
   return (
     <div className={`ink-divider ${className}`} aria-hidden="true">
