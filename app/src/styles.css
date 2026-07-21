@@ -85,24 +85,9 @@ h1, h2, h3, .font-display { font-family: var(--font-display); }
 .field::placeholder { color: rgba(28, 40, 53, 0.45); }
 .field:focus { border-color: var(--color-teal-2); background: rgba(255, 255, 255, 0.6); outline: none; }
 
-/* ---------- rivers ---------- */
-/* Intro veil: pure CSS keyed off the pre-paint <html> attribute, so it covers
-   the page from the very first frame — no React needed, no flash. The rivers
-   canvases are lifted above it only while the intro runs. */
-.river-veil {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: var(--color-cream);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.85s ease 0.05s;
-}
-html[data-river-intro] .river-veil { opacity: 1; pointer-events: auto; transition: none; }
-.river-canvas { z-index: 1; }
-html[data-river-intro] .river-canvas { z-index: 70; }
-html[data-river-intro] .enter { animation-play-state: paused; }
-html[data-river-intro] { overflow: hidden; }
+/* The paper grain (.paper::before) is a fixed, z-1 pseudo-element; the footer
+   must stack above it like <main> does. */
+footer { position: relative; z-index: 10; }
 
 /* ---------- founder portrait ---------- */
 .founder-photo {

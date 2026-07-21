@@ -151,13 +151,9 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body className="paper">
         {/* progressive enhancement flag: animation initial-hidden states only apply with JS */}
-        {/* Intro veil: SSR-rendered so it exists from the first byte; CSS keys it
-            off the pre-paint data-river-intro attribute. */}
-        <div className="river-veil" aria-hidden="true" />
         <script
           dangerouslySetInnerHTML={{
-            __html:
-              "document.documentElement.classList.add('js');try{if(location.pathname==='/'&&!sessionStorage.getItem('vn-ri')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-river-intro','1');setTimeout(function(){document.documentElement.removeAttribute('data-river-intro')},6500)}}catch(e){}",
+            __html: "document.documentElement.classList.add('js');",
           }}
         />
         {children}

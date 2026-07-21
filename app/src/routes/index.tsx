@@ -10,7 +10,6 @@ import {
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
 import { useBooking } from "../components/vn/BookingModal";
-import { Rivers } from "../components/vn/Rivers";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,8 +32,6 @@ function Index() {
     <div>
       {/* ═══ HERO ═══ */}
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
-        <Rivers />
-
         <div className="relative z-10">
           <h1
             className="enter mt-4 font-display text-[clamp(2.9rem,9vw,6.2rem)] font-semibold leading-[1.02] text-navy"
