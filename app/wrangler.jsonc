@@ -16,10 +16,13 @@
   // `name` must stay a valid Cloudflare name (lowercase + dashes, 3–63 chars).
   "name": "app-slug-placeholder",
 
-  // The Worker entry is the TanStack Start SSR server bundle — `vite build`
-  // emits dist/server/server.js (`export default { fetch }`). The deploy CI
-  // rediscovers the real built entry and points `main` at it.
-  "main": "dist/server/server.js",
+  // The Worker entry. Points at the TanStack Start SSR source entry (not the
+  // built dist/server/server.js) so `@cloudflare/vite-plugin` has a real file
+  // to resolve for `vite dev`/`vite build` — pointing at the build OUTPUT here
+  // is a chicken-and-egg problem since that file doesn't exist until after a
+  // build runs. The deploy CI ignores this file entirely and rediscovers the
+  // real built entry.
+  "main": "src/server.ts",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },

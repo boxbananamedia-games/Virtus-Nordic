@@ -1,4 +1,5 @@
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import {
@@ -30,20 +31,18 @@ export default defineConfig(({ mode }) => {
     // at runtime. Vite's default SSR build leaves npm deps as bare external
     // imports (h3, react, @tanstack/*, seroval, …), which resolve on a Node
     // server but throw "No such module" in a Worker. Bundle them all in.
-    // (node: builtins stay external — nodejs_compat provides them.)
+    // (`cloudflare:*` and `node:*` builtins stay external — the `cloudflare()`
+    // plugin below owns that externalization itself; setting it here too
+    // throws "incompatible with the Cloudflare Vite plugin" at config time.)
     ssr: {
       noExternal: true,
-      // `cloudflare:workers` is a workerd runtime built-in that exposes the Worker
-      // env / bindings (D1 `DB`, R2 `STORAGE`). Like node: builtins it must NOT be
-      // bundled; the runtime provides it. (`ssr.external` is typed string[].)
-      external: ["cloudflare:workers"],
-    },
-    build: {
-      // Keep `cloudflare:*` external in the SSR rollup pass too — `noExternal`
-      // above would otherwise try to resolve+bundle it and fail.
-      rollupOptions: { external: [/^cloudflare:/] },
     },
     plugins: [
+      // Runs the actual Cloudflare Workers runtime (workerd) inside Vite dev/build
+      // so `cloudflare:*` builtins (e.g. `cloudflare:workers` in bindings.server.ts)
+      // resolve locally and D1/R2/KV bindings from wrangler.jsonc are available in
+      // `vite dev` — not just after a real deploy. Must run before tanstackStart.
+      cloudflare({ viteEnvironment: { name: "ssr" } }),
       // Material Symbols SVGs (the app icon set) import as React components via
       // `?react`. `icon: true` sizes them 1em; fill is forced to currentColor so
       // they color like text (the raw SVGs have no fill attribute). Keep the
