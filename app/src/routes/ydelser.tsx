@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
 import { InkDivider, Reveal, SERVICE_ICONS } from "../components/vn/visuals";
@@ -16,6 +17,25 @@ export const Route = createFileRoute("/ydelser")({
 function Services() {
   const { t } = useLang();
   const book = `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(t.contact.mailSubject)}`;
+  const hash = useLocation({ select: (l) => l.hash });
+
+  // Scroll to the deep-linked service (e.g. /ydelser#service-2 from a homepage
+  // teaser card). Done explicitly and retried across ~700ms because the
+  // router's scroll-restoration resets to the top after the target mounts —
+  // the retries ensure our scroll runs last and sticks.
+  useEffect(() => {
+    const id = (hash ?? "").replace(/^#/, "");
+    if (!id) return;
+    const timers = [80, 250, 500, 750].map((ms) =>
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (Math.abs(el.getBoundingClientRect().top - 112) < 4) return; // already there
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, ms),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [hash]);
 
   return (
     <div>
@@ -30,7 +50,7 @@ function Services() {
 
       <div className="mx-auto max-w-5xl px-5 md:px-8">
         {t.services.items.map((item, i) => (
-          <div key={item.title}>
+          <div key={item.title} id={`service-${i}`} className="scroll-mt-28">
             <InkDivider />
             <Reveal className="py-10 md:py-14">
               <article className={`grid gap-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-14 ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>

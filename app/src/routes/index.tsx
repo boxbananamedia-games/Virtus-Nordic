@@ -34,16 +34,16 @@ function Index() {
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
         <div className="relative z-10">
           <h1
-            className="enter mt-4 font-display text-[clamp(2.9rem,9vw,6.2rem)] font-semibold leading-[1.02] text-navy"
+            className="enter mt-4 font-logo text-[clamp(2.5rem,7.5vw,5.5rem)] font-semibold leading-[1.08] tracking-[0.01em] text-navy"
             style={d(0.15)}
           >
             Virtus Nordic
           </h1>
-          <p className="enter mx-auto mt-5 max-w-2xl font-medium text-[1.05rem] tracking-[0.06em] text-navy/90 md:text-xl" style={d(0.3)}>
+          <p className="enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]" style={d(0.3)}>
             {t.hero.tagline}
           </p>
           <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
-            <button type="button" onClick={booking.open} className="btn btn-fill">
+            <button type="button" onClick={booking.open} className="btn btn-outline">
               {t.hero.ctaPrimary}
             </button>
             <Link to="/ydelser" className="btn btn-outline">
@@ -98,11 +98,16 @@ function Index() {
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {t.services.items.map((item, i) => (
             <Reveal key={item.title} delay={0.08 * i}>
-              <div className="srv-card h-full">
+              <Link
+                to="/ydelser"
+                hash={`service-${i}`}
+                className="srv-card block h-full"
+                aria-label={`${item.title} — ${t.servicesTeaser.label}`}
+              >
                 {(() => { const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length]; return <Icon className="h-11 w-11" />; })()}
                 <h3 className="mt-5 font-display text-xl font-semibold text-navy">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-navy/70">{item.teaser}</p>
-              </div>
+              </Link>
             </Reveal>
           ))}
         </div>

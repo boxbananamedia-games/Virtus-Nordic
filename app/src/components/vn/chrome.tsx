@@ -58,7 +58,7 @@ export function Nav() {
       <header className={`nav-shell ${scrolled ? "scrolled" : ""}`}>
         <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-5 md:px-8">
           <Link to="/" className="flex items-baseline gap-3" aria-label="Virtus Nordic">
-            <span className="font-display text-2xl font-semibold leading-none text-navy">VN</span>
+            <span className="font-logo text-2xl font-semibold leading-none text-navy">VN</span>
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">

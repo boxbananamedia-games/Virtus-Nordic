@@ -17,10 +17,12 @@ export const CRAFT_FRAME_COUNT = 191;
 export const CRAFT_FRAME_W = 1568;
 export const CRAFT_FRAME_H = 882;
 
-/* Cumulative end-of-beat thresholds (share of total scrub) derived from the
-   eight clip durations: cafe, train, intersection, window+bedroom (2 clips
-   share one caption), screen finale (3 clips). */
-const CAPTION_ENDS = [0.093, 0.223, 0.316, 0.611, 1];
+/* Scroll-progress at which each caption BEGINS (share of total scrub). The
+   first clip (cafe) plays caption-free — nothing shows until p passes
+   CAPTION_STARTS[0], clear of the logo/scene reveal — then each caption runs
+   until the next one begins, and the finale (last) holds until it fades out.
+   The five captions are spread across the remaining clips, same order. */
+const CAPTION_STARTS = [0.11, 0.27, 0.4, 0.55, 0.67];
 
 /* Deliberate in-film caption placements — one per beat, each clear of the
    scene's main motif: cafe (subject right) -> lower-left; train (passengers
@@ -32,7 +34,9 @@ const CAPTION_POS: React.CSSProperties[] = [
   { left: "7%", top: "12%", textAlign: "left", maxWidth: "32rem" },
   { right: "7%", top: "12%", textAlign: "right", maxWidth: "32rem" },
   { left: "7%", top: "44%", textAlign: "left", maxWidth: "26rem" },
-  { left: "50%", bottom: "12%", transform: "translateX(-50%)", textAlign: "center", maxWidth: "38rem" },
+  // Centred via left/right:0 + margin auto (not translateX) so the caption's
+  // entrance/drift animations own `transform` without fighting a static offset.
+  { left: 0, right: 0, margin: "0 auto", bottom: "12%", textAlign: "center", maxWidth: "38rem" },
 ];
 
 const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
@@ -44,8 +48,8 @@ export function ScrollCraft() {
   const loadedRef = useRef<boolean[]>([]);
   const lastDrawnRef = useRef(-1);
   const targetRef = useRef(0);
-  const captionIdxRef = useRef(0);
-  const [caption, setCaption] = useState(0);
+  const captionIdxRef = useRef(-1);
+  const [caption, setCaption] = useState(-1);
   const finaleFadeRef = useRef(false);
   const [finaleFaded, setFinaleFaded] = useState(false);
   const [staticMode, setStaticMode] = useState(false);
@@ -138,8 +142,13 @@ export function ScrollCraft() {
         const frame = Math.round(p * (CRAFT_FRAME_COUNT - 1));
         targetRef.current = frame;
         draw(frame);
-        let ci = 0;
-        while (ci < CAPTION_ENDS.length - 1 && p >= CAPTION_ENDS[ci]) ci += 1;
+        // -1 = no caption yet (first clip runs clean); otherwise the last
+        // caption whose start threshold we've passed.
+        let ci = -1;
+        for (let i = 0; i < CAPTION_STARTS.length; i += 1) {
+          if (p >= CAPTION_STARTS[i]) ci = i;
+          else break;
+        }
         if (ci !== captionIdxRef.current) {
           captionIdxRef.current = ci;
           setCaption(ci);
