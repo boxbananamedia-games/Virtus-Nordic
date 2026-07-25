@@ -6,6 +6,13 @@ import {
   type ReactNode,
 } from "react";
 
+/** True when the visitor has asked the OS for less animation. Safe on the
+ *  server, where there is no matchMedia to ask. */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 /* ------------------------------------------------------------------ */
 /* Ink art — Nordic ink-wash pieces generated for the brand            */
 /* ------------------------------------------------------------------ */

@@ -1,14 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import type { CSSProperties } from "react";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
+import { APPLICATIONS } from "../lib/applications";
 import {
   Reveal,
   InkDivider,
   SERVICE_ICONS,
+  prefersReducedMotion,
   useSectionProgress,
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
+import { PhoneField } from "../components/vn/apps/PhoneField";
+import { ApplicationsSection } from "../components/vn/apps/ApplicationsSection";
 import { useBooking } from "../components/vn/BookingModal";
 
 export const Route = createFileRoute("/")({
@@ -28,11 +32,47 @@ function Index() {
   const booking = useBooking();
   const [processRef, processProgress] = useSectionProgress<HTMLDivElement>();
 
+  /* ── the application showcase: hero devices and #applikationer share one
+        selection, so clicking a floating phone lands on its concept ── */
+  const [selectedApp, setSelectedApp] = useState(APPLICATIONS[0].id);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [tabFocus, setTabFocus] = useState(0);
+
+  const openConcept = useCallback((id: string) => {
+    setSelectedApp(id);
+    setDetailsOpen(true);
+    setTabFocus((n) => n + 1);
+    document.getElementById("applikationer")?.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
+  }, []);
+
+  // Deep link from the navbar on another page (/#applikationer). The router's
+  // scroll restoration resets to the top after the target mounts, so the scroll
+  // is retried across ~700ms to make sure ours runs last. Same approach as
+  // src/routes/ydelser.tsx.
+  const hash = useLocation({ select: (l) => l.hash });
+  useEffect(() => {
+    const id = (hash ?? "").replace(/^#/, "");
+    if (!id) return;
+    const timers = [80, 250, 500, 750].map((ms) =>
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (Math.abs(el.getBoundingClientRect().top - 96) < 4) return; // already there
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, ms),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [hash]);
+
   return (
     <div>
       {/* ═══ HERO ═══ */}
-      <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 text-center">
+      <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0">
         <div className="relative z-10">
+          <span className="vn-hero-scrim" aria-hidden="true" />
           <h1
             className="enter mt-4 font-logo text-[clamp(2.5rem,7.5vw,5.5rem)] font-semibold leading-[1.08] tracking-[0.01em] text-navy"
             style={d(0.15)}
@@ -51,6 +91,10 @@ function Index() {
             </Link>
           </div>
         </div>
+
+        {/* Five concepts drifting around the copy on desktop, one swipeable rail
+            below it on mobile. Same markup, switched in CSS. */}
+        <PhoneField onSelect={openConcept} />
 
         <div className="enter absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={d(0.7)}>
           <span className="text-[0.65rem] uppercase tracking-[0.3em] text-navy/50">{t.hero.scroll}</span>
@@ -112,6 +156,15 @@ function Index() {
           ))}
         </div>
       </section>
+
+      {/* ═══ APPLIKATIONER ═══ */}
+      <ApplicationsSection
+        selectedId={selectedApp}
+        onSelect={setSelectedApp}
+        detailsOpen={detailsOpen}
+        onDetailsToggle={() => setDetailsOpen((v) => !v)}
+        focusSignal={tabFocus}
+      />
 
       {/* ═══ PROCESS ═══ */}
       <InkDivider />

@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../../lib/language";
 import { CONTACT } from "../../lib/content";
-import { InkDivider } from "./visuals";
+import { InkDivider, prefersReducedMotion } from "./visuals";
 import { useBooking } from "./BookingModal";
 
 function unusedBookHref(subject: string) {
@@ -15,6 +15,7 @@ export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const hash = useRouterState({ select: (s) => s.location.hash });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -34,12 +35,38 @@ export function Nav() {
     };
   }, [open]);
 
-  const links: { to: string; label: string }[] = [
+  // Five items with "Applikationer" among them no longer fit beside the logo,
+  // language toggle and CTA below ~1024px, so the full nav starts at lg and
+  // tablets get the same menu button phones do.
+  const links: { to: string; hash?: string; label: string }[] = [
     { to: "/", label: t.nav.home },
     { to: "/om", label: t.nav.about },
     { to: "/ydelser", label: t.nav.services },
+    { to: "/", hash: "applikationer", label: t.nav.apps },
     { to: "/kontakt", label: t.nav.contact },
   ];
+
+  // Applikationer is a section of the homepage, not a route. From another page
+  // the Link navigates and the homepage's hash effect scrolls; when we are
+  // already on "/" the location may not change at all, so scroll it ourselves.
+  const onNavClick = (l: { to: string; hash?: string }, closeMenu = false) => () => {
+    if (closeMenu) setOpen(false);
+    if (!l.hash || pathname !== "/") return;
+    // Wait a frame when coming from the mobile menu: the overlay has to unmount
+    // and release the body scroll lock before anything can be scrolled.
+    const run = () =>
+      document
+        .getElementById(l.hash as string)
+        ?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    if (closeMenu) window.setTimeout(run, 60);
+    else run();
+  };
+
+  // The router reports the hash with or without its leading "#" depending on how
+  // the location was set, so normalise before comparing.
+  const currentHash = (hash ?? "").replace(/^#/, "");
+  const isActive = (l: { to: string; hash?: string }) =>
+    pathname === l.to && (l.hash ? currentHash === l.hash : !currentHash);
 
   const LangToggle = (
     <div className="flex items-center" aria-label="Language">
@@ -61,22 +88,29 @@ export function Nav() {
             <span className="font-logo text-2xl font-semibold leading-none text-navy">VN</span>
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-7 lg:flex xl:gap-8" aria-label="Primary">
             {links.map((l) => (
-              <Link key={l.to} to={l.to} className="nav-link" data-active={pathname === l.to}>
+              <Link
+                key={`${l.to}#${l.hash ?? ""}`}
+                to={l.to}
+                hash={l.hash}
+                className="nav-link"
+                data-active={isActive(l)}
+                onClick={onNavClick(l)}
+              >
                 {l.label}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-5 md:flex">
+          <div className="hidden items-center gap-5 lg:flex">
             {LangToggle}
             <button type="button" onClick={booking.open} className="btn btn-fill btn-sm">
               {t.nav.cta}
             </button>
           </div>
 
-          <div className="flex items-center gap-4 md:hidden">
+          <div className="flex items-center gap-4 lg:hidden">
             {LangToggle}
             <button
               type="button"
@@ -98,13 +132,15 @@ export function Nav() {
       </header>
 
       {open && (
-        <div className="mobile-menu md:hidden">
+        <div className="mobile-menu lg:hidden">
           {links.map((l, i) => (
             <Link
-              key={l.to}
+              key={`${l.to}#${l.hash ?? ""}`}
               to={l.to}
+              hash={l.hash}
               className="nav-link"
-              data-active={pathname === l.to}
+              data-active={isActive(l)}
+              onClick={onNavClick(l, true)}
               style={{ "--d": `${0.08 + i * 0.07}s` } as CSSProperties}
             >
               {l.label}

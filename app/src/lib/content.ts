@@ -12,7 +12,7 @@ type PageMeta = { title: string; description: string };
 
 export type Content = {
   meta: { home: PageMeta; about: PageMeta; services: PageMeta; contact: PageMeta };
-  nav: { home: string; about: string; services: string; contact: string; cta: string };
+  nav: { home: string; about: string; services: string; apps: string; contact: string; cta: string };
   hero: { tagline: string; ctaPrimary: string; ctaSecondary: string; scroll: string };
   intro: { quote: string; p1: string; p2: string };
   craft: { label: string; headline: string; body: string; captions: string[] };
@@ -23,6 +23,24 @@ export type Content = {
     items: ServiceItem[];
     closing: string;
     closingCta: string;
+  };
+  /** #applikationer — the floating application concepts. Section chrome only;
+   *  the concepts themselves live in src/lib/applications.ts. */
+  apps: {
+    label: string;
+    headline: string;
+    sub: string;
+    disclaimer: string;
+    selectLabel: string;
+    heroHint: string;
+    openConcept: string;
+    fields: { problem: string; journey: string; features: string; technical: string; value: string };
+    detailsOpen: string;
+    detailsClose: string;
+    valueNote: string;
+    cta: string;
+    ctaSub: string;
+    ctaButton: string;
   };
   process: {
     label: string;
@@ -95,7 +113,14 @@ export const content: Record<Lang, Content> = {
         description: "Book et møde med Virtus Nordic i Aalborg. Ingen forpligtelser, bare en snak.",
       },
     },
-    nav: { home: "Forside", about: "Om mig", services: "Ydelser", contact: "Kontakt", cta: "Book et møde" },
+    nav: {
+      home: "Forside",
+      about: "Om mig",
+      services: "Ydelser",
+      apps: "Applikationer",
+      contact: "Kontakt",
+      cta: "Book et møde",
+    },
     hero: {
       tagline: "Mobilapplikationer og redskaber der får din forretning til at vokse",
       ctaPrimary: "Book et møde",
@@ -161,6 +186,30 @@ export const content: Record<Lang, Content> = {
       ],
       closing: "Er du i tvivl om, hvilken af disse der passer til din forretning?",
       closingCta: "Book et møde, så finder vi ud af det sammen",
+    },
+    apps: {
+      label: "Applikationer",
+      headline: "Fem virksomheder. Fem applikationer der intet har til fælles.",
+      sub: "Virtus Nordic har én identitet. Produkterne har ikke. Hver applikation her er tegnet omkring kundens forretning, kundens brugere og kundens marked, ikke omkring min egen smag. Det er derfor de fem skærme ser ud som om de kommer fra fem forskellige studier.",
+      disclaimer:
+        "Uafhængige konceptstudier inspireret af lokale virksomheder. Ikke eksisterende kundesamarbejder.",
+      selectLabel: "Vælg et koncept",
+      heroHint: "Peg på en telefon, eller klik for hele konceptet",
+      openConcept: "Åbn konceptet.",
+      fields: {
+        problem: "Forretningsproblemet",
+        journey: "Brugerrejsen",
+        features: "Nøglefunktioner",
+        technical: "Tekniske kapabiliteter",
+        value: "Forretningsværdi",
+      },
+      detailsOpen: "Se teknik og forretningsværdi",
+      detailsClose: "Skjul teknik og forretningsværdi",
+      valueNote: "Effektmål for konceptet, ikke målte resultater fra et kundeforløb.",
+      cta: "Lad os finde applikationen i din virksomhed",
+      ctaSub:
+        "Din forretning har sit eget flow, sine egne kunder og sine egne spidsbelastninger. Lad os finde det sted, hvor en applikation flytter mest.",
+      ctaButton: "Book et møde",
     },
     process: {
       label: "Sådan arbejder jeg",
@@ -264,7 +313,14 @@ export const content: Record<Lang, Content> = {
         description: "Book a meeting with Virtus Nordic in Aalborg. No obligation, just a conversation.",
       },
     },
-    nav: { home: "Home", about: "About", services: "Services", contact: "Contact", cta: "Book a Meeting" },
+    nav: {
+      home: "Home",
+      about: "About",
+      services: "Services",
+      apps: "Applications",
+      contact: "Contact",
+      cta: "Book a Meeting",
+    },
     hero: {
       tagline: "Mobile Applications for Business Growth",
       ctaPrimary: "Book a Meeting",
@@ -330,6 +386,30 @@ export const content: Record<Lang, Content> = {
       ],
       closing: "Not sure which of these fits your business?",
       closingCta: "Book a meeting and we'll figure it out together",
+    },
+    apps: {
+      label: "Applications",
+      headline: "Five businesses. Five applications with nothing in common.",
+      sub: "Virtus Nordic has one identity. The products do not. Every application here is drawn around the client's business, the client's users and the client's market, not around my own taste. That is why these five screens look like they came from five different studios.",
+      disclaimer:
+        "Independent concept studies inspired by local businesses. Not existing client engagements.",
+      selectLabel: "Choose a concept",
+      heroHint: "Hover a phone, or click for the full concept",
+      openConcept: "Open the concept.",
+      fields: {
+        problem: "The business problem",
+        journey: "The user journey",
+        features: "Key features",
+        technical: "Technical capabilities",
+        value: "Business value",
+      },
+      detailsOpen: "Show technology and business value",
+      detailsClose: "Hide technology and business value",
+      valueNote: "Intended effects of the concept, not measured results from a client engagement.",
+      cta: "Let's find the application inside your business",
+      ctaSub:
+        "Your business has its own flow, its own customers and its own peak hours. Let's find the place where an application moves the most.",
+      ctaButton: "Book a Meeting",
     },
     process: {
       label: "How I work",
