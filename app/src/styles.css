@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./styles/applications.css";
+@import "./styles/ios-kit.css";
 @source "../src";
 
 @theme {

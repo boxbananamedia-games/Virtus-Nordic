@@ -89,7 +89,10 @@ export type Content = {
     form: { name: string; company: string; email: string; phone: string; message: string; send: string; note: string };
     mailSubject: string;
   };
-  footer: { rights: string; tagline: string };
+  /** `modelCredit` is a licence obligation, not decoration: the 3D device model
+   *  used in the hero is licensed from Meshy on condition of attribution. It
+   *  must stay visible on the site. */
+  footer: { rights: string; tagline: string; modelCredit: string };
 };
 
 export const content: Record<Lang, Content> = {
@@ -291,6 +294,8 @@ export const content: Record<Lang, Content> = {
     footer: {
       rights: "Alle rettigheder forbeholdes",
       tagline: "Mobilapplikationer og redskaber der får din forretning til at vokse",
+      // Reads with the linked "Meshy" appended: "3D-model af enheden fra Meshy".
+      modelCredit: "3D-model af enheden fra",
     },
   },
   en: {
@@ -491,6 +496,7 @@ export const content: Record<Lang, Content> = {
     footer: {
       rights: "All rights reserved",
       tagline: "Mobile Applications for Business Growth",
+      modelCredit: "Device 3D model by",
     },
   },
 };

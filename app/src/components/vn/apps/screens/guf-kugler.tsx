@@ -1,19 +1,49 @@
-import { HomeBar, StatusBar, TabBar } from "./parts";
+import Icecream from "@material-symbols/svg-400/outlined/icecream.svg?react";
+import Loyalty from "@material-symbols/svg-400/outlined/loyalty.svg?react";
+import Person from "@material-symbols/svg-400/outlined/person.svg?react";
+import Add from "@material-symbols/svg-400/outlined/add.svg?react";
+import Schedule from "@material-symbols/svg-400/outlined/schedule.svg?react";
+import Storefront from "@material-symbols/svg-400/outlined/storefront.svg?react";
+import {
+  Button,
+  Group,
+  HomeIndicator,
+  NavBar,
+  Pill,
+  Row,
+  Scroll,
+  Segmented,
+  StatusBar,
+  TabBar,
+} from "../ios";
 
 /**
- * Guf & Kugler — Food and takeaway commerce.
+ * Guf & Kugler — food and takeaway commerce. Screen 1 of 3: today's scoops.
  *
- * Cream ground, berry/pistachio/lemon accents, generous radii. Playful but
- * premium: the scoops are drawn with layered radial gradients, never photos.
+ * Rebuilt on the iOS foundation kit. The previous version was a header, three
+ * rows and a button on a mostly empty stage, which is what made it read as a
+ * concept slide. This one carries what a real ordering app carries at this
+ * point in the flow: an open/closed state, a live collection window, a
+ * segmented filter, a priced menu with availability, loyalty progress and an
+ * order already in progress — with the list deliberately running under the tab
+ * bar so it reads as a scroll position rather than a composed picture.
  *
- * Play state: two scoops drop into the cup while the total and the loyalty
- * points tick up (see .gk-* rules in src/styles/applications.css).
+ * Scoops stay drawn rather than photographed for now; the generated imagery
+ * from Phase 3 drops into `.gk-scoop` without touching this file's structure.
  */
 
 const FLAVOURS = [
-  { name: "Hindbær og lakrids", note: "Nyrørt i dag", price: "28", tone: "berry" },
-  { name: "Pistacie", note: "Sicilianske nødder", price: "30", tone: "pistachio" },
-  { name: "Citron og basilikum", note: "Sorbet, vegansk", price: "26", tone: "lemon" },
+  { name: "Hindbær og lakrids", note: "Nyrørt i dag", price: "28", tone: "berry", left: null },
+  { name: "Pistacie", note: "Sicilianske nødder", price: "30", tone: "pistachio", left: null },
+  {
+    name: "Citron og basilikum",
+    note: "Sorbet · vegansk",
+    price: "26",
+    tone: "lemon",
+    left: "4 tilbage",
+  },
+  { name: "Vanilje fra Madagaskar", note: "Klassiker", price: "26", tone: "vanilla", left: null },
+  { name: "Mørk chokolade 70%", note: "Uden tilsat sukker", price: "30", tone: "cocoa", left: null },
 ];
 
 export function GufKuglerScreen() {
@@ -21,68 +51,88 @@ export function GufKuglerScreen() {
     <div className="vn-scr gk">
       <StatusBar />
 
-      <header className="gk-head">
-        <p className="gk-brand">
-          Guf <span className="gk-amp">&amp;</span> Kugler
-        </p>
-        <h3 className="gk-h1">Dagens kugler i Aalborg</h3>
-      </header>
+      <NavBar
+        eyebrow="Guf & Kugler · Bispensgade"
+        title="Dagens kugler"
+        trailing={
+          <span className="gk-open">
+            <i />
+            Åbent til 21
+          </span>
+        }
+      />
 
-      <ul className="gk-list">
-        {FLAVOURS.map((f) => (
-          <li key={f.name} className="gk-flav">
-            <span className={`gk-scoop gk-scoop--${f.tone}`} />
-            <span className="gk-flav-text">
-              <b>{f.name}</b>
-              <i>{f.note}</i>
+      <Scroll>
+        <Segmented items={["I dag", "Sorbet", "Vegansk"]} active={0} />
+
+        <Group header="Dagens smage" footer="Smagene skiftes ud hver morgen kl. 10.">
+          {FLAVOURS.map((f) => (
+            <Row
+              key={f.name}
+              avatar={<span className={`gk-scoop gk-scoop--${f.tone}`} />}
+              title={f.name}
+              sub={f.note}
+              value={
+                <span className="gk-price">
+                  {f.left && <em>{f.left}</em>}
+                  <b>{f.price} kr</b>
+                </span>
+              }
+            />
+          ))}
+        </Group>
+
+        <Group header="Din ordre">
+          <Row icon={Add} title="Byg din is" sub="2 kugler · vaffel · drys" value="42 kr" chevron />
+          <Row
+            icon={Schedule}
+            iconBg="var(--app-accent-2)"
+            title="Afhentning"
+            sub="I dag · klar 12:15"
+            trailing={<Pill>Om 20 min</Pill>}
+          />
+          <Row
+            icon={Storefront}
+            iconBg="var(--app-accent-3)"
+            title="Bispensgade 14"
+            sub="450 m herfra"
+            chevron
+          />
+        </Group>
+
+        <Group header="Guf-klub">
+          <div className="gk-loyal">
+            <div className="gk-loyal-top">
+              <span className="ios-subhead">2 kugler til en gratis is</span>
+              <span className="ios-headline ios-num">120</span>
+            </div>
+            <span className="gk-bar">
+              <i />
             </span>
-            <span className="gk-flav-price">{f.price} kr</span>
-          </li>
-        ))}
-      </ul>
+            <p className="ios-caption gk-loyal-note">Niveau 2 · Optjent 8 point denne måned</p>
+          </div>
+        </Group>
 
-      <div className="gk-loyal">
-        <div className="gk-loyal-top">
-          <span className="gk-loyal-label">Guf-klub</span>
-          <span className="gk-pts">
-            <b className="gk-swap-a">120</b>
-            <b className="gk-swap-b">128</b>
-            <i>point</i>
-          </span>
+        <div className="gk-cta-wrap">
+          <Button trailing={<span className="ios-num">42 kr</span>}>Til kassen</Button>
         </div>
-        <span className="gk-bar">
-          <i />
-        </span>
-        <p className="gk-loyal-note">2 kugler til en gratis is</p>
-      </div>
 
-      <div className="gk-build">
-        {/* Cup first, scoops after: later siblings paint on top, so a scoop that
-            lands in the cup stays visible instead of hiding behind it. */}
-        <span className="gk-cup-wrap">
-          <span className="gk-cup">
-            <span className="gk-cup-fill" />
-          </span>
-          <span className="gk-drop gk-drop--1" />
-          <span className="gk-drop gk-drop--2" />
-        </span>
-        <span className="gk-build-text">
-          <b>Byg din is</b>
-          <i>2 kugler, vaffel, drys</i>
-          <span className="gk-pickup">Klar til afhentning 12:15</span>
-        </span>
-      </div>
+        <Group header="Kommende">
+          <Row title="Mini-Isbar til fødselsdag" sub="Book til lør. 23. aug." chevron />
+          <Row title="Gavekort" sub="Køb og send i appen" chevron />
+        </Group>
+      </Scroll>
 
-      <div className="gk-cta">
-        <span>Til kassen</span>
-        <span className="gk-total">
-          <b className="gk-swap-a">42 kr</b>
-          <b className="gk-swap-b">56 kr</b>
-        </span>
-      </div>
-
-      <TabBar items={["I dag", "Byg", "Klub", "Mig"]} active={0} />
-      <HomeBar />
+      <TabBar
+        items={[
+          { label: "I dag", icon: Icecream },
+          { label: "Byg", icon: Add },
+          { label: "Klub", icon: Loyalty },
+          { label: "Mig", icon: Person },
+        ]}
+        active={0}
+      />
+      <HomeIndicator />
     </div>
   );
 }

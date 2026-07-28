@@ -192,7 +192,19 @@ export function Footer() {
         </div>
         <hr className="hairline my-7" />
         <p className="text-xs tracking-[0.14em] text-navy/50">
-          © {new Date().getFullYear()} Virtus Nordic · {t.footer.rights}
+          © {new Date().getFullYear()} Virtus Nordic · {t.footer.rights} ·{" "}
+          {/* Licence obligation for the hero's device model — must stay visible.
+              rel="noopener" because target="_blank" otherwise hands the opened
+              page a reference back to this window. */}
+          {t.footer.modelCredit}{" "}
+          <a
+            href="https://www.meshy.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-navy/25 underline-offset-4 hover:text-navy/80"
+          >
+            Meshy
+          </a>
         </p>
       </div>
     </footer>
