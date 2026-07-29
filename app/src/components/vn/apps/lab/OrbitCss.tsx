@@ -29,8 +29,14 @@ export type OrbitKnobs = {
   tilt: number;
   /** Perspective distance in px. Lower is a wider, more dramatic lens. */
   persp: number;
-  /** 1 = always facing the viewer, 0 = fully turning with the orbit. */
+  /** 1 = always facing the viewer, 0 = fully turning with the orbit.
+   *  Branch A only — Branch B's carousel faces radially outward by rule. */
   face: number;
+  /** Vertical travel as a fraction of orbit radius: one rise and fall per lap. */
+  rise: number;
+  /** How much the orbit slows as each phone reaches the front. 0 = constant
+   *  speed, 0.9 = near-stop. Applied as a modulation of angular velocity. */
+  dwell: number;
   /** Screen width in px at scale 1, identical for every device. */
   size: number;
   /** Depth-of-field blur on/off, and its strength at the far side. */

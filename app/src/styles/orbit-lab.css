@@ -195,6 +195,38 @@
   color: rgba(28, 40, 53, 0.65);
 }
 
+/* ─────────────────────────── dusk theme trial ───────────────────────────
+   The page's bottom edge IS the light source: near-navy at the top graduating
+   to the site's cream at the bottom, with a radial glow pooled at the floor.
+   The 3D scene runs the matching rig (Studio.tsx "dusk"), so the reflections
+   on the devices and the page tell one story. */
+
+.ol-lab[data-theme="dusk"] {
+  background:
+    radial-gradient(
+      120% 60% at 50% 102%,
+      rgba(255, 248, 235, 0.95) 0%,
+      rgba(255, 248, 235, 0) 62%
+    ),
+    linear-gradient(
+      180deg,
+      #171f29 0%,
+      #2e3944 30%,
+      #7a7d76 60%,
+      #d8d2c2 82%,
+      #f6f1e7 100%
+    );
+}
+
+/* The fixed site nav sits over the dark top of the gradient, where its navy
+   text would vanish. Per the brief the bar stays white — a solid strip rather
+   than the usual transparency, scoped to the trial so the rest of the site
+   never changes. */
+html[data-lab-theme="dusk"] .nav-shell {
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(28, 40, 53, 0.08);
+}
+
 /* Under reduce the orbit does not run at all: the rAF never starts and the
    formation holds the composed arrangement the static angle produces. */
 @media (prefers-reduced-motion: reduce) {

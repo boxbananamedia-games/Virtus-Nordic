@@ -8,17 +8,23 @@ import { useRoundedScreenGeometry } from "./RoundedScreen";
  * One device: the iPhone chassis in a given finish, its screen, and its
  * Dynamic Island.
  *
- * ── Why geometry and textures are separate files ─────────────────────────
- * The five supplied colour exports contain, after welding/simplification/
- * quantisation, exactly ONE distinct mesh — they were the same base model
- * differing only at float precision. Geometry is 83% of a packed GLB, so five
- * standalone files would ship the same 36k-triangle phone five times for
- * 3.65MB. Instead we ship one geometry (0.53MB) and five texture sets
- * (0.46MB): 0.99MB for the whole set, in the hero's LCP path.
+ * ── Why each finish is a whole GLB with textures EMBEDDED ────────────────
+ * An earlier revision split the assets: one shared geometry plus loose JPEG
+ * maps per finish, rebound to the material at runtime (0.99MB total instead
+ * of 3.6MB). It rendered subtly and then catastrophically wrong — camera
+ * lenses sampling body colour instead of their dark texels. A controlled A/B
+ * (harness lens-debug sheet) proved the corruption: the SAME texture bytes
+ * render correctly embedded-in-GLB via GLTFLoader and incorrectly as loose
+ * files via TextureLoader with hand-set flipY/colorSpace. Rather than keep
+ * fighting the loose path's plumbing, each finish now ships as Meshy exported
+ * it (size-optimised only: resized textures, simplified quantized mesh), and
+ * GLTFLoader owns ALL texture semantics. Fidelity to the supplied models is
+ * the contract; the 2.6MB saving was not worth breaking it.
  *
- * Sharing is only valid because UV layouts are identical across all five,
- * which harness/build-shared.mjs verifies by hashing post-optimisation
- * geometry rather than assuming it.
+ * Materials are deliberately untouched — no metalness overrides, no roughness
+ * multipliers. The reference look (Meshy viewer) uses the maps as authored.
+ * The ONE material property this component may set is envMapIntensity,
+ * because it belongs to the scene's lighting design, not to the model.
  *
  * ── What this component adds that the raw model lacks ────────────────────
  *  1. A screen. These are back-view generations: the front face is flat noise
@@ -26,15 +32,18 @@ import { useRoundedScreenGeometry } from "./RoundedScreen";
  *     proud of that face and covers it completely.
  *  2. A Dynamic Island as real geometry at Apple's proportions, rather than
  *     the one Meshy painted into the texture in the wrong place.
- *  3. Titanium rather than chrome — a roughness change, not a mesh change.
  */
-
-const GEOMETRY = "/lab-models/shared/geo-a.glb";
-const texUrl = (finish: string, role: string) =>
-  `/lab-models/shared/tex/${finish}/${role}.jpg`;
 
 /** The five finishes, one per concept. */
 export type Finish = "graphite" | "copper" | "silver" | "green" | "navy";
+
+const FINISH_GLB: Record<Finish, string> = {
+  graphite: "/lab-models/opt/graphite.glb",
+  copper: "/lab-models/opt/copper.glb",
+  silver: "/lab-models/opt/silver.glb",
+  green: "/lab-models/opt/green.glb",
+  navy: "/lab-models/opt/navy.glb",
+};
 
 /** Apple's Dynamic Island, as fractions of the display it sits on:
  *  125 x 36.7pt on a 393 x 852pt screen, 11pt below the top edge. */
@@ -57,10 +66,10 @@ export const DEFAULT_FIT: PhoneFit = {
   lift: 0.0015,
 };
 
-/** Measure the shared mesh once. Every finish uses the same bounding box, so
- *  the screen fit and island placement are computed a single time. */
-export function usePhoneGeometry() {
-  const { scene } = useGLTF(GEOMETRY);
+/** Load and measure one finish's GLB. All five exports share a bounding box
+ *  (verified by hash during optimisation), so fit numbers hold across them. */
+function usePhoneAsset(finish: Finish) {
+  const { scene } = useGLTF(FINISH_GLB[finish]);
   return useMemo(() => {
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3();
@@ -71,70 +80,41 @@ export function usePhoneGeometry() {
   }, [scene]);
 }
 
-/** Build a chassis wearing one finish: clone the shared mesh, clone its
- *  material, and bind that finish's maps. */
-function useChassis(finish: Finish) {
-  const { scene } = usePhoneGeometry();
-  const [base, normal, mr] = useLoader(THREE.TextureLoader, [
-    texUrl(finish, "base_color"),
-    texUrl(finish, "normal"),
-    texUrl(finish, "metallic_roughness"),
-  ]);
-
-  return useMemo(() => {
-    // glTF stores textures unflipped, but TextureLoader defaults flipY to true
-    // for loose image files. Left alone, every map would be applied upside
-    // down — the logo on the back is the giveaway.
-    for (const t of [base, normal, mr]) {
-      t.flipY = false;
-      t.anisotropy = 8;
-      t.needsUpdate = true;
-    }
-    // Colour data is sRGB; normals and the packed metal/rough mask are raw
-    // numbers and must stay linear or the lighting goes wrong.
-    base.colorSpace = THREE.SRGBColorSpace;
-    normal.colorSpace = THREE.NoColorSpace;
-    mr.colorSpace = THREE.NoColorSpace;
-
-    const root = scene.clone(true);
-    root.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      // Clone the material too. Without this every device shares one material
-      // and whichever finish mounts last wins for all five.
-      const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
-      mat.map = base;
-      mat.normalMap = normal;
-      // glTF packs roughness in G and metalness in B of a single texture, so
-      // both slots point at the same map.
-      mat.roughnessMap = mr;
-      mat.metalnessMap = mr;
-      // With maps bound these factors are multipliers, not absolutes.
-      mat.roughness = 0.42;
-      mat.metalness = 1;
-      mat.envMapIntensity = 1.15;
-      mat.needsUpdate = true;
-      mesh.material = mat;
-    });
-    return root;
-  }, [scene, base, normal, mr]);
-}
-
 export function PhoneModel({
   screenTexture,
   finish = "graphite",
   fit = DEFAULT_FIT,
   flattenZ = 1,
+  envIntensity = 1.25,
 }: {
   screenTexture: string;
   finish?: Finish;
   fit?: PhoneFit;
   /** The mesh measures ~22% thicker than a real body-plus-bump. */
   flattenZ?: number;
+  /** Scene-lighting property, the one thing we set on the model's materials.
+   *  1.25 matches the Meshy viewer's HDRI intensity. */
+  envIntensity?: number;
 }) {
-  const { size, centre, frontZ } = usePhoneGeometry();
-  const body = useChassis(finish);
+  const { scene, size, centre, frontZ } = usePhoneAsset(finish);
   const map = useLoader(THREE.TextureLoader, screenTexture);
+
+  // Each device instance clones the shared scene graph; geometry and textures
+  // stay shared on the GPU. Materials are cloned only to carry a per-context
+  // envMapIntensity without cross-talk between orbit and solo bench.
+  const body = useMemo(() => {
+    const root = scene.clone(true);
+    root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
+      mat.envMapIntensity = envIntensity;
+      // Grazing-angle sharpness for the atlas; spatially neutral.
+      if (mat.map) mat.map.anisotropy = 8;
+      mesh.material = mat;
+    });
+    return root;
+  }, [scene, envIntensity]);
 
   useEffect(() => {
     map.colorSpace = THREE.SRGBColorSpace;
@@ -174,4 +154,4 @@ export function PhoneModel({
   );
 }
 
-useGLTF.preload(GEOMETRY);
+for (const url of Object.values(FINISH_GLB)) useGLTF.preload(url);

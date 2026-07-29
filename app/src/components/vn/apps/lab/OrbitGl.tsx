@@ -1,10 +1,10 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 import { APPLICATIONS } from "../../../../lib/applications";
 import type { OrbitKnobs } from "./OrbitCss";
 import { PhoneModel, type Finish } from "./PhoneModel";
+import { StudioLighting, type StudioVariant } from "./Studio";
 
 /**
  * BRANCH B — orbit in WebGL. Prototype for the Phase 0 bake-off.
@@ -57,45 +57,101 @@ const STAGE_H = 780;
 const cameraFov = (k: OrbitKnobs) =>
   (2 * Math.atan(STAGE_H / 2 / k.persp) * 180) / Math.PI;
 
+/** How wide the slow stretch is, as a fraction of one lap. Small on purpose:
+ *  a broad dwell makes devices pile up around the front, so several present
+ *  their screens at once instead of one at a time. */
+const DWELL_WIDTH = 0.055;
+
+/**
+ * Precomputed easing table for one lap.
+ *
+ * We need position-as-a-function-of-phase, not a velocity we integrate each
+ * frame: every device reads the same curve at its own offset, and integrating
+ * per device would drift them apart over a long-running page.
+ *
+ * The closed-form `u - (a/2pi)·sin(2pi·u)` used previously spreads its slow
+ * region across half the lap, which is what caused the pile-up. A narrow
+ * Gaussian dip in *velocity* gives a brief, well-defined pause at the front and
+ * has no closed-form integral — so integrate it once into a lookup table
+ * instead, and normalise so a full lap still takes exactly one cycle.
+ */
+function useOrbitEasing(dwell: number) {
+  return useMemo(() => {
+    const N = 1024;
+    const cumulative = new Float32Array(N + 1);
+    let acc = 0;
+    for (let i = 0; i < N; i++) {
+      const u = i / N;
+      // Distance to the front of the orbit, wrapping at the seam.
+      const d = Math.min(u, 1 - u);
+      const speed = 1 - dwell * Math.exp(-(d * d) / (2 * DWELL_WIDTH * DWELL_WIDTH));
+      acc += speed;
+      cumulative[i + 1] = acc;
+    }
+    for (let i = 0; i <= N; i++) cumulative[i] /= acc;
+    return cumulative;
+  }, [dwell]);
+}
+
+/** Sample the table with linear interpolation — 1024 steps is far finer than a
+ *  frame's worth of travel, so this is visually continuous. */
+function sampleEasing(table: Float32Array, u: number) {
+  const N = table.length - 1;
+  const x = u * N;
+  const i = Math.floor(x);
+  const f = x - i;
+  return table[i] * (1 - f) + table[Math.min(i + 1, N)] * f;
+}
+
 function Device({
   index,
   textureUrl,
   knobs,
   angleRef,
+  easing,
+  envIntensity,
 }: {
   index: number;
   textureUrl: string;
   knobs: OrbitKnobs;
   angleRef: { current: number };
+  easing: Float32Array;
+  envIntensity: number;
 }) {
   const group = useRef<THREE.Group>(null);
 
-  useFrame(({ camera }) => {
+  useFrame(() => {
     const g = group.current;
     if (!g) return;
-    const a = ((angleRef.current + index * 72) * Math.PI) / 180;
+
+    // Each device eases on its OWN phase rather than sharing one ring speed.
+    // Modulating a single shared velocity made all five slow down together —
+    // the formation stuttering in unison instead of one phone arriving and
+    // settling. Here the shared value is a plain linear phase, each device
+    // offsets it by i/n, and the easing table gives a brief pause confined to
+    // the front so only the presenting device is ever slow.
+    const n = APPLICATIONS.length;
+    const u = (angleRef.current / 360 + index / n) % 1;
+    const a = sampleEasing(easing, u) * 2 * Math.PI;
     const R = sceneRadius(knobs);
-    const tilt = (knobs.tilt * Math.PI) / 180;
 
-    // The ring's tilt is baked into the position rather than applied as a
-    // parent rotation. Two reasons: the orbit still reads as an ellipse on
-    // screen, AND the device stays a child of an untilted space, so its local Y
-    // rotation IS world yaw. Under a tilted parent it is not, and every facing
-    // correction below would be quietly wrong.
+    // θ = 0 is the point nearest the camera. Radius is constant: phones already
+    // grow and shrink substantially coming round the near side, and that is the
+    // perspective divide doing it honestly rather than a faked scale.
     const x = Math.sin(a) * R;
-    const zFlat = Math.cos(a) * R;
-    g.position.set(x, -zFlat * Math.sin(tilt), zFlat * Math.cos(tilt));
+    const z = Math.cos(a) * R;
 
-    // Yaw toward the camera instead of billboarding to a fixed -Z. With a fixed
-    // axis, perspective means an off-centre device is viewed obliquely and its
-    // screen foreshortens to an unreadable sliver at the sides of the orbit.
-    // Yaw only — a full lookAt would also pitch the device up or down toward
-    // the camera, and phones that tip out of vertical read as falling.
-    const yaw = Math.atan2(camera.position.x - g.position.x, camera.position.z - g.position.z);
+    // One rise and fall per lap, phased so the nearest point sits at mid
+    // height — the featured phone is centred vertically rather than bobbing at
+    // the moment you are meant to read it.
+    const y = Math.sin(a) * R * knobs.rise;
+    g.position.set(x, y, z);
 
-    // A residual turn on top keeps the formation alive rather than five slabs
-    // sliding around always dead-on. face = 1 is fully camera-facing.
-    g.rotation.set(0, yaw + a * (1 - knobs.face), 0);
+    // The whole carousel rule, in one line: face radially outward from the
+    // centre. Whichever phone swings nearest then presents its screen without
+    // any hand-timed keyframing, and the far one shows its back. Position stays
+    // in untilted space so local Y is true world yaw.
+    g.rotation.set(0, a, 0);
   });
 
   return (
@@ -105,6 +161,7 @@ function Device({
           screenTexture={textureUrl}
           finish={FINISHES[index % FINISHES.length]}
           flattenZ={FLATTEN_Z}
+          envIntensity={envIntensity}
         />
       </group>
     </group>
@@ -116,24 +173,34 @@ function Ring({
   angleRef,
   onFrame,
   freeze,
+  envIntensity,
 }: {
   knobs: OrbitKnobs;
   angleRef: { current: number };
   onFrame?: () => void;
   freeze?: number;
+  envIntensity: number;
 }) {
+  const easing = useOrbitEasing(knobs.dwell);
   const reduced =
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   useFrame((_, delta) => {
-    if (freeze !== undefined) angleRef.current = freeze;
-    else if (!reduced) angleRef.current = (angleRef.current + delta * knobs.speed) % 360;
+    if (freeze !== undefined) {
+      angleRef.current = freeze;
+    } else if (!reduced) {
+      // Plain linear phase. All the easing now happens per device (see Device),
+      // so this must stay uniform — modulating it here is what made the whole
+      // formation slow down together.
+      angleRef.current = (angleRef.current + delta * knobs.speed) % 360;
+    }
     onFrame?.();
   });
 
   // No rotation here any more: the tilt now lives in each device's position
-  // (see Device), so this group stays axis-aligned with the world.
+  // (see Device), so this group stays axis-aligned with the world. The easing
+  // table is built once here and shared, so all five read one identical curve.
   return (
     <group>
       {APPLICATIONS.map((app, i) => (
@@ -143,6 +210,8 @@ function Ring({
           textureUrl={`/lab-textures/${app.id}.png`}
           knobs={knobs}
           angleRef={angleRef}
+          easing={easing}
+          envIntensity={envIntensity}
         />
       ))}
     </group>
@@ -153,10 +222,13 @@ export function OrbitGl({
   knobs,
   onFrame,
   freeze,
+  lighting = "day",
 }: {
   knobs: OrbitKnobs;
   onFrame?: () => void;
   freeze?: number;
+  /** Which studio rig lights the scene — see Studio.tsx. */
+  lighting?: StudioVariant;
 }) {
   const angleRef = useRef(0);
   // The Canvas touches WebGL on construction, so it can only exist after mount.
@@ -175,20 +247,19 @@ export function OrbitGl({
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.35} />
-        <directionalLight position={[4, 6, 8]} intensity={1.6} />
-        {/* Self-hosted lighting: Lightformers are rendered into a cubemap at
-            runtime, so the metal gets real reflections with no HDRI fetch and
-            therefore no CSP change. */}
-        <Environment resolution={256}>
-          <Lightformer intensity={2.4} position={[0, 4, 4]} scale={[10, 6, 1]} />
-          <Lightformer intensity={1.1} position={[-6, 1, 2]} scale={[6, 8, 1]} color="#cfe0ff" />
-          <Lightformer intensity={0.9} position={[6, -2, 3]} scale={[6, 8, 1]} color="#ffe9cf" />
-        </Environment>
+        {/* The rig lives in Studio.tsx, shared with the solo inspection view so
+            judging a finish there tells the truth about the carousel. */}
+        <StudioLighting variant={lighting} />
         {/* useLoader suspends while the screen plates decode. Without a boundary
             the whole scene stays suspended and the canvas renders empty. */}
         <Suspense fallback={null}>
-          <Ring knobs={knobs} angleRef={angleRef} onFrame={onFrame} freeze={freeze} />
+          <Ring
+            knobs={knobs}
+            angleRef={angleRef}
+            onFrame={onFrame}
+            freeze={freeze}
+            envIntensity={lighting === "dusk" ? 0.22 : 1.35}
+          />
         </Suspense>
       </Canvas>
     </div>

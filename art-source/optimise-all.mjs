@@ -21,7 +21,7 @@ import { mkdirSync, statSync } from "node:fs";
 import { createResizer } from "./img-resize.mjs";
 
 const DL = "C:/Users/Liv Thomsen/Downloads";
-const OUT = "D:/Alex/VirtusNordic/Virtus-Nordic/art-source/opt";
+const OUT = "D:/Alex/VirtusNordic/Virtus-Nordic/app/public/lab-models/opt";
 const MODELS = {
   copper: "0728190705",
   green: "0728190737",

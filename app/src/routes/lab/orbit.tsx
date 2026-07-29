@@ -4,6 +4,8 @@ import { findApplication } from "../../lib/applications";
 import { OrbitCss, type OrbitKnobs } from "../../components/vn/apps/lab/OrbitCss";
 import { OrbitGl } from "../../components/vn/apps/lab/OrbitGl";
 import { ModelInspect } from "../../components/vn/apps/lab/ModelInspect";
+import { SoloDevice, type SoloEnv } from "../../components/vn/apps/lab/SoloDevice";
+import type { Finish } from "../../components/vn/apps/lab/PhoneModel";
 import "../../styles/orbit-lab.css";
 
 /**
@@ -32,10 +34,28 @@ type Search = {
   flattenZ?: number;
   /** Which candidate GLB to inspect, by filename stem under /lab-models/eval. */
   model?: string;
+  speed?: number;
+  rise?: number;
+  dwell?: number;
   screenW?: number;
   screenH?: number;
   screenY?: number;
   showScreen?: number;
+  /** "dusk" swaps page background and studio rig to the bottom-lit look. */
+  theme?: string;
+  /** Solo material-inspection view: one finish at one angle. */
+  solo?: string;
+  metal?: number;
+  rawTex?: number;
+  /** Matrix knobs for the solo bench: environment, post chain, texture set. */
+  env?: string;
+  bloom?: number;
+  tone?: string;
+  texset?: string;
+  envi?: number;
+  /** "dark" puts the bench on a neutral dark ground like the Meshy viewer, so
+   *  comparisons against the reference screenshots are like for like. */
+  bg?: string;
 };
 
 const num = (v: unknown) => (v === undefined || v === "" ? undefined : Number(v));
@@ -54,20 +74,37 @@ export const Route = createFileRoute("/lab/orbit")({
     yaw: num(raw.yaw),
     flattenZ: num(raw.flattenZ),
     model: raw.model === undefined ? undefined : String(raw.model),
+    speed: num(raw.speed),
+    rise: num(raw.rise),
+    dwell: num(raw.dwell),
     screenW: num(raw.screenW),
     screenH: num(raw.screenH),
     screenY: num(raw.screenY),
     showScreen: num(raw.showScreen),
+    // Dusk is the default look per Alex (2026-07-29). Reversible: pass
+    // ?theme=day, or change this one fallback string.
+    theme: raw.theme === undefined ? "dusk" : String(raw.theme),
+    solo: raw.solo === undefined ? undefined : String(raw.solo),
+    metal: num(raw.metal),
+    rawTex: num(raw.rawTex),
+    env: raw.env === undefined ? undefined : String(raw.env),
+    bloom: num(raw.bloom),
+    tone: raw.tone === undefined ? undefined : String(raw.tone),
+    texset: raw.texset === undefined ? undefined : String(raw.texset),
+    envi: num(raw.envi),
+    bg: raw.bg === undefined ? undefined : String(raw.bg),
   }),
   component: OrbitLab,
 });
 
 const DEFAULTS: OrbitKnobs = {
-  speed: 9,
-  radius: 430,
+  speed: 8,
+  radius: 600,
   tilt: -14,
-  persp: 1400,
+  persp: 1900,
   face: 0.82,
+  rise: 0.34,
+  dwell: 0.82,
   size: 190,
   dof: true,
   dofPx: 2.2,
@@ -81,7 +118,18 @@ function OrbitLab() {
     ...(search.radius !== undefined ? { radius: search.radius } : {}),
     ...(search.tilt !== undefined ? { tilt: search.tilt } : {}),
     ...(search.persp !== undefined ? { persp: search.persp } : {}),
+    ...(search.speed !== undefined ? { speed: search.speed } : {}),
+    ...(search.rise !== undefined ? { rise: search.rise } : {}),
+    ...(search.dwell !== undefined ? { dwell: search.dwell } : {}),
   });
+  // The fixed site nav lives outside this component, so the theme has to be
+  // reflected on <html> for CSS to reach it. Cleaned up on unmount so the rest
+  // of the site never sees it.
+  useEffect(() => {
+    if (search.theme) document.documentElement.setAttribute("data-lab-theme", search.theme);
+    return () => document.documentElement.removeAttribute("data-lab-theme");
+  }, [search.theme]);
+
   const [fps, setFps] = useState(0);
   const [support, setSupport] = useState<string>("checking");
 
@@ -139,6 +187,25 @@ function OrbitLab() {
     );
   }
 
+  if (search.solo) {
+    return (
+      <main
+        className="ol-lab"
+        data-bare="true"
+        style={search.bg === "dark" ? { background: "#232326" } : undefined}
+      >
+        <SoloDevice
+          finish={search.solo as Finish}
+          yaw={search.yaw ?? 0}
+          envIntensity={search.envi}
+          env={(search.env as SoloEnv) ?? "day"}
+          bloom={search.bloom ?? 0}
+          tone={search.tone === "agx" ? "agx" : "aces"}
+        />
+      </main>
+    );
+  }
+
   const isB = search.branch === "b";
 
   // Model inspection: one raw candidate export alone, no orbit. Requires an
@@ -162,9 +229,13 @@ function OrbitLab() {
 
   if (search.bare) {
     return (
-      <main className="ol-lab" data-bare="true">
+      <main className="ol-lab" data-bare="true" data-theme={search.theme}>
         {isB ? (
-          <OrbitGl knobs={knobs} freeze={search.freeze} />
+          <OrbitGl
+            knobs={knobs}
+            freeze={search.freeze}
+            lighting={search.theme === "dusk" ? "dusk" : "day"}
+          />
         ) : (
           <OrbitCss knobs={knobs} freeze={search.freeze} />
         )}
@@ -173,7 +244,7 @@ function OrbitLab() {
   }
 
   return (
-    <main className="ol-lab">
+    <main className="ol-lab" data-theme={search.theme}>
       <div className="ol-panel">
         <strong>Branch A · CSS 3D</strong>
         <Range label="speed" v={knobs.speed} min={0} max={40} step={1} on={(v) => set("speed", v)} />
@@ -201,6 +272,15 @@ function OrbitLab() {
           max={1}
           step={0.02}
           on={(v) => set("face", v)}
+        />
+        <Range label="rise" v={knobs.rise} min={0} max={0.8} step={0.02} on={(v) => set("rise", v)} />
+        <Range
+          label="dwell"
+          v={knobs.dwell}
+          min={0}
+          max={0.95}
+          step={0.05}
+          on={(v) => set("dwell", v)}
         />
         <Range label="size" v={knobs.size} min={120} max={300} step={5} on={(v) => set("size", v)} />
         <label>
@@ -239,7 +319,12 @@ function OrbitLab() {
             : "Branch A — CSS 3D orbit, live DOM screens"}
         </h2>
         {isB ? (
-          <OrbitGl knobs={knobs} onFrame={onFrame} freeze={search.freeze} />
+          <OrbitGl
+            knobs={knobs}
+            onFrame={onFrame}
+            freeze={search.freeze}
+            lighting={search.theme === "dusk" ? "dusk" : "day"}
+          />
         ) : (
           <OrbitCss knobs={knobs} onFrame={onFrame} freeze={search.freeze} />
         )}
