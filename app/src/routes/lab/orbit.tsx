@@ -5,7 +5,7 @@ import { OrbitCss, type OrbitKnobs } from "../../components/vn/apps/lab/OrbitCss
 import { OrbitGl } from "../../components/vn/apps/lab/OrbitGl";
 import { ModelInspect } from "../../components/vn/apps/lab/ModelInspect";
 import { SoloDevice, type SoloEnv } from "../../components/vn/apps/lab/SoloDevice";
-import type { Finish } from "../../components/vn/apps/lab/PhoneModel";
+import type { Finish } from "../../components/vn/apps/device/PhoneModel";
 import "../../styles/orbit-lab.css";
 
 /**

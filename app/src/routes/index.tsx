@@ -12,6 +12,7 @@ import {
 } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
 import { PhoneField } from "../components/vn/apps/PhoneField";
+import { HeroOrbit, canRunOrbit } from "../components/vn/apps/HeroOrbit";
 import { ApplicationsSection } from "../components/vn/apps/ApplicationsSection";
 import { useBooking } from "../components/vn/BookingModal";
 
@@ -26,6 +27,37 @@ export const Route = createFileRoute("/")({
 });
 
 const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
+
+/**
+ * The hero's device showcase, in whichever form this browser can support.
+ *
+ * Both live in the DOM together and the choice is structural rather than a
+ * flag: PhoneField (the CSS field / swipeable rail) always renders, and the
+ * WebGL orbit mounts over it only once the client has confirmed a wide
+ * hover-capable viewport with working WebGL — at which point CSS hides the
+ * field. So a phone, a WebGL failure, or JavaScript never running all land on
+ * the original rail with no extra code path.
+ *
+ * The capability check has to run in an effect, not during render: it touches
+ * matchMedia and a probe canvas, and deciding during SSR would either guess
+ * wrong or mismatch on hydration.
+ *
+ * REVERSIBLE: delete this component and render <PhoneField> directly to go
+ * back to the CSS hero exactly as it was. Nothing else in the hero changed.
+ */
+function HeroDevices({ onSelect }: { onSelect: (id: string) => void }) {
+  const [orbit, setOrbit] = useState(false);
+  useEffect(() => setOrbit(canRunOrbit()), []);
+
+  return (
+    <div className="vn-hero-devices" data-orbit={orbit ? "true" : "false"}>
+      {/* Fallback and mobile rail. Kept mounted so it can take over instantly
+          if the orbit is not viable. */}
+      <PhoneField onSelect={onSelect} />
+      {orbit && <HeroOrbit onSelect={onSelect} />}
+    </div>
+  );
+}
 
 function Index() {
   const { t } = useLang();
@@ -46,6 +78,17 @@ function Index() {
       behavior: prefersReducedMotion() ? "auto" : "smooth",
       block: "start",
     });
+  }, []);
+
+  // The dusk hero needs to restyle the fixed nav, which is rendered outside
+  // this route, so the flag goes on <html>. Removed on unmount so other pages
+  // never inherit it.
+  //
+  // REVERSIBLE: delete this effect (and the CSS keyed off the attribute) to put
+  // the hero back on plain cream.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-hero-theme", "dusk");
+    return () => document.documentElement.removeAttribute("data-hero-theme");
   }, []);
 
   // Deep link from the navbar on another page (/#applikationer). The router's
@@ -70,8 +113,8 @@ function Index() {
   return (
     <div>
       {/* ═══ HERO ═══ */}
-      <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0">
-        <div className="relative z-10">
+      <section className="vn-hero relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0">
+        <div className="vn-hero-copy relative z-10">
           <span className="vn-hero-scrim" aria-hidden="true" />
           <h1
             className="enter mt-4 font-logo text-[clamp(2.5rem,7.5vw,5.5rem)] font-semibold leading-[1.08] tracking-[0.01em] text-navy"
@@ -79,7 +122,7 @@ function Index() {
           >
             Virtus Nordic
           </h1>
-          <p className="enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]" style={d(0.3)}>
+          <p className="vn-hero-tagline enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]" style={d(0.3)}>
             {t.hero.tagline}
           </p>
           <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
@@ -92,9 +135,7 @@ function Index() {
           </div>
         </div>
 
-        {/* Five concepts drifting around the copy on desktop, one swipeable rail
-            below it on mobile. Same markup, switched in CSS. */}
-        <PhoneField onSelect={openConcept} />
+        <HeroDevices onSelect={openConcept} />
 
         <div className="enter absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={d(0.7)}>
           <span className="text-[0.65rem] uppercase tracking-[0.3em] text-navy/50">{t.hero.scroll}</span>

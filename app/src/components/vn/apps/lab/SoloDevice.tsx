@@ -4,8 +4,8 @@ import { Environment } from "@react-three/drei";
 import { EffectComposer, Bloom, ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 import * as THREE from "three";
-import { PhoneModel, type Finish } from "./PhoneModel";
-import { StudioLighting, RoomLighting } from "./Studio";
+import { PhoneModel, type Finish } from "../device/PhoneModel";
+import { StudioLighting, RoomLighting } from "../device/Studio";
 
 /**
  * One device, one angle, under a selectable rig — the bench where material

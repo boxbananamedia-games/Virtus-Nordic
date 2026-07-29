@@ -2378,3 +2378,178 @@
     transition: none !important;
   }
 }
+
+/* ═════════════════════════ THE HERO ORBIT (WebGL) ════════════════════════
+   Mounts only on a wide, hover-capable viewport with working WebGL. The CSS
+   field above stays in the DOM as the fallback and is hidden by
+   .vn-hero-devices[data-orbit="true"], so a phone, a WebGL failure or no JS
+   at all still gets the original swipeable rail.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Fills the hero so the absolutely-positioned field and canvas inside it have
+   the section as their box. pointer-events pass through; the phones and the
+   orbit's buttons opt back in, so the hero copy and CTAs stay clickable. */
+.vn-hero-devices {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Below the breakpoint the wrapper must disappear from layout entirely.
+   .vn-app-field becomes the swipeable rail there using `align-self: stretch`,
+   which only works while it is a direct flex child of the hero section —
+   `display: contents` gives it that back, so every existing mobile rule keeps
+   working untouched. The orbit never mounts at this width anyway. */
+@media (max-width: 767px) {
+  .vn-hero-devices {
+    display: contents;
+  }
+}
+
+.vn-hero-devices[data-orbit="true"] .vn-app-field {
+  display: none;
+}
+
+.vn-orbit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.vn-orbit canvas {
+  display: block;
+}
+
+/* The accessible layer: real buttons, positioned by the render loop. Sits above
+   the canvas but only the buttons themselves take pointer events, so the hero
+   copy and its CTAs stay clickable. */
+.vn-orbit-hits {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+/* Transform, width, height, z-index, opacity and pointer-events are all written
+   per frame from Device — declaring them here too would be overwritten. */
+.vn-orbit-hit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* The device's own corner radius, so the focus ring traces the phone. */
+  border-radius: 13.5% / 6.5%;
+  transition: opacity 0.3s ease;
+}
+.vn-orbit-hit:focus-visible {
+  outline: 2px solid var(--color-teal-1);
+  outline-offset: 8px;
+}
+
+/* Category + value line, revealed on hover or focus. Anchored under the device
+   and centred on it; the button is the positioned ancestor, so this follows the
+   orbit for free. */
+.vn-orbit-label {
+  position: absolute;
+  top: calc(100% + 0.85rem);
+  left: 50%;
+  width: max-content;
+  max-width: 20rem;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: center;
+  opacity: 0;
+  transition:
+    opacity 0.35s ease,
+    translate 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vn-orbit-hit[data-active="true"] .vn-orbit-label {
+  opacity: 1;
+  translate: -50% 0.3rem;
+}
+.vn-orbit-label b {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-teal-1);
+}
+.vn-orbit-label i {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-navy);
+}
+
+/* Under reduce the orbit holds a static composed arrangement (the rAF never
+   advances), so only the label transition needs silencing. */
+@media (prefers-reduced-motion: reduce) {
+  .vn-orbit-hit,
+  .vn-orbit-label {
+    transition: none;
+  }
+}
+
+/* ─────────────────── the dusk hero (default look) ────────────────────────
+   The page's lower edge reads as the light source, and the 3D rig in
+   device/Studio.tsx lights the devices to match. Both have to change together:
+   dusk lighting on a cream page is the exact mismatch that made the devices
+   look wrong before.
+
+   REVERSIBLE: drop the `data-hero-theme` attribute set in routes/index.tsx and
+   the hero returns to plain cream. Nothing here touches any other section. */
+
+html[data-hero-theme="dusk"] .vn-hero {
+  background:
+    radial-gradient(
+      120% 55% at 50% 104%,
+      rgba(255, 248, 235, 0.92) 0%,
+      rgba(255, 248, 235, 0) 60%
+    ),
+    linear-gradient(180deg, #171f29 0%, #2e3944 26%, #7a7d76 58%, #d8d2c2 82%, #f6f1e7 100%);
+}
+
+/* The hero copy sits on the dark upper half, so it inverts there. */
+html[data-hero-theme="dusk"] .vn-hero h1,
+html[data-hero-theme="dusk"] .vn-hero .vn-hero-tagline {
+  color: #f6f1e7;
+}
+html[data-hero-theme="dusk"] .vn-hero .btn-outline {
+  border-color: rgba(246, 241, 231, 0.5);
+  color: #f6f1e7;
+}
+html[data-hero-theme="dusk"] .vn-hero .btn-outline:hover {
+  background: rgba(246, 241, 231, 0.1);
+  border-color: rgba(246, 241, 231, 0.8);
+}
+/* The scrim exists to keep copy legible over the devices; on the dark ground it
+   would be a pale smear. */
+html[data-hero-theme="dusk"] .vn-hero .vn-hero-scrim {
+  display: none;
+}
+
+/* The fixed nav crosses the dark top of the gradient, where its navy text would
+   vanish. Solid white, matching what the lab trial validated. */
+html[data-hero-theme="dusk"] .nav-shell {
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(28, 40, 53, 0.08);
+}
+
+/* A 100svh hero cannot hold vertically-centred copy AND a full carousel below
+   it — the nearest device is the tallest thing on screen and lands straight on
+   the CTA row. Lifting the copy on desktop gives the orbit the lower band.
+   Mobile keeps the original centred hero above the swipeable rail. */
+@media (min-width: 768px) {
+  html[data-hero-theme="dusk"] .vn-hero-copy {
+    transform: translateY(-7vh);
+  }
+}

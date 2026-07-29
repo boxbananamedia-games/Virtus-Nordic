@@ -3,8 +3,8 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { APPLICATIONS } from "../../../../lib/applications";
 import type { OrbitKnobs } from "./OrbitCss";
-import { PhoneModel, type Finish } from "./PhoneModel";
-import { StudioLighting, type StudioVariant } from "./Studio";
+import { PhoneModel, type Finish } from "../device/PhoneModel";
+import { StudioLighting, type StudioVariant } from "../device/Studio";
 
 /**
  * BRANCH B — orbit in WebGL. Prototype for the Phase 0 bake-off.

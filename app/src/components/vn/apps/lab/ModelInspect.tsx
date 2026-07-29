@@ -3,7 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { useLoader } from "@react-three/fiber";
 import { Environment, Lightformer, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { RoundedScreen } from "./RoundedScreen";
+import { RoundedScreen } from "../device/RoundedScreen";
 
 /**
  * Model inspection view — Phase 0, not production.
