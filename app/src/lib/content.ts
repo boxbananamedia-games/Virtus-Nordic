@@ -195,7 +195,7 @@ export const content: Record<Lang, Content> = {
       headline: "Fem virksomheder. Fem applikationer der intet har til fælles.",
       sub: "Virtus Nordic har én identitet. Produkterne har ikke. Hver applikation her er tegnet omkring kundens forretning, kundens brugere og kundens marked, ikke omkring min egen smag. Det er derfor de fem skærme ser ud som om de kommer fra fem forskellige studier.",
       disclaimer:
-        "Uafhængige konceptstudier inspireret af lokale virksomheder. Ikke eksisterende kundesamarbejder.",
+        "Alle fem virksomheder er virkelige og har givet tilladelse til, at deres forretning bruges som udgangspunkt for disse konceptstudier. Der er ikke et igangværende samarbejde mellem Virtus Nordic og virksomhederne.",
       selectLabel: "Vælg et koncept",
       heroHint: "Peg på en telefon, eller klik for hele konceptet",
       openConcept: "Åbn konceptet.",
@@ -397,7 +397,7 @@ export const content: Record<Lang, Content> = {
       headline: "Five businesses. Five applications with nothing in common.",
       sub: "Virtus Nordic has one identity. The products do not. Every application here is drawn around the client's business, the client's users and the client's market, not around my own taste. That is why these five screens look like they came from five different studios.",
       disclaimer:
-        "Independent concept studies inspired by local businesses. Not existing client engagements.",
+        "All five businesses are real and have given permission for their business to be used as the basis for these concept studies. There is no ongoing engagement between Virtus Nordic and the businesses.",
       selectLabel: "Choose a concept",
       heroHint: "Hover a phone, or click for the full concept",
       openConcept: "Open the concept.",
