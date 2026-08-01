@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApplikationerRouteImport } from './routes/applikationer'
 import { Route as KontaktRouteImport } from './routes/kontakt'
 import { Route as OmRouteImport } from './routes/om'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
@@ -21,6 +22,11 @@ import { Route as LabOrbitRouteImport } from './routes/lab/orbit'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplikationerRoute = ApplikationerRouteImport.update({
+  id: '/applikationer',
+  path: '/applikationer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KontaktRoute = KontaktRouteImport.update({
@@ -61,6 +67,7 @@ const LabOrbitRoute = LabOrbitRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/applikationer': typeof ApplikationerRoute
   '/kontakt': typeof KontaktRoute
   '/om': typeof OmRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/applikationer': typeof ApplikationerRoute
   '/kontakt': typeof KontaktRoute
   '/om': typeof OmRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/applikationer': typeof ApplikationerRoute
   '/kontakt': typeof KontaktRoute
   '/om': typeof OmRoute
   '/robots.txt': typeof RobotsDottxtRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/applikationer'
     | '/kontakt'
     | '/om'
     | '/robots.txt'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/applikationer'
     | '/kontakt'
     | '/om'
     | '/robots.txt'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/applikationer'
     | '/kontakt'
     | '/om'
     | '/robots.txt'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApplikationerRoute: typeof ApplikationerRoute
   KontaktRoute: typeof KontaktRoute
   OmRoute: typeof OmRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applikationer': {
+      id: '/applikationer'
+      path: '/applikationer'
+      fullPath: '/applikationer'
+      preLoaderRoute: typeof ApplikationerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kontakt': {
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApplikationerRoute: ApplikationerRoute,
   KontaktRoute: KontaktRoute,
   OmRoute: OmRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,

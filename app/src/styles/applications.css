@@ -1617,7 +1617,7 @@
   cursor: pointer;
 }
 .vn-app-phone__hit:focus-visible {
-  outline: 2px solid var(--color-teal-2);
+  outline: 2px solid var(--vn-accent);
   outline-offset: 7px;
 }
 
@@ -1674,7 +1674,7 @@
   font-weight: 400;
   letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 .vn-app-phone__label i {
   display: block;
@@ -1813,7 +1813,7 @@
   right: 0;
   bottom: -1px;
   height: 1px;
-  background: var(--color-teal-1);
+  background: var(--vn-accent);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1845,11 +1845,11 @@
 .vn-app-cat {
   display: inline-block;
   padding: 0.4rem 0.85rem;
-  border: 1px solid rgba(27, 107, 107, 0.32);
+  border: 1px solid color-mix(in srgb, var(--vn-accent) 32%, transparent);
   font-size: 0.66rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 
 .vn-app-journey {
@@ -1873,7 +1873,7 @@
   font-family: var(--font-display);
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 
 .vn-app-features,
@@ -1906,7 +1906,7 @@
   background: var(--color-sand);
 }
 .vn-app-tech li::before {
-  background: var(--color-teal-3);
+  background: color-mix(in srgb, var(--vn-accent) 55%, transparent);
 }
 
 .vn-app-value > div {
@@ -1939,7 +1939,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
   transition: color 0.3s ease;
 }
 .vn-app-more:hover {
@@ -2407,7 +2407,12 @@
   }
 }
 
-.vn-hero-devices[data-orbit="true"] .vn-app-field {
+/* Hidden once the orbit has taken over, and hidden while the verdict is still
+   pending so the flat fallback never flashes up on a desktop cold load. The
+   `.js` guard is what keeps that safe: with JavaScript off the class is never
+   added, the state never leaves "pending", and the field stays visible. */
+.vn-hero-devices[data-orbit="true"] .vn-app-field,
+.js .vn-hero-devices[data-orbit="pending"] .vn-app-field {
   display: none;
 }
 
@@ -2432,6 +2437,18 @@
   pointer-events: none;
 }
 
+/* The slot a staged device left behind. Invisible, and live only while its
+   device is actually away from it — see the Hit type in HeroOrbit for why it
+   has to exist. Transform, size, z-index and pointer-events are all written per
+   frame, exactly as for the control above. */
+.vn-orbit-berth {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  pointer-events: none;
+}
+
 /* Transform, width, height, z-index, opacity and pointer-events are all written
    per frame from Device — declaring them here too would be overwritten. */
 .vn-orbit-hit {
@@ -2447,7 +2464,7 @@
   transition: opacity 0.3s ease;
 }
 .vn-orbit-hit:focus-visible {
-  outline: 2px solid var(--color-teal-1);
+  outline: 2px solid var(--vn-accent);
   outline-offset: 8px;
 }
 
@@ -2480,7 +2497,7 @@
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 .vn-orbit-label i {
   font-family: var(--font-display);
@@ -2508,14 +2525,33 @@
    REVERSIBLE: drop the `data-hero-theme` attribute set in routes/index.tsx and
    the hero returns to plain cream. Nothing here touches any other section. */
 
+/* The gradient has to LAND on the page background, not merely near it: the hero
+   is a painted box on top of body cream, so any difference at its bottom edge
+   reads as a ruled line across the page. Both the warm pool and the ramp are
+   therefore fully resolved to var(--color-cream) before 100%, leaving a flat
+   cream band at the bottom of the hero that is indistinguishable from the
+   section below it.
+
+   The pool's vertical radius (28%) and centre (68%) are chosen so it reaches
+   zero at 68 + 28 = 96%… and its transparent stop at 72% of that radius brings
+   it to zero by 88%. It is contained on purpose. */
 html[data-hero-theme="dusk"] .vn-hero {
   background:
     radial-gradient(
-      120% 55% at 50% 104%,
-      rgba(255, 248, 235, 0.92) 0%,
-      rgba(255, 248, 235, 0) 60%
+      85% 28% at 50% 68%,
+      rgba(255, 248, 235, 0.8) 0%,
+      rgba(255, 248, 235, 0) 72%
     ),
-    linear-gradient(180deg, #171f29 0%, #2e3944 26%, #7a7d76 58%, #d8d2c2 82%, #f6f1e7 100%);
+    linear-gradient(
+      180deg,
+      #171f29 0%,
+      #2b3641 22%,
+      #6f736d 48%,
+      #b3ad9f 66%,
+      #dcd6ca 80%,
+      var(--color-cream) 90%,
+      var(--color-cream) 100%
+    );
 }
 
 /* The hero copy sits on the dark upper half, so it inverts there. */
@@ -2538,18 +2574,33 @@ html[data-hero-theme="dusk"] .vn-hero .vn-hero-scrim {
 }
 
 /* The fixed nav crosses the dark top of the gradient, where its navy text would
-   vanish. Solid white, matching what the lab trial validated. */
+   vanish, so it needs a solid ground here rather than the transparent-until-
+   scrolled treatment. Cream, not white: white is a colour the site does not use
+   anywhere else, and the bar reads as a foreign element against every other
+   page's off-white chrome. */
 html[data-hero-theme="dusk"] .nav-shell {
-  background: #ffffff;
+  background: var(--color-cream);
   box-shadow: 0 1px 0 rgba(28, 40, 53, 0.08);
 }
 
-/* A 100svh hero cannot hold vertically-centred copy AND a full carousel below
-   it — the nearest device is the tallest thing on screen and lands straight on
-   the CTA row. Lifting the copy on desktop gives the orbit the lower band.
-   Mobile keeps the original centred hero above the swipeable rail. */
+/* A hero cannot hold vertically-centred copy AND a full carousel below it — the
+   nearest device is the tallest thing on screen and lands straight on the CTA
+   row. On desktop the copy is therefore anchored to the top instead of centred,
+   which hands the whole lower band to the orbit and, unlike the translate it
+   replaces, puts the copy in the same place at every viewport height rather
+   than sliding down as the viewport grows.
+ *
+ * The hero also runs 14svh past the fold, which is the room the devices at the
+ * low point of their arc need: they used to be sliced off by the hero's own
+ * bottom edge, with the next section starting on the cut. Camera framing in
+ * HeroOrbit.tsx is derived against this height.
+ *
+ * Mobile keeps the original centred hero above the swipeable rail. */
 @media (min-width: 768px) {
-  html[data-hero-theme="dusk"] .vn-hero-copy {
-    transform: translateY(-7vh);
+  html[data-hero-theme="dusk"] .vn-hero {
+    min-height: 114svh;
+    justify-content: flex-start;
+    padding-top: clamp(6.5rem, 15svh, 13rem);
+    padding-bottom: 14svh;
   }
 }

@@ -2,7 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../../lib/language";
 import { CONTACT } from "../../lib/content";
-import { InkDivider, prefersReducedMotion } from "./visuals";
+import { accentProps, useAccent } from "../../lib/accent";
+import { InkDivider } from "./visuals";
 import { useBooking } from "./BookingModal";
 
 function unusedBookHref(subject: string) {
@@ -15,7 +16,6 @@ export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const hash = useRouterState({ select: (s) => s.location.hash });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -35,38 +35,18 @@ export function Nav() {
     };
   }, [open]);
 
-  // Five items with "Applikationer" among them no longer fit beside the logo,
-  // language toggle and CTA below ~1024px, so the full nav starts at lg and
-  // tablets get the same menu button phones do.
-  const links: { to: string; hash?: string; label: string }[] = [
+  // Five items no longer fit beside the logo, language toggle and CTA below
+  // ~1024px, so the full nav starts at lg and tablets get the same menu button
+  // phones do.
+  const links: { to: string; label: string }[] = [
     { to: "/", label: t.nav.home },
     { to: "/om", label: t.nav.about },
     { to: "/ydelser", label: t.nav.services },
-    { to: "/", hash: "applikationer", label: t.nav.apps },
+    { to: "/applikationer", label: t.nav.apps },
     { to: "/kontakt", label: t.nav.contact },
   ];
 
-  // Applikationer is a section of the homepage, not a route. From another page
-  // the Link navigates and the homepage's hash effect scrolls; when we are
-  // already on "/" the location may not change at all, so scroll it ourselves.
-  const onNavClick = (l: { to: string; hash?: string }, closeMenu = false) => () => {
-    if (closeMenu) setOpen(false);
-    if (!l.hash || pathname !== "/") return;
-    // Wait a frame when coming from the mobile menu: the overlay has to unmount
-    // and release the body scroll lock before anything can be scrolled.
-    const run = () =>
-      document
-        .getElementById(l.hash as string)
-        ?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
-    if (closeMenu) window.setTimeout(run, 60);
-    else run();
-  };
-
-  // The router reports the hash with or without its leading "#" depending on how
-  // the location was set, so normalise before comparing.
-  const currentHash = (hash ?? "").replace(/^#/, "");
-  const isActive = (l: { to: string; hash?: string }) =>
-    pathname === l.to && (l.hash ? currentHash === l.hash : !currentHash);
+  const isActive = (l: { to: string }) => pathname === l.to;
 
   const LangToggle = (
     <div className="flex items-center" aria-label="Language">
@@ -90,14 +70,7 @@ export function Nav() {
 
           <nav className="hidden items-center gap-7 lg:flex xl:gap-8" aria-label="Primary">
             {links.map((l) => (
-              <Link
-                key={`${l.to}#${l.hash ?? ""}`}
-                to={l.to}
-                hash={l.hash}
-                className="nav-link"
-                data-active={isActive(l)}
-                onClick={onNavClick(l)}
-              >
+              <Link key={l.to} to={l.to} className="nav-link" data-active={isActive(l)}>
                 {l.label}
               </Link>
             ))}
@@ -135,12 +108,11 @@ export function Nav() {
         <div className="mobile-menu lg:hidden">
           {links.map((l, i) => (
             <Link
-              key={`${l.to}#${l.hash ?? ""}`}
+              key={l.to}
               to={l.to}
-              hash={l.hash}
               className="nav-link"
               data-active={isActive(l)}
-              onClick={onNavClick(l, true)}
+              onClick={() => setOpen(false)}
               style={{ "--d": `${0.08 + i * 0.07}s` } as CSSProperties}
             >
               {l.label}
@@ -165,9 +137,12 @@ export function Nav() {
 
 export function Footer() {
   const { t } = useLang();
+  // The footer closes the page it belongs to, so it takes that page's pigment
+  // rather than a house colour of its own.
+  const accent = useAccent();
   return (
-    <footer className="relative mt-4">
-      <InkDivider />
+    <footer className="relative mt-4" {...accentProps(accent)}>
+      <InkDivider variant={2} />
       <div className="mx-auto max-w-6xl px-5 pb-10 pt-2 md:px-8">
         <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
           <div>

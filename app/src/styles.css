@@ -22,6 +22,13 @@ html {
   background: var(--color-cream);
 }
 
+/* The page's pigment. Set per page on <main> and <footer> from lib/accent.ts,
+   which is the single source of truth; this is only the fallback for the
+   persistent chrome outside them — the nav, the booking modal. */
+:root {
+  --vn-accent: var(--color-teal-1);
+}
+
 body {
   background: var(--color-cream);
   color: var(--color-navy);
@@ -31,7 +38,7 @@ body {
   overflow-x: hidden;
 }
 
-::selection { background: rgba(61, 142, 138, 0.25); }
+::selection { background: color-mix(in srgb, var(--vn-accent) 28%, transparent); }
 
 @layer base { h1, h2, h3, .font-display { font-family: var(--font-display); } }
 
@@ -65,11 +72,11 @@ body {
 }
 .btn:active { transform: translateY(0) scale(0.98); transition-duration: 0.12s; }
 .btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
-  outline: 2px solid var(--color-teal-2);
+  outline: 2px solid var(--vn-accent);
   outline-offset: 3px;
 }
 .btn-fill { background: var(--color-navy); color: var(--color-cream); }
-.btn-fill:hover { background: var(--color-teal-1); border-color: var(--color-teal-1); transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(27, 107, 107, 0.55), 0 3px 8px -4px rgba(28, 40, 53, 0.25); }
+.btn-fill:hover { background: var(--vn-accent); border-color: var(--vn-accent); transform: translateY(-2px); box-shadow: 0 14px 30px -14px color-mix(in srgb, var(--vn-accent) 55%, transparent), 0 3px 8px -4px rgba(28, 40, 53, 0.25); }
 .btn-outline { background: transparent; color: var(--color-navy); }
 .btn-outline:hover { background: var(--color-navy); color: var(--color-cream); transform: translateY(-2px); box-shadow: 0 14px 30px -16px rgba(28, 40, 53, 0.5); }
 .btn-sm { padding: 0.6rem 1.35rem; font-size: 0.72rem; }
@@ -86,7 +93,7 @@ body {
   transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 .field::placeholder { color: rgba(28, 40, 53, 0.45); }
-.field:focus { border-color: var(--color-teal-2); background: rgba(255, 255, 255, 0.6); outline: none; }
+.field:focus { border-color: var(--vn-accent); background: rgba(255, 255, 255, 0.6); outline: none; }
 
 /* The paper grain (.paper::before) is a fixed, z-1 pseudo-element; the footer
    must stack above it like <main> does. */
@@ -162,7 +169,7 @@ footer { position: relative; z-index: 10; }
   font-weight: 400;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 
 .hairline { border: 0; border-top: 1px solid rgba(28, 40, 53, 0.14); }
@@ -216,12 +223,18 @@ html:not(.js) .draw-path { stroke-dashoffset: 0; }
   align-items: center;
   justify-content: center;
 }
+/* Silhouette, distortion and pigment all arrive as custom properties set by
+   InkDivider — see INK_VARIANTS in lib/accent.ts. The defaults here are the
+   original stroke exactly, which is what the homepage renders. */
 .ink-divider .ink-art {
+  --ink-mask: radial-gradient(ellipse 48% 46% at 50% 50%, black 40%, transparent 74%);
   width: min(1100px, 92vw);
   height: 100%;
   object-fit: cover;
-  -webkit-mask-image: radial-gradient(ellipse 48% 46% at 50% 50%, black 40%, transparent 74%);
-  mask-image: radial-gradient(ellipse 48% 46% at 50% 50%, black 40%, transparent 74%);
+  -webkit-mask-image: var(--ink-mask);
+  mask-image: var(--ink-mask);
+  filter: var(--ink-filter, none);
+  transform: var(--ink-transform, none);
   opacity: 0.85;
 }
 @keyframes inkDrift {
@@ -302,7 +315,7 @@ html:not(.js) .ink-art { opacity: 1; }
 }
 .srv-card:hover {
   transform: translateY(-5px) scale(1.005);
-  border-color: rgba(27, 107, 107, 0.45);
+  border-color: color-mix(in srgb, var(--vn-accent) 45%, transparent);
   background: rgba(255, 255, 255, 0.42);
   box-shadow: 0 30px 60px -34px rgba(28, 40, 53, 0.45), 0 4px 14px -8px rgba(28, 40, 53, 0.18);
 }
@@ -325,7 +338,7 @@ html:not(.js) .ink-art { opacity: 1; }
   background: var(--color-cream);
   transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
 }
-.step-num[data-lit="true"] { background: var(--color-teal-1); border-color: var(--color-teal-1); color: var(--color-cream); }
+.step-num[data-lit="true"] { background: var(--vn-accent); border-color: var(--vn-accent); color: var(--color-cream); }
 
 /* ---------- scroll film ---------- */
 .film-caption {
@@ -361,7 +374,7 @@ html:not(.js) .ink-art { opacity: 1; }
   50% { transform: translateY(-6px); }
 }
 
-::selection { background: rgba(61, 142, 138, 0.25); }
+::selection { background: color-mix(in srgb, var(--vn-accent) 28%, transparent); }
 
 @layer base { h1, h2, h3, .font-display { font-family: var(--font-display); } }
 

@@ -1,19 +1,17 @@
-import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
-import { APPLICATIONS } from "../lib/applications";
-import {
-  Reveal,
-  InkDivider,
-  SERVICE_ICONS,
-  prefersReducedMotion,
-  useSectionProgress,
-} from "../components/vn/visuals";
+import { Reveal, InkDivider, SERVICE_ICONS, useSectionProgress } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
 import { PhoneField } from "../components/vn/apps/PhoneField";
 import { HeroOrbit, canRunOrbit } from "../components/vn/apps/HeroOrbit";
-import { ApplicationsSection } from "../components/vn/apps/ApplicationsSection";
 import { useBooking } from "../components/vn/BookingModal";
 
 export const Route = createFileRoute("/")({
@@ -28,6 +26,9 @@ export const Route = createFileRoute("/")({
 
 const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
+/** useLayoutEffect warns when it runs during SSR, where it does nothing anyway. */
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 /**
  * The hero's device showcase, in whichever form this browser can support.
  *
@@ -40,21 +41,25 @@ const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
  *
  * The capability check has to run in an effect, not during render: it touches
  * matchMedia and a probe canvas, and deciding during SSR would either guess
- * wrong or mismatch on hydration.
+ * wrong or mismatch on hydration. Until it has run the state is "pending" and
+ * CSS hides the field, so a desktop visitor never sees the flat fallback
+ * flash up before the orbit takes over. A layout effect makes that verdict
+ * land before the browser paints the hydrated tree; with JavaScript off the
+ * `js` class is never added and the field stays visible.
  *
  * REVERSIBLE: delete this component and render <PhoneField> directly to go
  * back to the CSS hero exactly as it was. Nothing else in the hero changed.
  */
 function HeroDevices({ onSelect }: { onSelect: (id: string) => void }) {
-  const [orbit, setOrbit] = useState(false);
-  useEffect(() => setOrbit(canRunOrbit()), []);
+  const [orbit, setOrbit] = useState<"pending" | "true" | "false">("pending");
+  useIsoLayoutEffect(() => setOrbit(canRunOrbit() ? "true" : "false"), []);
 
   return (
-    <div className="vn-hero-devices" data-orbit={orbit ? "true" : "false"}>
+    <div className="vn-hero-devices" data-orbit={orbit}>
       {/* Fallback and mobile rail. Kept mounted so it can take over instantly
           if the orbit is not viable. */}
       <PhoneField onSelect={onSelect} />
-      {orbit && <HeroOrbit onSelect={onSelect} />}
+      {orbit === "true" && <HeroOrbit onSelect={onSelect} />}
     </div>
   );
 }
@@ -62,27 +67,23 @@ function HeroDevices({ onSelect }: { onSelect: (id: string) => void }) {
 function Index() {
   const { t } = useLang();
   const booking = useBooking();
+  const navigate = useNavigate();
   const [processRef, processProgress] = useSectionProgress<HTMLDivElement>();
 
-  /* ── the application showcase: hero devices and #applikationer share one
-        selection, so clicking a floating phone lands on its concept ── */
-  const [selectedApp, setSelectedApp] = useState(APPLICATIONS[0].id);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [tabFocus, setTabFocus] = useState(0);
-
-  const openConcept = useCallback((id: string) => {
-    setSelectedApp(id);
-    setDetailsOpen(true);
-    setTabFocus((n) => n + 1);
-    document.getElementById("applikationer")?.scrollIntoView({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
-      block: "start",
-    });
-  }, []);
+  // Selecting a hero device hands off to the concept page with that concept
+  // already open.
+  const openConcept = useCallback(
+    (id: string) => {
+      void navigate({ to: "/applikationer", search: { app: id } });
+    },
+    [navigate],
+  );
 
   // The dusk hero needs to restyle the fixed nav, which is rendered outside
   // this route, so the flag goes on <html>. Removed on unmount so other pages
-  // never inherit it.
+  // never inherit it. On a cold load the inline script in __root.tsx has
+  // already set it before first paint — this effect covers client-side
+  // navigation back to the homepage.
   //
   // REVERSIBLE: delete this effect (and the CSS keyed off the attribute) to put
   // the hero back on plain cream.
@@ -90,25 +91,6 @@ function Index() {
     document.documentElement.setAttribute("data-hero-theme", "dusk");
     return () => document.documentElement.removeAttribute("data-hero-theme");
   }, []);
-
-  // Deep link from the navbar on another page (/#applikationer). The router's
-  // scroll restoration resets to the top after the target mounts, so the scroll
-  // is retried across ~700ms to make sure ours runs last. Same approach as
-  // src/routes/ydelser.tsx.
-  const hash = useLocation({ select: (l) => l.hash });
-  useEffect(() => {
-    const id = (hash ?? "").replace(/^#/, "");
-    if (!id) return;
-    const timers = [80, 250, 500, 750].map((ms) =>
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (Math.abs(el.getBoundingClientRect().top - 96) < 4) return; // already there
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, ms),
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [hash]);
 
   return (
     <div>
@@ -136,15 +118,12 @@ function Index() {
         </div>
 
         <HeroDevices onSelect={openConcept} />
-
-        <div className="enter absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={d(0.7)}>
-          <span className="text-[0.65rem] uppercase tracking-[0.3em] text-navy/50">{t.hero.scroll}</span>
-          <span className="block h-12 w-px bg-gradient-to-b from-teal-1/70 to-transparent" />
-        </div>
       </section>
 
-      {/* ═══ INTRO ═══ */}
-      <InkDivider />
+      {/* ═══ INTRO ═══
+          No divider here on purpose. The hero now resolves into the page
+          background rather than ending on an edge, and a stroke across that
+          join puts the horizontal rule straight back. */}
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="grid gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
@@ -198,17 +177,8 @@ function Index() {
         </div>
       </section>
 
-      {/* ═══ APPLIKATIONER ═══ */}
-      <ApplicationsSection
-        selectedId={selectedApp}
-        onSelect={setSelectedApp}
-        detailsOpen={detailsOpen}
-        onDetailsToggle={() => setDetailsOpen((v) => !v)}
-        focusSignal={tabFocus}
-      />
-
       {/* ═══ PROCESS ═══ */}
-      <InkDivider />
+      <InkDivider variant={1} />
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <Reveal>
           <span className="label-eyebrow">{t.process.label}</span>
@@ -262,7 +232,7 @@ function Index() {
       </section>
 
       {/* ═══ CTA BAND ═══ */}
-      <InkDivider />
+      <InkDivider variant={3} />
       <section className="relative mx-auto max-w-4xl overflow-hidden px-5 py-20 text-center md:px-8 md:py-28">
         <Reveal className="relative">
           <h2 className="font-display text-4xl font-semibold leading-tight text-navy md:text-5xl">

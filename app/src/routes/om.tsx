@@ -36,7 +36,7 @@ function About() {
         </Reveal>
       </section>
 
-      <InkDivider />
+      <InkDivider variant={0} />
 
       <section className="mx-auto max-w-4xl px-5 py-14 md:px-8 md:py-20">
         <Reveal>
@@ -50,7 +50,7 @@ function About() {
         </Reveal>
       </section>
 
-      <InkDivider />
+      <InkDivider variant={3} />
 
       <section className="mx-auto max-w-4xl px-5 py-14 pb-24 md:px-8 md:py-20">
         <Reveal>
