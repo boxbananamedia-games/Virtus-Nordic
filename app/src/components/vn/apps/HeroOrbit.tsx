@@ -1,5 +1,5 @@
 import { Suspense, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { APPLICATIONS, pick } from "../../../lib/applications";
 import { useLang } from "../../../lib/language";
@@ -96,6 +96,57 @@ const STAGE = { y: -3, z: 33 };
 const STAGE_TAU = { in: 0.17, out: 0.24 };
 
 /**
+ * The ring assembles itself as its assets land.
+ *
+ * Each device has its own Suspense boundary, so it appears when ITS model and
+ * screen resolve rather than the whole formation waiting on the slowest. The
+ * arrival is what makes that read as craft instead of as popping: the device
+ * settles into its slot from slightly above and slightly small, with a little
+ * overshoot.
+ *
+ * That is also the honest answer to the loading problem. A preloader would hide
+ * a hero that already paints its headline and CTAs in about 100ms, in order to
+ * wait on decoration; this shows real progress instead, and the page is usable
+ * throughout.
+ *
+ * `STAGGER` only guarantees an order — the devices' own download times usually
+ * space them out further. Index 0 is at the front of the ring when the lap
+ * starts, and it happens to carry the smallest model, so the front device
+ * generally lands first without anything being scheduled.
+ */
+const ARRIVE = { duration: 0.72, stagger: 0.07, from: 0.84, rise: 2.4 };
+
+/**
+ * easeOutBack — runs a little past its target, then settles back.
+ *
+ * The drop is what you actually read: 2.4 units against a device 14.96 tall is
+ * 16% of its own height. The overshoot is deliberately near the threshold of
+ * noticing — at c1 = 1.6 it carries the device about 1.4% (~6px at hero size)
+ * past its slot before it settles. Enough to feel like weight, not enough to
+ * bounce; this is a studio's hero, not a toy.
+ */
+const easeOutBack = (t: number) => {
+  const c1 = 1.6;
+  const p = t - 1;
+  return 1 + (c1 + 1) * p * p * p + c1 * p * p;
+};
+
+const plateUrl = (id: string) => `/lab-textures/${id}.webp`;
+
+/**
+ * Put the screen plates in flight with the models rather than behind them.
+ *
+ * PhoneModel calls useGLTF before useLoader, and the first hook to suspend
+ * stops the ones after it from running at all — so without this, every device
+ * fetched its 730KB model, and only then started on its screen. Preloading here
+ * costs nothing (drei does the same for the models) and takes a whole
+ * round-trip out of each device's arrival.
+ */
+if (typeof window !== "undefined") {
+  for (const app of APPLICATIONS) useLoader.preload(THREE.TextureLoader, plateUrl(app.id));
+}
+
+/**
  * Easing table for one lap, integrated once.
  *
  * We need position as a function of phase, not a velocity integrated per
@@ -190,10 +241,32 @@ function Device({
   /** 0 = in the ring, 1 = at centre stage. Its own value per device, so several
    *  can be mid-flight at once when the pointer moves between them. */
   const focus = useRef(0);
+  /** 0 = not here yet, 1 = settled in the ring. Starts counting from this
+   *  device's own mount, which is the moment its assets finished loading. */
+  const arrival = useRef(0);
+  const hold = useRef(index * ARRIVE.stagger);
 
   useFrame((_, delta) => {
     const g = group.current;
     if (!g) return;
+    const dt = Math.min(delta, 0.1);
+
+    // Waiting its turn: present in the scene graph but not yet on screen, and
+    // its control inert with it.
+    if (!reduced && hold.current > 0) {
+      hold.current -= dt;
+      g.visible = false;
+      const pending = hits.current[index]?.el;
+      if (pending) {
+        pending.style.opacity = "0";
+        pending.style.pointerEvents = "none";
+      }
+      return;
+    }
+    g.visible = true;
+    arrival.current = reduced ? 1 : Math.min(1, arrival.current + dt / ARRIVE.duration);
+    const landed = easeOutBack(arrival.current);
+    const arriveScale = ARRIVE.from + (1 - ARRIVE.from) * landed;
 
     const n = APPLICATIONS.length;
     const u = (angleRef.current / 360 + index / n) % 1;
@@ -222,7 +295,15 @@ function Device({
     const f = focus.current;
     const e = f * f * (3 - 2 * f);
 
-    g.position.set(ox + (0 - ox) * e, oy + (STAGE.y - oy) * e, oz + (STAGE.z - oz) * e);
+    g.position.set(
+      ox + (0 - ox) * e,
+      oy + (STAGE.y - oy) * e + (1 - landed) * ARRIVE.rise,
+      oz + (STAGE.z - oz) * e,
+    );
+    // Scale carries the arrival. Nothing here touches the model's materials —
+    // fading one in would mean turning on transparency, and a transparent
+    // metallic body sorts badly against the rest of the ring.
+    g.scale.setScalar(arriveScale);
     // Face radially outward — the entire carousel rule in one line. The device
     // nearest the camera therefore presents its screen with no keyframing. The
     // second term turns that into a full revolution ending square to the camera
@@ -236,10 +317,10 @@ function Device({
     // group's NORMALISE scale produces — multiplying by NORMALISE again here
     // inflated every control to ~7.5x the device.
     const tanHalfFov = Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360);
-    const place = (el: HTMLElement, at: THREE.Vector3, z: number) => {
+    const place = (el: HTMLElement, at: THREE.Vector3, z: number, scale = 1) => {
       projected.copy(at).project(camera);
       const dist = camera.position.distanceTo(at);
-      const h = (DEVICE_H * size.height) / (2 * dist * tanHalfFov);
+      const h = (DEVICE_H * scale * size.height) / (2 * dist * tanHalfFov);
       const w = h * (71.5 / 149.6);
       const x = (projected.x * 0.5 + 0.5) * size.width;
       const y = (-projected.y * 0.5 + 0.5) * size.height;
@@ -254,8 +335,9 @@ function Device({
     const el = hits.current[index]?.el;
     if (!el) return;
     // Depth-sort the controls so the front device wins the pointer where two
-    // overlap on screen, matching what the viewer sees.
-    place(el, g.position, 1000);
+    // overlap on screen, matching what the viewer sees. The arrival scale goes
+    // with it, so the control never covers more than the device does.
+    place(el, g.position, 1000, arriveScale);
     // Hide the control while its device is on the far side and facing away:
     // clicking a phone you are seeing the back of is not a meaningful target.
     //
@@ -323,16 +405,21 @@ function Ring({
   return (
     <>
       {APPLICATIONS.map((app, i) => (
-        <Device
-          key={app.id}
-          index={i}
-          screenTexture={`/lab-textures/${app.id}.png`}
-          angleRef={angleRef}
-          easing={easing}
-          hits={hits}
-          stagedRef={stagedRef}
-          reduced={reduced}
-        />
+        // One boundary per device, not one around the ring. PhoneModel suspends
+        // while its GLB and screen plate decode, and a shared boundary made
+        // every device wait on the slowest — the hero stayed empty and then
+        // arrived all at once. Per device, each one lands as its own assets do.
+        <Suspense key={app.id} fallback={null}>
+          <Device
+            index={i}
+            screenTexture={plateUrl(app.id)}
+            angleRef={angleRef}
+            easing={easing}
+            hits={hits}
+            stagedRef={stagedRef}
+            reduced={reduced}
+          />
+        </Suspense>
       ))}
     </>
   );
@@ -390,11 +477,8 @@ export function HeroOrbit({ onSelect }: { onSelect: (id: string) => void }) {
         aria-hidden="true"
       >
         <StudioLighting variant="dusk" />
-        {/* PhoneModel suspends while its GLB and screen plate decode; without a
-            boundary the whole hero would suspend with it. */}
-        <Suspense fallback={null}>
-          <Ring hits={hits} stagedRef={stagedRef} reduced={reduced} />
-        </Suspense>
+        {/* Each device carries its own Suspense boundary — see Ring. */}
+        <Ring hits={hits} stagedRef={stagedRef} reduced={reduced} />
       </Canvas>
 
       {/* The real interaction layer. One button per concept, tracked to its

@@ -43,7 +43,7 @@ function Model({
 }) {
   const { scene } = useGLTF(url);
   const [box] = useState(() => new THREE.Box3());
-  const tex = useLoader(THREE.TextureLoader, screen?.tex ?? "/lab-textures/guf-kugler.png");
+  const tex = useLoader(THREE.TextureLoader, screen?.tex ?? "/lab-textures/guf-kugler.webp");
 
   useEffect(() => {
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -117,7 +117,7 @@ export function ModelInspect({
   screenW = 0.9,
   screenH = 0.94,
   screenY = 0,
-  tex = "/lab-textures/guf-kugler.png",
+  tex = "/lab-textures/guf-kugler.webp",
   showScreen = true,
 }: {
   url: string;

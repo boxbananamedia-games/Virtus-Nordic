@@ -38,7 +38,7 @@ export function SoloDevice({
   env = "day",
   bloom = 0,
   tone = "aces",
-  screen = "/lab-textures/guf-kugler.png",
+  screen = "/lab-textures/guf-kugler.webp",
 }: {
   finish: Finish;
   yaw?: number;

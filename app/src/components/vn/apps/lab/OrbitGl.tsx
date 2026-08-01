@@ -207,7 +207,7 @@ function Ring({
         <Device
           key={app.id}
           index={i}
-          textureUrl={`/lab-textures/${app.id}.png`}
+          textureUrl={`/lab-textures/${app.id}.webp`}
           knobs={knobs}
           angleRef={angleRef}
           easing={easing}
