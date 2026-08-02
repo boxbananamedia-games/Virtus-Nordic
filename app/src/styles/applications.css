@@ -2573,6 +2573,80 @@ html[data-hero-theme="dusk"] .vn-hero .vn-hero-scrim {
   display: none;
 }
 
+/* ═══════════════ THE LOOK EXPERIMENTS ═══════════════════════════════════
+   Additive, and reachable only at /?look=noir | aurora | gallery. Nothing here
+   applies to the shipped hero: without the attribute the dusk rules above are
+   the whole story. Delete this block, the extra variants in Studio.tsx and the
+   search param in routes/index.tsx to undo the experiment entirely.
+
+   Each look changes the page as well as the rig, because they have to agree.
+   The devices are metal, so they mirror an environment cubemap built to match
+   this gradient; light the phones one way and paint the page another and they
+   stop looking like they are in the same room.
+
+   Every one still lands on var(--color-cream) before 100%, which is the rule
+   that keeps the hero from ending on a ruled line across the page.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Near-black room, one tight warm pool under the devices. */
+html[data-hero-look="noir"] .vn-hero {
+  background:
+    radial-gradient(70% 26% at 50% 70%, rgba(255, 226, 186, 0.55) 0%, rgba(255, 226, 186, 0) 72%),
+    linear-gradient(
+      180deg,
+      #03050a 0%,
+      #080d16 26%,
+      #2a2a2c 52%,
+      #8e8578 72%,
+      #d6cfc1 86%,
+      var(--color-cream) 94%,
+      var(--color-cream) 100%
+    );
+}
+
+/* The brand's teal as the sky, cream as the floor. */
+html[data-hero-look="aurora"] .vn-hero {
+  background:
+    radial-gradient(80% 30% at 50% 70%, rgba(255, 240, 214, 0.72) 0%, rgba(255, 240, 214, 0) 72%),
+    linear-gradient(
+      180deg,
+      #03161c 0%,
+      #0a2f36 24%,
+      #2f6f6b 46%,
+      #8fa593 66%,
+      #d8d2c3 84%,
+      var(--color-cream) 93%,
+      var(--color-cream) 100%
+    );
+}
+
+/* High key. The copy has to invert with it — cream text on a pale hero is
+   unreadable, and the whole reason the dusk hero can use cream text is that its
+   top half is nearly black. */
+html[data-hero-look="gallery"] .vn-hero {
+  background:
+    radial-gradient(90% 34% at 50% 66%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 74%),
+    linear-gradient(180deg, #c9d3dd 0%, #dfe4e6 34%, #ece7dd 68%, var(--color-cream) 92%, var(--color-cream) 100%);
+}
+html[data-hero-look="gallery"] .vn-hero h1,
+html[data-hero-look="gallery"] .vn-hero .vn-hero-tagline {
+  color: var(--color-navy);
+}
+html[data-hero-look="gallery"] .vn-hero .btn-outline {
+  border-color: rgba(28, 40, 53, 0.45);
+  color: var(--color-navy);
+}
+html[data-hero-look="gallery"] .vn-hero .btn-outline:hover {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: var(--color-cream);
+}
+/* On a pale hero the nav no longer needs a solid ground to stay legible. */
+html[data-hero-look="gallery"] .nav-shell {
+  background: transparent;
+  box-shadow: none;
+}
+
 /* The fixed nav crosses the dark top of the gradient, where its navy text would
    vanish, so it needs a solid ground here rather than the transparent-until-
    scrolled treatment. Cream, not white: white is a colour the site does not use

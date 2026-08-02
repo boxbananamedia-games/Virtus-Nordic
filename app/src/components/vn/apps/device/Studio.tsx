@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { Environment, Lightformer } from "@react-three/drei";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
 
 /**
  * The studio environment, shared by the orbit and the solo inspection view so
@@ -62,7 +63,185 @@ export function GradientDome({ top, bottom }: { top: string; bottom: string }) {
   );
 }
 
-export type StudioVariant = "day" | "dusk";
+export type StudioVariant = "day" | "dusk" | "noir" | "aurora" | "gallery";
+
+/**
+ * ── The look experiments ──────────────────────────────────────────────────
+ *
+ * Everything from here to StudioLighting is ADDITIVE. "dusk" is untouched and
+ * remains the default; delete these three functions, the extra members of
+ * StudioVariant, and the `data-hero-look` CSS block to return exactly to where
+ * the hero was.
+ *
+ * One observation drives all three. The dusk rig lights from below and from
+ * nowhere else, which is a coherent story but leaves every device with the same
+ * problem: no edge. A silhouette against a dark background with no rim reads as
+ * a flat cut-out no matter how good the material is. So each of these adds a
+ * rim — the single cheapest thing that makes a render look photographed rather
+ * than rendered — and then differs in how it colours the two ends.
+ *
+ * The screens are unlit (meshBasicMaterial, toneMapped off), so they hold their
+ * brightness whatever happens around them. The darker the rig, the more the
+ * screens carry the frame, which is the point: the app is the product.
+ */
+
+/**
+ * "noir" — near-black room, one tight warm pool underneath, hard cool and warm
+ * kickers behind.
+ *
+ * The most dramatic of the three. Narrow vertical strips in the environment
+ * rather than broad panels, because a mirror reflects a shape: wide softboxes
+ * smear into an even sheen, thin strips streak down the chassis as it turns.
+ */
+function NoirLighting() {
+  return (
+    <>
+      {/* The floor pool. Tighter and harder than dusk's, so falloff is steep
+          and a device genuinely darkens as it rides up the orbit. */}
+      <pointLight position={[0, -14, 13]} intensity={4200} decay={2} color="#ffe3ba" />
+      {/* Cool rim, behind and left. This is the edge that dusk never had. */}
+      <pointLight position={[-17, 5, -16]} intensity={5600} decay={2} color="#a9c8ff" />
+      {/* Warm kicker, behind and right — the opposite temperature, so the two
+          edges of a device are never the same colour. */}
+      <pointLight position={[16, -3, -15]} intensity={3400} decay={2} color="#ffb377" />
+      <ambientLight intensity={0.015} />
+
+      <Environment resolution={ENV_RES} frames={1}>
+        <GradientDome top="#04060b" bottom="#e9d9be" />
+        <Lightformer
+          form="rect"
+          intensity={4}
+          color="#fff1dc"
+          position={[0, -9, 0]}
+          scale={[14, 4, 1]}
+          rotation={[Math.PI / 2, 0, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={8}
+          color="#cfe0ff"
+          position={[-14, 2, -9]}
+          scale={[1.1, 18, 1]}
+          rotation={[0, Math.PI / 3, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={6}
+          color="#ffcb96"
+          position={[14, 0, -9]}
+          scale={[1.1, 18, 1]}
+          rotation={[0, -Math.PI / 3, 0]}
+        />
+      </Environment>
+    </>
+  );
+}
+
+/**
+ * "aurora" — the brand's own teal as the sky, cream as the floor.
+ *
+ * The most on-brand of the three: it is the site's palette turned into light
+ * rather than a film convention borrowed wholesale. Teal rim above and behind,
+ * warm cream from the floor, so a device is cool along its top edge and warm
+ * underneath — the same two colours the page itself runs between.
+ */
+function AuroraLighting() {
+  return (
+    <>
+      <pointLight position={[0, -13, 13]} intensity={3600} decay={2} color="#fff0d8" />
+      {/* Teal rim, high and behind. Brand colour doing structural work. */}
+      <pointLight position={[-9, 12, -15]} intensity={5200} decay={2} color="#4fd6c4" />
+      <pointLight position={[13, 2, -13]} intensity={2600} decay={2} color="#2f9d94" />
+      <ambientLight intensity={0.025} />
+
+      <Environment resolution={ENV_RES} frames={1}>
+        <GradientDome top="#04171c" bottom="#fff2dc" />
+        <Lightformer
+          form="rect"
+          intensity={3.6}
+          color="#fff4e4"
+          position={[0, -8, 0]}
+          scale={[16, 5, 1]}
+          rotation={[Math.PI / 2, 0, 0]}
+        />
+        {/* A wide teal band across the top of the dome: the aurora itself, and
+            what a device mirrors along its upper edge. */}
+        <Lightformer
+          form="rect"
+          intensity={5}
+          color="#3fd0bd"
+          position={[0, 11, -6]}
+          scale={[20, 2.5, 1]}
+          rotation={[-Math.PI / 2.6, 0, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={4}
+          color="#63e0cf"
+          position={[-12, 4, -8]}
+          scale={[1.4, 14, 1]}
+          rotation={[0, Math.PI / 3.2, 0]}
+        />
+      </Environment>
+    </>
+  );
+}
+
+/**
+ * "gallery" — high key, the opposite bet.
+ *
+ * Bright, soft and even, the way a product page photographs hardware. Included
+ * deliberately as the counter-argument to the other two: drama is not the only
+ * way to look expensive, and restraint is closer to the rest of this site than
+ * a noir rig is. Needs the page and the hero copy to invert with it — see the
+ * `gallery` block in the CSS — because cream text on a pale hero is unreadable.
+ */
+function GalleryLighting() {
+  return (
+    <>
+      <directionalLight position={[5, 9, 11]} intensity={1.9} color="#fffaf2" />
+      <directionalLight position={[-8, 3, 6]} intensity={0.8} color="#e4edff" />
+      {/* Still a rim, even here. It is what keeps a pale device from dissolving
+          into a pale background. */}
+      <pointLight position={[0, 6, -14]} intensity={2600} decay={2} color="#ffffff" />
+      <ambientLight intensity={0.32} />
+
+      <Environment resolution={ENV_RES} frames={1}>
+        <GradientDome top="#c8d2dc" bottom="#fffaf0" />
+        <Lightformer
+          form="rect"
+          intensity={5}
+          position={[0, 8, 5]}
+          scale={[18, 8, 1]}
+          rotation={[-Math.PI / 3, 0, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={2.4}
+          color="#e8f0ff"
+          position={[-9, 1, 5]}
+          scale={[6, 13, 1]}
+          rotation={[0, Math.PI / 3.4, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={2.4}
+          color="#fff0da"
+          position={[9, 0, 5]}
+          scale={[6, 13, 1]}
+          rotation={[0, -Math.PI / 3.4, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={2}
+          position={[0, -7, 4]}
+          scale={[14, 5, 1]}
+          rotation={[Math.PI / 3, 0, 0]}
+        />
+      </Environment>
+    </>
+  );
+}
 
 /**
  * "dusk" — the page's bottom edge is the light source, and nothing else is.
@@ -127,12 +306,46 @@ export function RoomLighting() {
       <Environment resolution={ENV_RES} frames={1}>
         <GradientDome top="#33383f" bottom="#57534b" />
         {/* Two cool windows on the left, staggered in angle... */}
-        <Lightformer form="rect" intensity={6} position={[-8, 3, 2]} scale={[3, 6, 1]} rotation={[0, Math.PI / 3, 0]} color="#eaf2ff" />
-        <Lightformer form="rect" intensity={5} position={[-8, 2, -4]} scale={[3, 6, 1]} rotation={[0, Math.PI / 2.6, 0]} color="#dfeaff" />
+        <Lightformer
+          form="rect"
+          intensity={6}
+          position={[-8, 3, 2]}
+          scale={[3, 6, 1]}
+          rotation={[0, Math.PI / 3, 0]}
+          color="#eaf2ff"
+        />
+        <Lightformer
+          form="rect"
+          intensity={5}
+          position={[-8, 2, -4]}
+          scale={[3, 6, 1]}
+          rotation={[0, Math.PI / 2.6, 0]}
+          color="#dfeaff"
+        />
         {/* ...one warm window right, a ceiling panel, and a floor bounce. */}
-        <Lightformer form="rect" intensity={4} position={[7, 4, 3]} scale={[2.5, 5, 1]} rotation={[0, -Math.PI / 3, 0]} color="#ffe2b8" />
-        <Lightformer form="rect" intensity={5} position={[0, 7, 2]} scale={[9, 1.5, 1]} rotation={[-Math.PI / 2.2, 0, 0]} />
-        <Lightformer form="rect" intensity={2} position={[0, -6, 4]} scale={[10, 4, 1]} rotation={[Math.PI / 2.5, 0, 0]} color="#d8cbb8" />
+        <Lightformer
+          form="rect"
+          intensity={4}
+          position={[7, 4, 3]}
+          scale={[2.5, 5, 1]}
+          rotation={[0, -Math.PI / 3, 0]}
+          color="#ffe2b8"
+        />
+        <Lightformer
+          form="rect"
+          intensity={5}
+          position={[0, 7, 2]}
+          scale={[9, 1.5, 1]}
+          rotation={[-Math.PI / 2.2, 0, 0]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={2}
+          position={[0, -6, 4]}
+          scale={[10, 4, 1]}
+          rotation={[Math.PI / 2.5, 0, 0]}
+          color="#d8cbb8"
+        />
         {/* Hard dark breaks: what turns "brighter here" into visible streaks. */}
         <mesh position={[-4, 0, 6]} rotation={[0, Math.PI / 6, 0]}>
           <planeGeometry args={[2, 12]} />
@@ -147,8 +360,52 @@ export function RoomLighting() {
   );
 }
 
+/**
+ * Bloom, for the dark rigs only.
+ *
+ * The screens are unlit — meshBasicMaterial with tone mapping off — so they
+ * hold full brightness while a dark rig pulls everything around them down.
+ * That is exactly the condition bloom exists for: the threshold sits above
+ * anything the chassis reflects and below the screens, so the app faces glow
+ * and the aluminium does not. It is the one effect here that makes the frame
+ * look photographed rather than rendered.
+ *
+ * `mipmapBlur` because the alternative at this radius is a visible ring around
+ * every bright edge. No vignette: the page gradient already darkens the corners
+ * and a second one over a transparent canvas would darken the PAGE, not the
+ * render.
+ */
+function HeroBloom() {
+  return (
+    <EffectComposer multisampling={0} enableNormalPass={false}>
+      <Bloom
+        intensity={0.32}
+        luminanceThreshold={0.9}
+        luminanceSmoothing={0.18}
+        mipmapBlur
+        radius={0.42}
+      />
+    </EffectComposer>
+  );
+}
+
 export function StudioLighting({ variant = "day" }: { variant?: StudioVariant }) {
   if (variant === "dusk") return <DuskLighting />;
+  if (variant === "noir")
+    return (
+      <>
+        <NoirLighting />
+        <HeroBloom />
+      </>
+    );
+  if (variant === "aurora")
+    return (
+      <>
+        <AuroraLighting />
+        <HeroBloom />
+      </>
+    );
+  if (variant === "gallery") return <GalleryLighting />;
   return (
     <>
       {/* Positioned key, so a specular hotspot travels across the chassis as it

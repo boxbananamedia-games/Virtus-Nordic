@@ -8,7 +8,20 @@ import { PhoneField } from "../components/vn/apps/PhoneField";
 import { HeroOrbit, canRunOrbit } from "../components/vn/apps/HeroOrbit";
 import { useBooking } from "../components/vn/BookingModal";
 
+/**
+ * Lighting rigs the hero can be viewed under, reachable at /?look=noir and so
+ * on. An experiment: "dusk" is what ships, everything else is there to be
+ * compared against it. Remove this list, the search param and the
+ * `data-hero-look` CSS to undo the whole thing.
+ */
+const LOOKS = ["dusk", "noir", "aurora", "gallery"] as const;
+type Look = (typeof LOOKS)[number];
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): { look?: Look } => {
+    const look = LOOKS.find((l) => l === search.look);
+    return look && look !== "dusk" ? { look } : {};
+  },
   head: () => ({
     meta: [
       { title: content.da.meta.home.title },
@@ -44,7 +57,7 @@ const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayout
  * REVERSIBLE: delete this component and render <PhoneField> directly to go
  * back to the CSS hero exactly as it was. Nothing else in the hero changed.
  */
-function HeroDevices({ onSelect }: { onSelect: (id: string) => void }) {
+function HeroDevices({ onSelect, look }: { onSelect: (id: string) => void; look: Look }) {
   const [orbit, setOrbit] = useState<"pending" | "true" | "false">("pending");
   useIsoLayoutEffect(() => setOrbit(canRunOrbit() ? "true" : "false"), []);
 
@@ -72,7 +85,7 @@ function HeroDevices({ onSelect }: { onSelect: (id: string) => void }) {
       {/* Fallback and mobile rail. Kept mounted so it can take over instantly
           if the orbit is not viable. */}
       <PhoneField onSelect={onSelect} />
-      {orbit === "true" && <HeroOrbit onSelect={onSelect} />}
+      {orbit === "true" && <HeroOrbit onSelect={onSelect} look={look} />}
     </div>
   );
 }
@@ -104,6 +117,17 @@ function Index() {
     document.documentElement.setAttribute("data-hero-theme", "dusk");
     return () => document.documentElement.removeAttribute("data-hero-theme");
   }, []);
+
+  // The page has to tell the same story the 3D rig does — the reflections in
+  // the devices come from an environment matched to this gradient, and a
+  // mismatch between them is exactly what makes CGI look pasted on. Set on
+  // <html> rather than the section because the nav, which lives outside this
+  // route, has to move with it.
+  const { look = "dusk" } = Route.useSearch();
+  useEffect(() => {
+    document.documentElement.setAttribute("data-hero-look", look);
+    return () => document.documentElement.removeAttribute("data-hero-look");
+  }, [look]);
 
   return (
     <div>
@@ -142,7 +166,7 @@ function Index() {
           </div>
         </div>
 
-        <HeroDevices onSelect={openConcept} />
+        <HeroDevices onSelect={openConcept} look={look} />
       </section>
 
       {/* ═══ INTRO ═══

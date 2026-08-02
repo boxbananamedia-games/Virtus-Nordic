@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { APPLICATIONS, pick } from "../../../lib/applications";
 import { useLang } from "../../../lib/language";
 import { PhoneModel, type Finish } from "./device/PhoneModel";
-import { StudioLighting } from "./device/Studio";
+import { StudioLighting, type StudioVariant } from "./device/Studio";
 
 /**
  * The hero carousel: five devices orbiting a shared centre, each facing
@@ -550,7 +550,15 @@ function Ring({
   );
 }
 
-export function HeroOrbit({ onSelect }: { onSelect: (id: string) => void }) {
+export function HeroOrbit({
+  onSelect,
+  look = "dusk",
+}: {
+  onSelect: (id: string) => void;
+  /** Which lighting rig to run. Defaults to the shipped one; the alternatives
+   *  are an experiment reachable at /?look=… — see Studio.tsx. */
+  look?: StudioVariant;
+}) {
   const { lang, t } = useLang();
   const hits = useRef<Hit[]>(APPLICATIONS.map(() => ({ el: null, berth: null })));
   /** Which device is out at centre stage. A ref as well as state because the
@@ -601,7 +609,7 @@ export function HeroOrbit({ onSelect }: { onSelect: (id: string) => void }) {
         // Decorative: the accessible content is the button list below.
         aria-hidden="true"
       >
-        <StudioLighting variant="dusk" />
+        <StudioLighting variant={look} />
         {/* One boundary for the whole ring, deliberately. PhoneModel suspends
             while its GLB and plate decode, and the entrance is a formation —
             five devices trickling in as their own assets resolve cannot fly in
