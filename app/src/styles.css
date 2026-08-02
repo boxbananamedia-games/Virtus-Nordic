@@ -174,10 +174,31 @@ footer { position: relative; z-index: 10; }
 
 .hairline { border: 0; border-top: 1px solid rgba(28, 40, 53, 0.14); }
 
-/* ---------- hero entrance: plain on-mount fade/stagger ---------- */
+/* ---------- hero entrance ----------
+   Held until the ring cues it, then a slow fall.
+
+   The copy lands mid-spin, while the carousel is still turning better than a
+   lap a second. That contrast is the point: the slower and calmer the copy
+   arrives, the faster the ring reads. 1.4s against the 0.9s this used to be,
+   on an easing that spends almost all its time decelerating.
+
+   The hold is scoped to exactly the conditions the orbit itself runs under —
+   see canRunOrbit — so a phone or a narrow window, which never gets an
+   entrance to wait for, is never left staring at nothing. `.js` covers the
+   same ground for scripting being off. Under reduced motion the animation is
+   `none`, so there is nothing to pause and the copy is simply there. */
 .enter {
-  animation: enterUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: heroEnter 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: var(--d, 0s);
+}
+
+@keyframes heroEnter {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .js .vn-hero[data-hero-cue="hold"] .enter { animation-play-state: paused; }
 }
 
 @keyframes enterUp {

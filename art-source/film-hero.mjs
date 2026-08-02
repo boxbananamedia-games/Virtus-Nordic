@@ -82,26 +82,17 @@ try {
   await page.setViewport({ width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 });
 
   // The first frame in which a control has been positioned is the first frame
-  // after Ring mounted — which is t = 0 for the entrance.
-  // Also watch the hero copy, because the entrance clock does not start when
-  // the ring mounts — the ring holds until the copy has landed. The audio has
-  // to be offset by the same wait or every whoosh lands early.
+  // after Ring mounted, which is t = 0 for the entrance — and, since the ring
+  // now leads and cues the copy rather than waiting for it, t = 0 for the
+  // soundtrack too.
   await page.evaluateOnNewDocument(() => {
     window.__ringAt = null;
-    window.__copyAt = null;
     const tick = () => {
       const b = document.querySelector(".vn-orbit-hit");
-      if (b && b.getBoundingClientRect().width > 0 && window.__ringAt === null) {
+      if (b && b.getBoundingClientRect().width > 0) {
         window.__ringAt = performance.now();
+        return;
       }
-      if (window.__copyAt === null) {
-        const parts = [...document.querySelectorAll(".vn-hero-copy .enter")];
-        const anims = parts.flatMap((e) => e.getAnimations?.() ?? []);
-        if (anims.length && anims.every((a) => a.playState === "finished")) {
-          window.__copyAt = performance.now();
-        }
-      }
-      if (window.__ringAt !== null && window.__copyAt !== null) return;
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -145,10 +136,6 @@ try {
 
   await new Promise((r) => setTimeout(r, SECONDS * 1000 + 400));
   await client.send("Page.stopScreencast");
-  const { ringAt, copyAt } = await page.evaluate(() => ({
-    ringAt: window.__ringAt,
-    copyAt: window.__copyAt,
-  }));
 
   const shot = frames.filter((f) => f.at >= ringEpoch && f.at <= ringEpoch + SECONDS * 1000);
   if (shot.length < 2) throw new Error(`only ${shot.length} frames captured`);
@@ -173,10 +160,11 @@ try {
   list.push(`file '${shot.length ? `f${String(shot.length - 1).padStart(5, "0")}.jpg` : ""}'`);
   await writeFile(path.join(FRAMES, "frames.txt"), list.join("\n"));
 
-  // Where the entrance clock reaches zero, measured from the video's first
-  // frame: the ring waits for the copy, so this is the same max() the
-  // component itself applies.
-  const entranceAt = Math.max(0, (Math.max(ringAt, copyAt ?? 0) - ringAt) / 1000);
+  // Where the entrance clock reaches zero within the clip. The ring starts the
+  // moment its models are ready and waits for nothing, and the capture begins
+  // on that same frame — so the two clocks share an origin and the soundtrack
+  // needs no offset.
+  const entranceAt = 0;
 
   const audioIn = [];
   const audioOut = [];

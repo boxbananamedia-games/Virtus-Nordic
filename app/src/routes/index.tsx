@@ -1,11 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
 import { Reveal, InkDivider, SERVICE_ICONS, useSectionProgress } from "../components/vn/visuals";
@@ -54,6 +48,25 @@ function HeroDevices({ onSelect }: { onSelect: (id: string) => void }) {
   const [orbit, setOrbit] = useState<"pending" | "true" | "false">("pending");
   useIsoLayoutEffect(() => setOrbit(canRunOrbit() ? "true" : "false"), []);
 
+  // The hero copy is held for the ring's cue (see HERO_CUE_AT in HeroOrbit).
+  // Both escape hatches live here, because this is the component that knows
+  // whether an entrance is going to happen at all:
+  //   - no orbit, so no entrance to wait for: release at once;
+  //   - orbit, but the models never arrive: release anyway on a backstop.
+  // Copy that is late is a blemish; copy that never appears is a dead page.
+  useEffect(() => {
+    if (orbit === "pending") return;
+    const hero = document.querySelector(".vn-hero");
+    if (!hero) return;
+    const release = () => hero.setAttribute("data-hero-cue", "go");
+    if (orbit === "false") {
+      release();
+      return;
+    }
+    const backstop = setTimeout(release, 9000);
+    return () => clearTimeout(backstop);
+  }, [orbit]);
+
   return (
     <div className="vn-hero-devices" data-orbit={orbit}>
       {/* Fallback and mobile rail. Kept mounted so it can take over instantly
@@ -95,19 +108,31 @@ function Index() {
   return (
     <div>
       {/* ═══ HERO ═══ */}
-      <section className="vn-hero relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0">
+      {/* data-hero-cue: the copy is held here until the ring has finished
+          boarding and cues it. CSS only honours the hold where the orbit
+          actually runs; HeroDevices releases it everywhere else. */}
+      <section
+        className="vn-hero relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0"
+        data-hero-cue="hold"
+      >
         <div className="vn-hero-copy relative z-10">
           <span className="vn-hero-scrim" aria-hidden="true" />
           <h1
             className="enter mt-4 font-logo text-[clamp(2.5rem,7.5vw,5.5rem)] font-semibold leading-[1.08] tracking-[0.01em] text-navy"
-            style={d(0.15)}
+            style={d(0)}
           >
             Virtus Nordic
           </h1>
-          <p className="vn-hero-tagline enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]" style={d(0.3)}>
+          <p
+            className="vn-hero-tagline enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]"
+            style={d(0.2)}
+          >
             {t.hero.tagline}
           </p>
-          <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
+          <div
+            className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row"
+            style={d(0.4)}
+          >
             <button type="button" onClick={booking.open} className="btn btn-outline">
               {t.hero.ctaPrimary}
             </button>
@@ -168,7 +193,10 @@ function Index() {
                 className="srv-card block h-full"
                 aria-label={`${item.title} — ${t.servicesTeaser.label}`}
               >
-                {(() => { const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length]; return <Icon className="h-11 w-11" />; })()}
+                {(() => {
+                  const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length];
+                  return <Icon className="h-11 w-11" />;
+                })()}
                 <h3 className="mt-5 font-display text-xl font-semibold text-navy">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-navy/70">{item.teaser}</p>
               </Link>
@@ -223,7 +251,9 @@ function Index() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                 </div>
-                <h3 className="mt-0 font-display text-xl font-semibold text-navy md:mt-6">{step.title}</h3>
+                <h3 className="mt-0 font-display text-xl font-semibold text-navy md:mt-6">
+                  {step.title}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-navy/70">{step.body}</p>
               </Reveal>
             ))}

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { APPLICATIONS, pick } from "../../../lib/applications";
@@ -180,37 +180,29 @@ const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) *
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
 /**
- * Resolves once the hero copy has finished arriving.
+ * When the hero copy is cued in, in seconds of entrance time.
  *
- * The copy and the ring run on unrelated clocks. The copy's CSS animations
- * start at first paint; the ring's starts whenever its models and plates have
- * finished decoding. On a cold load the copy is long settled before the ring
- * exists — but on a warm cache, which is every repeat visit and every time the
- * site is being demonstrated, the ring can mount while the wordmark is still
- * fading up, and two entrances play over each other.
+ * Mid-spin, a beat after the last phone has merged. The ring is still turning
+ * better than a lap a second at this point, and the copy arrives slowly
+ * against it — the contrast is the point, and the calmer the words land the
+ * faster the carousel reads.
  *
- * Waiting here makes the order always copy, then arrival, and costs nothing in
- * the common case: a finished CSS animation is still filling, so it is still
- * returned by getAnimations() with its promise already resolved, and this
- * settles within a microtask.
- *
- * Deliberately not the other way round. Gating the copy on the ring would put
- * the pitch and both CTAs behind 3.7MB of WebGL, which is the preloader
- * mistake wearing a different hat.
- *
- * Fails open, twice over: nothing matching the selector resolves immediately,
- * and an animation that never settles is overtaken by the timeout. A hero that
- * starts a beat early is a blemish; one that never starts is a broken page.
+ * This is the reverse of what the hero did before, where the ring waited for
+ * the copy on the grounds that gating words behind WebGL is the preloader
+ * mistake in a different hat. That objection has not gone away; it has been
+ * accepted in exchange for the composition. What keeps it honest is that the
+ * trade is confined to browsers that actually get an entrance: the CSS hold is
+ * scoped to the same conditions canRunOrbit tests, and HeroDevices releases
+ * the copy immediately anywhere the orbit will not run — and on a backstop
+ * timer if the models never arrive.
  */
-function heroCopySettled(): Promise<unknown> {
-  if (typeof document === "undefined") return Promise.resolve();
-  const parts = document.querySelectorAll(".vn-hero-copy .enter");
-  const running = [...parts].flatMap((el) => el.getAnimations?.() ?? []);
-  if (!running.length) return Promise.resolve();
-  return Promise.race([
-    Promise.all(running.map((a) => a.finished.catch(() => undefined))),
-    new Promise((resolve) => setTimeout(resolve, 2500)),
-  ]);
+const HERO_CUE_AT = BOARD_END + 0.4;
+
+/** Hands the hero its copy. Written straight to the DOM from the render loop
+ *  rather than lifted into React state: it fires once, mid-animation, and a
+ *  re-render of the hero at that exact moment is what should not happen. */
+function cueHeroCopy() {
+  document.querySelector(".vn-hero")?.setAttribute("data-hero-cue", "go");
 }
 
 /**
@@ -517,27 +509,14 @@ function Ring({
    *  exactly mergeTime(k). Static but composed under reduce: an arrangement
    *  where all five are visible rather than stacking behind one another. */
   const spinRef = useRef(reduced ? 18 : SPIN_FROM);
-  /** Seconds of entrance elapsed. Everything in the entrance is timed off this
-   *  one value, and it does not start until BOTH the models are ready (this
-   *  component exists) and the hero copy has landed (`armed`). */
+  /** Seconds of entrance elapsed, counted from the moment the models were
+   *  ready. Everything in the entrance is timed off this one value. */
   const clockRef = useRef(0);
-  /** Held until the copy has finished arriving — see heroCopySettled. Until
-   *  then the clock stays at zero, which parks every device off-screen left,
-   *  so the hero simply shows its settled copy and nothing else. */
-  const armed = useRef(false);
-
-  useEffect(() => {
-    let live = true;
-    void heroCopySettled().then(() => {
-      if (live) armed.current = true;
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
+  /** The copy is cued once, partway through the spin. */
+  const cued = useRef(false);
 
   useFrame((_, delta) => {
-    if (reduced || !armed.current) return;
+    if (reduced) return;
     // Clamp delta so a backgrounded tab does not jump the orbit on return.
     const dt = Math.min(delta, 0.1);
     clockRef.current += dt;
@@ -546,6 +525,10 @@ function Ring({
     // either: freezing it on hover made the hero look broken for as long as the
     // pointer rested anywhere near a device.
     spinRef.current += dt * lapSpeed(clockRef.current);
+    if (!cued.current && clockRef.current >= HERO_CUE_AT) {
+      cued.current = true;
+      cueHeroCopy();
+    }
   });
 
   return (
