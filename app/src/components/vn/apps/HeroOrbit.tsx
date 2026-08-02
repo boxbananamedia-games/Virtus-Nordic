@@ -96,40 +96,67 @@ const STAGE = { y: -3, z: 33 };
 const STAGE_TAU = { in: 0.17, out: 0.24 };
 
 /**
- * The ring assembles itself as its assets land.
+ * The entrance: a flypast, then a spin-down.
  *
- * Each device has its own Suspense boundary, so it appears when ITS model and
- * screen resolve rather than the whole formation waiting on the slowest. The
- * arrival is what makes that read as craft instead of as popping: the device
- * settles into its slot from slightly above and slightly small, with a little
- * overshoot.
+ * The formation arrives as one thing rather than five — the devices come in
+ * from off-screen left in a line, screens to camera, and fold onto their own
+ * slots in the ring. The ring then takes off at roughly a lap a second and
+ * decays to its cruising 8°/s, so the carousel spins up and settles rather than
+ * simply starting.
  *
- * That is also the honest answer to the loading problem. A preloader would hide
- * a hero that already paints its headline and CTAs in about 100ms, in order to
- * wait on decoration; this shows real progress instead, and the page is usable
- * throughout.
+ * The whole formation is choreographed, which is why the ring shares ONE
+ * Suspense boundary: five devices trickling in as their assets resolve cannot
+ * make a formation. That costs waiting on the slowest model, which is a fair
+ * price now the plates are WebP and the models load in parallel.
  *
- * `STAGGER` only guarantees an order — the devices' own download times usually
- * space them out further. Index 0 is at the front of the ring when the lap
- * starts, and it happens to carry the smallest model, so the front device
- * generally lands first without anything being scheduled.
+ * `spinFrom` is derived, not chosen. The last device in the line finishes its
+ * glide at `glide + (n-1) * stagger`, and the lap must not start before then:
+ * rotation during the glide is a blend towards each device's own fixed slot
+ * angle, and an angle that is advancing underneath that blend would wrap
+ * through 2π and snap.
  */
-const ARRIVE = { duration: 0.72, stagger: 0.07, from: 0.84, rise: 2.4 };
+const INTRO = {
+  /** Seconds for one device's run in from the line. */
+  glide: 0.75,
+  /** Seconds between successive devices leaving the line. */
+  stagger: 0.05,
+  /** Lap speed multiplier the instant the ring takes off. 60 x 8°/s = 480°/s,
+   *  a lap and a third every second. */
+  boost: 60,
+  /** Seconds for that to decay towards 1x. Total extra rotation is
+   *  speed * (boost - 1) * decay ≈ 470°, so about one and a third bonus laps,
+   *  visibly slowing by three seconds and cruising by seven. */
+  decay: 1,
+  /** Below this multiple of the cruising speed the devices become targetable
+   *  again. A threshold rather than a timeout, so it tracks `boost` and `decay`
+   *  if either is retuned. */
+  grabbable: 6,
+  /** Gap between devices along the line, in scene units. Where the line STARTS
+   *  is not a constant: it is derived from the camera frustum each frame, so
+   *  the formation is off-screen at every aspect rather than at the one it was
+   *  eyeballed on. */
+  gap: 15,
+  /** Clearance beyond the frustum edge, in scene units. A device is 7.15 wide. */
+  margin: 7,
+};
+
+const INTRO_SPIN_FROM = INTRO.glide + (APPLICATIONS.length - 1) * INTRO.stagger;
+
+/** Fast in, decelerating — the devices run in and settle onto their slots. */
+const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
 /**
- * easeOutBack — runs a little past its target, then settles back.
+ * Lap speed at `t` seconds after the ring appeared, in degrees per second.
  *
- * The drop is what you actually read: 2.4 units against a device 14.96 tall is
- * 16% of its own height. The overshoot is deliberately near the threshold of
- * noticing — at c1 = 1.6 it carries the device about 1.4% (~6px at hero size)
- * past its slot before it settles. Enough to feel like weight, not enough to
- * bounce; this is a studio's hero, not a toy.
+ * Exponential decay rather than a fixed ramp: it is the shape a real flywheel
+ * makes, it never overshoots the cruising speed, and it approaches it closely
+ * enough to be indistinguishable long before it arrives.
  */
-const easeOutBack = (t: number) => {
-  const c1 = 1.6;
-  const p = t - 1;
-  return 1 + (c1 + 1) * p * p * p + c1 * p * p;
-};
+function lapSpeed(t: number) {
+  if (t < INTRO_SPIN_FROM) return 0;
+  const k = Math.exp(-(t - INTRO_SPIN_FROM) / INTRO.decay);
+  return ORBIT.speed * (1 + (INTRO.boost - 1) * k);
+}
 
 const plateUrl = (id: string) => `/lab-textures/${id}.webp`;
 
@@ -218,6 +245,7 @@ function Device({
   index,
   screenTexture,
   angleRef,
+  clockRef,
   easing,
   hits,
   stagedRef,
@@ -226,6 +254,9 @@ function Device({
   index: number;
   screenTexture: string;
   angleRef: { current: number };
+  /** Seconds since the whole formation appeared. Shared, so the entrance is one
+   *  piece of choreography rather than five. */
+  clockRef: { current: number };
   easing: Float32Array;
   hits: { current: Hit[] };
   /** Index of the device currently held at centre stage, or null. */
@@ -241,32 +272,10 @@ function Device({
   /** 0 = in the ring, 1 = at centre stage. Its own value per device, so several
    *  can be mid-flight at once when the pointer moves between them. */
   const focus = useRef(0);
-  /** 0 = not here yet, 1 = settled in the ring. Starts counting from this
-   *  device's own mount, which is the moment its assets finished loading. */
-  const arrival = useRef(0);
-  const hold = useRef(index * ARRIVE.stagger);
 
   useFrame((_, delta) => {
     const g = group.current;
     if (!g) return;
-    const dt = Math.min(delta, 0.1);
-
-    // Waiting its turn: present in the scene graph but not yet on screen, and
-    // its control inert with it.
-    if (!reduced && hold.current > 0) {
-      hold.current -= dt;
-      g.visible = false;
-      const pending = hits.current[index]?.el;
-      if (pending) {
-        pending.style.opacity = "0";
-        pending.style.pointerEvents = "none";
-      }
-      return;
-    }
-    g.visible = true;
-    arrival.current = reduced ? 1 : Math.min(1, arrival.current + dt / ARRIVE.duration);
-    const landed = easeOutBack(arrival.current);
-    const arriveScale = ARRIVE.from + (1 - ARRIVE.from) * landed;
 
     const n = APPLICATIONS.length;
     const u = (angleRef.current / 360 + index / n) % 1;
@@ -280,7 +289,19 @@ function Device({
     const oy = Math.sin(a) * ORBIT.radius * ORBIT.rise + ORBIT.centreY;
     const oz = Math.cos(a) * ORBIT.radius;
 
-    if (reduced) {
+    // The run in from the line, 0 -> 1. The lap is held at a standstill until
+    // the last device has finished (see INTRO_SPIN_FROM), so `a` is this
+    // device's own fixed slot angle throughout and the rotation blend below has
+    // a still target to aim at.
+    const entry = reduced
+      ? 1
+      : easeOutCubic(
+          Math.min(1, Math.max(0, (clockRef.current - index * INTRO.stagger) / INTRO.glide)),
+        );
+
+    if (reduced || entry < 1) {
+      // No staging mid-entrance: hovering would blend towards a ring position
+      // the device has not reached yet.
       focus.current = 0;
     } else {
       const target = stagedRef.current === index ? 1 : 0;
@@ -295,20 +316,33 @@ function Device({
     const f = focus.current;
     const e = f * f * (3 - 2 * f);
 
+    // Where the device would be if the entrance were over: its ring slot,
+    // blended towards centre stage by any hover.
+    const rx = ox + (0 - ox) * e;
+    const ry = oy + (STAGE.y - oy) * e;
+    const rz = oz + (STAGE.z - oz) * e;
+
+    // …and where it starts: off the left edge of whatever frustum this viewport
+    // actually has, at the height of the ring's centre and its mid depth, each
+    // device queued a gap further back so the five read as a line.
+    const tanHalfFov = Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360);
+    const halfWidth = ORBIT.cameraZ * tanHalfFov * (size.width / size.height);
+    const lineX = -(halfWidth + INTRO.margin + index * INTRO.gap);
+
     g.position.set(
-      ox + (0 - ox) * e,
-      oy + (STAGE.y - oy) * e + (1 - landed) * ARRIVE.rise,
-      oz + (STAGE.z - oz) * e,
+      lineX + (rx - lineX) * entry,
+      ORBIT.centreY + (ry - ORBIT.centreY) * entry,
+      rz * entry,
     );
-    // Scale carries the arrival. Nothing here touches the model's materials —
-    // fading one in would mean turning on transparency, and a transparent
-    // metallic body sorts badly against the rest of the ring.
-    g.scale.setScalar(arriveScale);
     // Face radially outward — the entire carousel rule in one line. The device
     // nearest the camera therefore presents its screen with no keyframing. The
     // second term turns that into a full revolution ending square to the camera
     // as the device reaches the stage, and unwinds it on the way back.
-    g.rotation.set(0, a + (turnToCamera(a) + Math.PI * 2) * e, 0);
+    //
+    // Scaling the whole thing by `entry` means the devices fly in square to the
+    // camera, screens showing, and turn onto their radial heading as they take
+    // their slots. At entry = 1 it is exactly the carousel rule again.
+    g.rotation.set(0, (a + (turnToCamera(a) + Math.PI * 2) * e) * entry, 0);
 
     // Apparent height from the perspective divide, so a hit area shrinks with
     // its device as it travels to the back of the orbit.
@@ -316,11 +350,10 @@ function Device({
     // DEVICE_H is already in scene units (1 unit = 10mm), which is what the
     // group's NORMALISE scale produces — multiplying by NORMALISE again here
     // inflated every control to ~7.5x the device.
-    const tanHalfFov = Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360);
-    const place = (el: HTMLElement, at: THREE.Vector3, z: number, scale = 1) => {
+    const place = (el: HTMLElement, at: THREE.Vector3, z: number) => {
       projected.copy(at).project(camera);
       const dist = camera.position.distanceTo(at);
-      const h = (DEVICE_H * scale * size.height) / (2 * dist * tanHalfFov);
+      const h = (DEVICE_H * size.height) / (2 * dist * tanHalfFov);
       const w = h * (71.5 / 149.6);
       const x = (projected.x * 0.5 + 0.5) * size.width;
       const y = (-projected.y * 0.5 + 0.5) * size.height;
@@ -335,17 +368,26 @@ function Device({
     const el = hits.current[index]?.el;
     if (!el) return;
     // Depth-sort the controls so the front device wins the pointer where two
-    // overlap on screen, matching what the viewer sees. The arrival scale goes
-    // with it, so the control never covers more than the device does.
-    place(el, g.position, 1000, arriveScale);
+    // overlap on screen, matching what the viewer sees.
+    place(el, g.position, 1000);
     // Hide the control while its device is on the far side and facing away:
     // clicking a phone you are seeing the back of is not a meaningful target.
+    // Tested against the rotation actually rendered rather than the orbit angle,
+    // so it agrees with the entrance — during the run in the devices are square
+    // to the camera whatever their slot angle says.
     //
     // Never while it is staged, though. A staged device keeps travelling its
     // lap underneath, so its orbit angle eventually says "facing away" even
     // though the thing on screen is squared up at centre stage — and switching
     // its control off there would drop the hover and fling it home.
-    const facingAway = Math.cos(a) < -0.35 && e < 0.02;
+    //
+    // And never before the device has arrived, or while the ring is still
+    // whipping round — yanking a device to centre stage out of a formation
+    // doing better than a lap a second reads as a glitch, not a hover.
+    const inert =
+      entry < 1 ||
+      (!reduced && lapSpeed(clockRef.current) > ORBIT.speed * INTRO.grabbable);
+    const facingAway = (Math.cos(g.rotation.y) < -0.35 && e < 0.02) || inert;
     el.style.pointerEvents = facingAway ? "none" : "auto";
     el.style.opacity = facingAway ? "0" : "1";
 
@@ -391,35 +433,37 @@ function Ring({
   // Static but composed: under reduce the formation holds an arrangement where
   // all five are visible rather than stacking behind one another.
   const angleRef = useRef(reduced ? 18 : 0);
+  /** Seconds since this component mounted — which, because the whole ring sits
+   *  behind one Suspense boundary, is the moment all five devices were ready.
+   *  Everything in the entrance is timed off this one value. */
+  const clockRef = useRef(0);
 
   useFrame((_, delta) => {
     if (reduced) return;
+    // Clamp delta so a backgrounded tab does not jump the orbit on return.
+    const dt = Math.min(delta, 0.1);
+    clockRef.current += dt;
     // The lap runs regardless of what the pointer is doing. Freezing it on
     // hover made the whole hero look broken for as long as the pointer rested
-    // anywhere near a device.
-    //
-    // Clamp delta so a backgrounded tab does not jump the orbit on return.
-    angleRef.current = (angleRef.current + Math.min(delta, 0.1) * ORBIT.speed) % 360;
+    // anywhere near a device. It is held at zero only for the entrance, while
+    // the devices are still running in from the line.
+    angleRef.current = (angleRef.current + dt * lapSpeed(clockRef.current)) % 360;
   });
 
   return (
     <>
       {APPLICATIONS.map((app, i) => (
-        // One boundary per device, not one around the ring. PhoneModel suspends
-        // while its GLB and screen plate decode, and a shared boundary made
-        // every device wait on the slowest — the hero stayed empty and then
-        // arrived all at once. Per device, each one lands as its own assets do.
-        <Suspense key={app.id} fallback={null}>
-          <Device
-            index={i}
-            screenTexture={plateUrl(app.id)}
-            angleRef={angleRef}
-            easing={easing}
-            hits={hits}
-            stagedRef={stagedRef}
-            reduced={reduced}
-          />
-        </Suspense>
+        <Device
+          key={app.id}
+          index={i}
+          screenTexture={plateUrl(app.id)}
+          angleRef={angleRef}
+          clockRef={clockRef}
+          easing={easing}
+          hits={hits}
+          stagedRef={stagedRef}
+          reduced={reduced}
+        />
       ))}
     </>
   );
@@ -477,8 +521,14 @@ export function HeroOrbit({ onSelect }: { onSelect: (id: string) => void }) {
         aria-hidden="true"
       >
         <StudioLighting variant="dusk" />
-        {/* Each device carries its own Suspense boundary — see Ring. */}
-        <Ring hits={hits} stagedRef={stagedRef} reduced={reduced} />
+        {/* One boundary for the whole ring, deliberately. PhoneModel suspends
+            while its GLB and plate decode, and the entrance is a formation —
+            five devices trickling in as their own assets resolve cannot fly in
+            as a line. Mounting Ring is therefore the starting gun, and its
+            clock starts from zero at that moment. */}
+        <Suspense fallback={null}>
+          <Ring hits={hits} stagedRef={stagedRef} reduced={reduced} />
+        </Suspense>
       </Canvas>
 
       {/* The real interaction layer. One button per concept, tracked to its
