@@ -552,11 +552,11 @@ function Ring({
 
 export function HeroOrbit({
   onSelect,
-  look = "dusk",
+  look = "aurora",
 }: {
   onSelect: (id: string) => void;
-  /** Which lighting rig to run. Defaults to the shipped one; the alternatives
-   *  are an experiment reachable at /?look=… — see Studio.tsx. */
+  /** Which lighting rig to run. `aurora` ships; the alternatives are reachable
+   *  at /?look=dusk | noir | gallery — see Studio.tsx. */
   look?: StudioVariant;
 }) {
   const { lang, t } = useLang();

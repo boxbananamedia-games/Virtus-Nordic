@@ -9,18 +9,21 @@ import { HeroOrbit, canRunOrbit } from "../components/vn/apps/HeroOrbit";
 import { useBooking } from "../components/vn/BookingModal";
 
 /**
- * Lighting rigs the hero can be viewed under, reachable at /?look=noir and so
- * on. An experiment: "dusk" is what ships, everything else is there to be
- * compared against it. Remove this list, the search param and the
- * `data-hero-look` CSS to undo the whole thing.
+ * Lighting rigs the hero can be viewed under. `aurora` ships and needs no
+ * parameter; the others are reachable at /?look=dusk | noir | gallery for
+ * comparison. `dusk` is the original navy rig, kept so the change is one URL
+ * away from being reviewed rather than one deploy away.
  */
-const LOOKS = ["dusk", "noir", "aurora", "gallery"] as const;
+const LOOKS = ["aurora", "dusk", "noir", "gallery"] as const;
 type Look = (typeof LOOKS)[number];
+const DEFAULT_LOOK: Look = "aurora";
 
 export const Route = createFileRoute("/")({
+  // The default is stripped from the URL rather than pinned into it, so the
+  // canonical homepage stays "/" and never picks up a redundant ?look=aurora.
   validateSearch: (search: Record<string, unknown>): { look?: Look } => {
     const look = LOOKS.find((l) => l === search.look);
-    return look && look !== "dusk" ? { look } : {};
+    return look && look !== DEFAULT_LOOK ? { look } : {};
   },
   head: () => ({
     meta: [
@@ -123,8 +126,13 @@ function Index() {
   // mismatch between them is exactly what makes CGI look pasted on. Set on
   // <html> rather than the section because the nav, which lives outside this
   // route, has to move with it.
-  const { look = "dusk" } = Route.useSearch();
+  //
+  // Only the ALTERNATIVES need the attribute. Aurora is the base gradient in
+  // CSS, so the default hero is correct on the first painted frame instead of
+  // flashing the old palette until this effect runs.
+  const { look = DEFAULT_LOOK } = Route.useSearch();
   useEffect(() => {
+    if (look === DEFAULT_LOOK) return;
     document.documentElement.setAttribute("data-hero-look", look);
     return () => document.documentElement.removeAttribute("data-hero-look");
   }, [look]);

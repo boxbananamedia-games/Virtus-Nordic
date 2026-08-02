@@ -19,7 +19,9 @@ const BASE = process.argv[2] ?? "http://localhost:5173/";
  *  of the spin-down, so the ring is composed rather than blurred. */
 const SETTLE = Number(process.argv[3] ?? 9);
 const LABEL = process.argv[4] ?? "looks";
-const LOOKS = ["dusk", "noir", "aurora", "gallery"];
+/** `aurora` ships and its param is stripped by the route as redundant, so it
+ *  renders from the bare URL either way. The rest need asking for. */
+const LOOKS = ["aurora", "dusk", "noir", "gallery"];
 const VIEW = { width: 1500, height: 860 };
 const OUT = path.resolve("art-source/capture");
 
@@ -41,7 +43,7 @@ try {
   const shots = [];
 
   for (const look of LOOKS) {
-    const url = look === "dusk" ? BASE : `${BASE}?look=${look}`;
+    const url = `${BASE}?look=${look}`;
     await page.goto(url, { waitUntil: "networkidle0" });
     // Confirm the rig actually engaged rather than silently falling back.
     const state = await page.evaluate(() => ({

@@ -2532,24 +2532,31 @@
    cream band at the bottom of the hero that is indistinguishable from the
    section below it.
 
-   The pool's vertical radius (28%) and centre (68%) are chosen so it reaches
-   zero at 68 + 28 = 96%… and its transparent stop at 72% of that radius brings
-   it to zero by 88%. It is contained on purpose. */
+   The pool's vertical radius (30%) and centre (70%) are chosen so it reaches
+   zero at 70 + 30 = 100%… and its transparent stop at 72% of that radius brings
+   it to zero by 92%. It is contained on purpose.
+
+   NOTE ON THE ATTRIBUTE NAME: `data-hero-theme="dusk"` now means "the dark
+   hero treatment" — dark top, cream copy, cream nav, 114svh — rather than a
+   particular palette. The palette below is `aurora`. Renaming the attribute
+   would mean touching the pre-paint script in __root.tsx, which is the one
+   piece of this that has to be right on the very first frame, so the name has
+   been left alone and this comment carries the truth instead. */
 html[data-hero-theme="dusk"] .vn-hero {
   background:
     radial-gradient(
-      85% 28% at 50% 68%,
-      rgba(255, 248, 235, 0.8) 0%,
-      rgba(255, 248, 235, 0) 72%
+      80% 30% at 50% 70%,
+      rgba(255, 240, 214, 0.72) 0%,
+      rgba(255, 240, 214, 0) 72%
     ),
     linear-gradient(
       180deg,
-      #171f29 0%,
-      #2b3641 22%,
-      #6f736d 48%,
-      #b3ad9f 66%,
-      #dcd6ca 80%,
-      var(--color-cream) 90%,
+      #03161c 0%,
+      #0a2f36 24%,
+      #2f6f6b 46%,
+      #8fa593 66%,
+      #d8d2c3 84%,
+      var(--color-cream) 93%,
       var(--color-cream) 100%
     );
 }
@@ -2573,20 +2580,41 @@ html[data-hero-theme="dusk"] .vn-hero .vn-hero-scrim {
   display: none;
 }
 
-/* ═══════════════ THE LOOK EXPERIMENTS ═══════════════════════════════════
-   Additive, and reachable only at /?look=noir | aurora | gallery. Nothing here
-   applies to the shipped hero: without the attribute the dusk rules above are
-   the whole story. Delete this block, the extra variants in Studio.tsx and the
-   search param in routes/index.tsx to undo the experiment entirely.
+/* ═══════════════ THE ALTERNATIVE LOOKS ══════════════════════════════════
+   Aurora ships, and it is the base gradient above rather than an override —
+   the hero's palette has to be right on the very first painted frame, and an
+   override applied from an effect would flash the old one first.
 
-   Each look changes the page as well as the rig, because they have to agree.
-   The devices are metal, so they mirror an environment cubemap built to match
-   this gradient; light the phones one way and paint the page another and they
-   stop looking like they are in the same room.
+   What is left here are the alternatives, reachable at
+   /?look=dusk | noir | gallery. Each repaints the page as well as the rig,
+   because they have to agree: the devices are metal, so they mirror an
+   environment cubemap built to match this gradient. Light the phones one way
+   and paint the page another and they stop looking like they are in the same
+   room.
 
-   Every one still lands on var(--color-cream) before 100%, which is the rule
-   that keeps the hero from ending on a ruled line across the page.
+   Every one lands on var(--color-cream) before 100%, which is the rule that
+   keeps the hero from ending on a ruled line across the page.
+
+   REVERSIBLE: to put dusk back as the default, move its gradient below into
+   the `data-hero-theme="dusk"` rule above and change the two `aurora`
+   defaults in routes/index.tsx and HeroOrbit.tsx.
    ════════════════════════════════════════════════════════════════════════ */
+
+/* The original: navy sky, warm floor, no rim on the devices. */
+html[data-hero-look="dusk"] .vn-hero {
+  background:
+    radial-gradient(85% 28% at 50% 68%, rgba(255, 248, 235, 0.8) 0%, rgba(255, 248, 235, 0) 72%),
+    linear-gradient(
+      180deg,
+      #171f29 0%,
+      #2b3641 22%,
+      #6f736d 48%,
+      #b3ad9f 66%,
+      #dcd6ca 80%,
+      var(--color-cream) 90%,
+      var(--color-cream) 100%
+    );
+}
 
 /* Near-black room, one tight warm pool under the devices. */
 html[data-hero-look="noir"] .vn-hero {
@@ -2604,21 +2632,8 @@ html[data-hero-look="noir"] .vn-hero {
     );
 }
 
-/* The brand's teal as the sky, cream as the floor. */
-html[data-hero-look="aurora"] .vn-hero {
-  background:
-    radial-gradient(80% 30% at 50% 70%, rgba(255, 240, 214, 0.72) 0%, rgba(255, 240, 214, 0) 72%),
-    linear-gradient(
-      180deg,
-      #03161c 0%,
-      #0a2f36 24%,
-      #2f6f6b 46%,
-      #8fa593 66%,
-      #d8d2c3 84%,
-      var(--color-cream) 93%,
-      var(--color-cream) 100%
-    );
-}
+/* No rule for `aurora`: it is the base gradient above, so /?look=aurora simply
+   falls through to the default. */
 
 /* High key. The copy has to invert with it — cream text on a pale hero is
    unreadable, and the whole reason the dusk hero can use cream text is that its
