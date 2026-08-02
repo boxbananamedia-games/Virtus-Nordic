@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { APPLICATIONS, pick } from "../../../lib/applications";
@@ -178,6 +178,40 @@ const SPIN_FROM = INTRO.gate - INTRO.boardSpeed * INTRO.glide;
 /** The crossing: gathers speed off-screen, sails, and settles onto the gate. */
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
+
+/**
+ * Resolves once the hero copy has finished arriving.
+ *
+ * The copy and the ring run on unrelated clocks. The copy's CSS animations
+ * start at first paint; the ring's starts whenever its models and plates have
+ * finished decoding. On a cold load the copy is long settled before the ring
+ * exists — but on a warm cache, which is every repeat visit and every time the
+ * site is being demonstrated, the ring can mount while the wordmark is still
+ * fading up, and two entrances play over each other.
+ *
+ * Waiting here makes the order always copy, then arrival, and costs nothing in
+ * the common case: a finished CSS animation is still filling, so it is still
+ * returned by getAnimations() with its promise already resolved, and this
+ * settles within a microtask.
+ *
+ * Deliberately not the other way round. Gating the copy on the ring would put
+ * the pitch and both CTAs behind 3.7MB of WebGL, which is the preloader
+ * mistake wearing a different hat.
+ *
+ * Fails open, twice over: nothing matching the selector resolves immediately,
+ * and an animation that never settles is overtaken by the timeout. A hero that
+ * starts a beat early is a blemish; one that never starts is a broken page.
+ */
+function heroCopySettled(): Promise<unknown> {
+  if (typeof document === "undefined") return Promise.resolve();
+  const parts = document.querySelectorAll(".vn-hero-copy .enter");
+  const running = [...parts].flatMap((el) => el.getAnimations?.() ?? []);
+  if (!running.length) return Promise.resolve();
+  return Promise.race([
+    Promise.all(running.map((a) => a.finished.catch(() => undefined))),
+    new Promise((resolve) => setTimeout(resolve, 2500)),
+  ]);
+}
 
 /**
  * Lap speed at `t` seconds after the ring appeared, in degrees per second.
@@ -483,13 +517,27 @@ function Ring({
    *  exactly mergeTime(k). Static but composed under reduce: an arrangement
    *  where all five are visible rather than stacking behind one another. */
   const spinRef = useRef(reduced ? 18 : SPIN_FROM);
-  /** Seconds since this component mounted — which, because the whole ring sits
-   *  behind one Suspense boundary, is the moment all five devices were ready.
-   *  Everything in the entrance is timed off this one value. */
+  /** Seconds of entrance elapsed. Everything in the entrance is timed off this
+   *  one value, and it does not start until BOTH the models are ready (this
+   *  component exists) and the hero copy has landed (`armed`). */
   const clockRef = useRef(0);
+  /** Held until the copy has finished arriving — see heroCopySettled. Until
+   *  then the clock stays at zero, which parks every device off-screen left,
+   *  so the hero simply shows its settled copy and nothing else. */
+  const armed = useRef(false);
+
+  useEffect(() => {
+    let live = true;
+    void heroCopySettled().then(() => {
+      if (live) armed.current = true;
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useFrame((_, delta) => {
-    if (reduced) return;
+    if (reduced || !armed.current) return;
     // Clamp delta so a backgrounded tab does not jump the orbit on return.
     const dt = Math.min(delta, 0.1);
     clockRef.current += dt;
