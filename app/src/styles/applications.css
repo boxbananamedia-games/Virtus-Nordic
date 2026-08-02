@@ -2546,16 +2546,16 @@ html[data-hero-theme="dusk"] .vn-hero {
   background:
     radial-gradient(
       80% 30% at 50% 70%,
-      rgba(255, 240, 214, 0.72) 0%,
-      rgba(255, 240, 214, 0) 72%
+      rgba(252, 238, 216, 0.52) 0%,
+      rgba(252, 238, 216, 0) 72%
     ),
     linear-gradient(
       180deg,
-      #03161c 0%,
-      #0a2f36 24%,
-      #2f6f6b 46%,
-      #8fa593 66%,
-      #d8d2c3 84%,
+      #03151a 0%,
+      #0b2a30 24%,
+      #2c625f 46%,
+      #8b9b8d 66%,
+      #d6d0c2 84%,
       var(--color-cream) 93%,
       var(--color-cream) 100%
     );

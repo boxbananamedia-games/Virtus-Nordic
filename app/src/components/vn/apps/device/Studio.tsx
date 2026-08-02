@@ -148,18 +148,28 @@ function NoirLighting() {
 function AuroraLighting() {
   return (
     <>
-      <pointLight position={[0, -13, 13]} intensity={3600} decay={2} color="#fff0d8" />
-      {/* Teal rim, high and behind. Brand colour doing structural work. */}
-      <pointLight position={[-9, 12, -15]} intensity={5200} decay={2} color="#4fd6c4" />
-      <pointLight position={[13, 2, -13]} intensity={2600} decay={2} color="#2f9d94" />
-      <ambientLight intensity={0.025} />
+      {/* Cooled down from the first cut, which read as glary. Measured rather
+          than eyeballed: it was never brighter than the rig it replaced — mean
+          luminance 0.520 against dusk's 0.560 — but it CLIPPED more, 5.90% of
+          the frame blown against 5.51%, and clipping is what the eye calls
+          glare. So the wash came down and the rim stayed up: contrast is what
+          makes the devices prominent, and prominence was the part worth
+          keeping. The teal was pulled toward the brand's own #1b6b6b as well;
+          the first pass sat nearer aquamarine, which is vivid rather than
+          expensive. */}
+      <pointLight position={[0, -13, 13]} intensity={2900} decay={2} color="#ffeed6" />
+      {/* Teal rim, high and behind. Brand colour doing structural work, and the
+          one light deliberately left near full strength. */}
+      <pointLight position={[-9, 12, -15]} intensity={4600} decay={2} color="#3fb3a6" />
+      <pointLight position={[13, 2, -13]} intensity={2100} decay={2} color="#2a857f" />
+      <ambientLight intensity={0.02} />
 
       <Environment resolution={ENV_RES} frames={1}>
-        <GradientDome top="#04171c" bottom="#fff2dc" />
+        <GradientDome top="#04161b" bottom="#f7ecd6" />
         <Lightformer
           form="rect"
-          intensity={3.6}
-          color="#fff4e4"
+          intensity={2.9}
+          color="#fdf0de"
           position={[0, -8, 0]}
           scale={[16, 5, 1]}
           rotation={[Math.PI / 2, 0, 0]}
@@ -168,16 +178,16 @@ function AuroraLighting() {
             what a device mirrors along its upper edge. */}
         <Lightformer
           form="rect"
-          intensity={5}
-          color="#3fd0bd"
+          intensity={3.6}
+          color="#45b8ab"
           position={[0, 11, -6]}
           scale={[20, 2.5, 1]}
           rotation={[-Math.PI / 2.6, 0, 0]}
         />
         <Lightformer
           form="rect"
-          intensity={4}
-          color="#63e0cf"
+          intensity={3}
+          color="#52bfb2"
           position={[-12, 4, -8]}
           scale={[1.4, 14, 1]}
           rotation={[0, Math.PI / 3.2, 0]}
@@ -378,12 +388,17 @@ export function RoomLighting() {
 function HeroBloom() {
   return (
     <EffectComposer multisampling={0} enableNormalPass={false}>
+      {/* Held down deliberately. Bloom is the only thing here that CLIPS —
+          it adds light to pixels that are already the brightest in frame — and
+          clipping is what reads as glare. At 0.32 it put more of the frame over
+          0.95 than the un-bloomed rig it replaced. This is enough to catch a
+          specular edge and not enough to halo. */}
       <Bloom
-        intensity={0.32}
-        luminanceThreshold={0.9}
-        luminanceSmoothing={0.18}
+        intensity={0.16}
+        luminanceThreshold={0.93}
+        luminanceSmoothing={0.14}
         mipmapBlur
-        radius={0.42}
+        radius={0.38}
       />
     </EffectComposer>
   );
