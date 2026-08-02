@@ -96,30 +96,34 @@ const STAGE = { y: -3, z: 33 };
 const STAGE_TAU = { in: 0.17, out: 0.24 };
 
 /**
- * The entrance: a flypast, then a spin-down.
+ * The entrance: a procession, caught by a spin-down.
  *
- * The formation arrives as one thing rather than five — the devices come in
- * from off-screen left in a line, screens to camera, and fold onto their own
- * slots in the ring. The ring then takes off at roughly a lap a second and
- * decays to its cruising 8°/s, so the carousel spins up and settles rather than
- * simply starting.
+ * The devices enter one at a time from the same point off-screen left, screens
+ * square to the camera, and run in along a line. Because `stagger` is well
+ * short of `glide`, three or four are in the air at once — a stream, not a
+ * rigid bar arriving together.
  *
- * The whole formation is choreographed, which is why the ring shares ONE
- * Suspense boundary: five devices trickling in as their assets resolve cannot
- * make a formation. That costs waiting on the slowest model, which is a fair
- * price now the plates are WebP and the models load in parallel.
+ * The lap starts the moment the FIRST device reaches its slot, not the last.
+ * That matters: waiting for the whole formation leaves the early arrivals
+ * standing in a motionless ring, which is exactly the dead beat this replaces.
+ * Everyone after the first flies into a ring already turning, so their target
+ * slot is sweeping away from them and they curve in behind it — the run in
+ * becomes the spiral rather than preceding it.
  *
- * `spinFrom` is derived, not chosen. The last device in the line finishes its
- * glide at `glide + (n-1) * stagger`, and the lap must not start before then:
- * rotation during the glide is a blend towards each device's own fixed slot
- * angle, and an angle that is advancing underneath that blend would wrap
- * through 2π and snap.
+ * The ring takes off at 480°/s and decays to its cruising 8°/s, so the carousel
+ * spins up and settles rather than simply starting.
+ *
+ * The whole thing is one piece of choreography, which is why the ring shares
+ * ONE Suspense boundary: five devices trickling in as their own assets resolve
+ * cannot make a procession. That costs waiting on the slowest model, which is
+ * affordable now the plates are WebP and everything loads in parallel.
  */
 const INTRO = {
   /** Seconds for one device's run in from the line. */
-  glide: 0.75,
-  /** Seconds between successive devices leaving the line. */
-  stagger: 0.05,
+  glide: 0.85,
+  /** Seconds between successive devices setting off. Deliberately much less
+   *  than `glide`, so the line has several devices on it at once. */
+  stagger: 0.22,
   /** Lap speed multiplier the instant the ring takes off. 60 x 8°/s = 480°/s,
    *  a lap and a third every second. */
   boost: 60,
@@ -131,16 +135,16 @@ const INTRO = {
    *  again. A threshold rather than a timeout, so it tracks `boost` and `decay`
    *  if either is retuned. */
   grabbable: 6,
-  /** Gap between devices along the line, in scene units. Where the line STARTS
-   *  is not a constant: it is derived from the camera frustum each frame, so
-   *  the formation is off-screen at every aspect rather than at the one it was
-   *  eyeballed on. */
-  gap: 15,
-  /** Clearance beyond the frustum edge, in scene units. A device is 7.15 wide. */
+  /** Clearance beyond the frustum edge, in scene units. A device is 7.15 wide,
+   *  so this puts its trailing edge 3.4 units clear. Where the line starts is
+   *  otherwise derived from the camera each frame rather than tuned, so the
+   *  devices are off-screen at every aspect — a constant that looked right at
+   *  16:9 was still on screen at 32:9. */
   margin: 7,
 };
 
-const INTRO_SPIN_FROM = INTRO.glide + (APPLICATIONS.length - 1) * INTRO.stagger;
+/** The lap begins when the first device lands. */
+const INTRO_SPIN_FROM = INTRO.glide;
 
 /** Fast in, decelerating — the devices run in and settle onto their slots. */
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
@@ -244,7 +248,7 @@ type Hit = { el: HTMLButtonElement | null; berth: HTMLSpanElement | null };
 function Device({
   index,
   screenTexture,
-  angleRef,
+  spinRef,
   clockRef,
   easing,
   hits,
@@ -253,7 +257,9 @@ function Device({
 }: {
   index: number;
   screenTexture: string;
-  angleRef: { current: number };
+  /** Total degrees the lap has turned since the ring appeared. Unwrapped, i.e.
+   *  it keeps counting past 360 — see the rotation blend below for why. */
+  spinRef: { current: number };
   /** Seconds since the whole formation appeared. Shared, so the entrance is one
    *  piece of choreography rather than five. */
   clockRef: { current: number };
@@ -278,8 +284,14 @@ function Device({
     if (!g) return;
 
     const n = APPLICATIONS.length;
-    const u = (angleRef.current / 360 + index / n) % 1;
-    const a = sampleEasing(easing, u) * 2 * Math.PI;
+    // Split the device's phase into whole laps plus the fraction within one, so
+    // the wrapped angle `a` (what the ring geometry wants) and the unwrapped
+    // `aTotal` (what the entrance blend wants) are both available and always
+    // differ by an exact multiple of 2π.
+    const phase = spinRef.current / 360 + index / n;
+    const laps = Math.floor(phase);
+    const a = sampleEasing(easing, phase - laps) * 2 * Math.PI;
+    const aTotal = a + laps * 2 * Math.PI;
 
     // The ring never stops for a hover, and this device never stops travelling
     // along it. Staging is a blend AWAY from a position that keeps advancing
@@ -289,10 +301,7 @@ function Device({
     const oy = Math.sin(a) * ORBIT.radius * ORBIT.rise + ORBIT.centreY;
     const oz = Math.cos(a) * ORBIT.radius;
 
-    // The run in from the line, 0 -> 1. The lap is held at a standstill until
-    // the last device has finished (see INTRO_SPIN_FROM), so `a` is this
-    // device's own fixed slot angle throughout and the rotation blend below has
-    // a still target to aim at.
+    // This device's own run in, 0 -> 1, offset from the one in front of it.
     const entry = reduced
       ? 1
       : easeOutCubic(
@@ -322,12 +331,15 @@ function Device({
     const ry = oy + (STAGE.y - oy) * e;
     const rz = oz + (STAGE.z - oz) * e;
 
-    // …and where it starts: off the left edge of whatever frustum this viewport
-    // actually has, at the height of the ring's centre and its mid depth, each
-    // device queued a gap further back so the five read as a line.
+    // …and where it starts: the same point off the left edge of whatever
+    // frustum this viewport actually has, at the height of the ring's centre
+    // and its mid depth. Every device enters HERE — they are separated in time
+    // by `stagger`, not spaced out along a bar, which is what makes it a
+    // procession. Their slots are already sweeping by the time the later ones
+    // set off, so they curve in behind them.
     const tanHalfFov = Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360);
     const halfWidth = ORBIT.cameraZ * tanHalfFov * (size.width / size.height);
-    const lineX = -(halfWidth + INTRO.margin + index * INTRO.gap);
+    const lineX = -(halfWidth + INTRO.margin);
 
     g.position.set(
       lineX + (rx - lineX) * entry,
@@ -336,13 +348,23 @@ function Device({
     );
     // Face radially outward — the entire carousel rule in one line. The device
     // nearest the camera therefore presents its screen with no keyframing. The
-    // second term turns that into a full revolution ending square to the camera
-    // as the device reaches the stage, and unwinds it on the way back.
+    // `turnToCamera` term makes that a full revolution ending square to the
+    // camera as a device reaches centre stage, and unwinds it on the way back.
     //
-    // Scaling the whole thing by `entry` means the devices fly in square to the
-    // camera, screens showing, and turn onto their radial heading as they take
-    // their slots. At entry = 1 it is exactly the carousel rule again.
-    g.rotation.set(0, (a + (turnToCamera(a) + Math.PI * 2) * e) * entry, 0);
+    // Devices fly in square to the camera, screens showing, and turn onto their
+    // radial heading as they take their slots. The turn is weighted late —
+    // `entry` squared rather than `entry` — because the point of the run in is
+    // that you see what is on the screens: measured, a device is still only 35°
+    // off camera at the halfway mark this way, against 69° for a straight
+    // blend.
+    //
+    // This uses the UNWRAPPED angle. The lap is already running while the later
+    // devices are still arriving, and `a * turn` would jump by 2π * turn every
+    // time the lap wrapped — a visible snap for any turn below 1. `aTotal`
+    // never wraps, and at turn = 1 the two are identical as far as a rotation
+    // is concerned.
+    const turn = entry * entry;
+    g.rotation.set(0, aTotal * turn + (turnToCamera(a) + Math.PI * 2) * e, 0);
 
     // Apparent height from the perspective divide, so a hit area shrinks with
     // its device as it travels to the back of the orbit.
@@ -385,8 +407,7 @@ function Device({
     // whipping round — yanking a device to centre stage out of a formation
     // doing better than a lap a second reads as a glitch, not a hover.
     const inert =
-      entry < 1 ||
-      (!reduced && lapSpeed(clockRef.current) > ORBIT.speed * INTRO.grabbable);
+      entry < 1 || (!reduced && lapSpeed(clockRef.current) > ORBIT.speed * INTRO.grabbable);
     const facingAway = (Math.cos(g.rotation.y) < -0.35 && e < 0.02) || inert;
     el.style.pointerEvents = facingAway ? "none" : "auto";
     el.style.opacity = facingAway ? "0" : "1";
@@ -430,9 +451,11 @@ function Ring({
   reduced: boolean;
 }) {
   const easing = useOrbitEasing();
-  // Static but composed: under reduce the formation holds an arrangement where
-  // all five are visible rather than stacking behind one another.
-  const angleRef = useRef(reduced ? 18 : 0);
+  /** Total degrees turned, NOT reduced modulo 360 — the entrance blends against
+   *  an unwrapped angle so a lap boundary cannot snap it. Static but composed
+   *  under reduce: an arrangement where all five are visible rather than
+   *  stacking behind one another. */
+  const spinRef = useRef(reduced ? 18 : 0);
   /** Seconds since this component mounted — which, because the whole ring sits
    *  behind one Suspense boundary, is the moment all five devices were ready.
    *  Everything in the entrance is timed off this one value. */
@@ -445,9 +468,9 @@ function Ring({
     clockRef.current += dt;
     // The lap runs regardless of what the pointer is doing. Freezing it on
     // hover made the whole hero look broken for as long as the pointer rested
-    // anywhere near a device. It is held at zero only for the entrance, while
-    // the devices are still running in from the line.
-    angleRef.current = (angleRef.current + dt * lapSpeed(clockRef.current)) % 360;
+    // anywhere near a device. It is stationary only until the first device has
+    // landed, and never again.
+    spinRef.current += dt * lapSpeed(clockRef.current);
   });
 
   return (
@@ -457,7 +480,7 @@ function Ring({
           key={app.id}
           index={i}
           screenTexture={plateUrl(app.id)}
-          angleRef={angleRef}
+          spinRef={spinRef}
           clockRef={clockRef}
           easing={easing}
           hits={hits}
