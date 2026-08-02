@@ -96,58 +96,100 @@ const STAGE = { y: -3, z: 33 };
 const STAGE_TAU = { in: 0.17, out: 0.24 };
 
 /**
- * The entrance: a procession, caught by a spin-down.
+ * The entrance: a line, then a spin-down.
  *
- * The devices enter one at a time from the same point off-screen left, screens
- * square to the camera, and run in along a line. Because `stagger` is well
- * short of `glide`, three or four are in the air at once — a stream, not a
- * rigid bar arriving together.
+ * Devices enter one at a time from the same point off-screen left and ride a
+ * conveyor rightwards, screens square to the camera. Because they all travel at
+ * one constant speed, their spacing is exactly `stagger * speed` and cannot
+ * bunch or cross. The line composes centred, holds for a beat — the only moment
+ * in the entrance where all five screens can be read, which is the whole
+ * argument the hero is making — and then folds into the ring as the lap takes
+ * off and decays to its cruising 8°/s.
  *
- * The lap starts the moment the FIRST device reaches its slot, not the last.
- * That matters: waiting for the whole formation leaves the early arrivals
- * standing in a motionless ring, which is exactly the dead beat this replaces.
- * Everyone after the first flies into a ring already turning, so their target
- * slot is sweeping away from them and they curve in behind it — the run in
- * becomes the spiral rather than preceding it.
+ * Measured at 1600x912: the assembled line sits at 0.19 / 0.35 / 0.50 / 0.65 /
+ * 0.81 of the frame, evenly spaced, with the middle device dead centre.
  *
- * The ring takes off at 480°/s and decays to its cruising 8°/s, so the carousel
- * spins up and settles rather than simply starting.
+ * Nothing in here was designed by arithmetic alone; see art-source/probe-hero
+ * and art-source/capture-hero, which is how the bunching and the strobing were
+ * found. Change the numbers and run them again rather than reasoning about it.
  *
  * The whole thing is one piece of choreography, which is why the ring shares
  * ONE Suspense boundary: five devices trickling in as their own assets resolve
- * cannot make a procession. That costs waiting on the slowest model, which is
+ * cannot make a line. That costs waiting on the slowest model, which is
  * affordable now the plates are WebP and everything loads in parallel.
  */
 const INTRO = {
-  /** Seconds for one device's run in from the line. */
-  glide: 0.85,
-  /** Seconds between successive devices setting off. Deliberately much less
-   *  than `glide`, so the line has several devices on it at once. */
-  stagger: 0.22,
-  /** Lap speed multiplier the instant the ring takes off. 60 x 8°/s = 480°/s,
-   *  a lap and a third every second. */
-  boost: 60,
+  /** Seconds between successive devices entering. Their spacing on the line is
+   *  this times the conveyor speed, so it is uniform by construction — the
+   *  earlier version eased each device towards its own distant seat, which let
+   *  them travel at different rates, cross over and bunch up at the left. */
+  stagger: 0.18,
+  /** When the line starts folding into the ring, in seconds. Everything about
+   *  the line is derived from this: the conveyor runs at whatever speed puts
+   *  the middle device dead centre `hold` seconds before it. */
+  foldAt: 1.25,
+  /** Seconds the composed line is held before it folds.
+   *
+   *  Without it the line is only centred for the single instant the fold
+   *  begins, so the one moment in the entrance where all five screens face the
+   *  camera is over before it can be read — and that moment is the entire
+   *  argument the hero is making. This is an accent, not the dead beat an
+   *  earlier version had: two tenths against the second the devices previously
+   *  spent parked in a motionless ring. */
+  hold: 0.18,
+  /** Scene units towards the camera the line sits, against a ring radius of
+   *  22.6. On the ring's own plane the devices measured 0.34 of viewport height
+   *  against the 0.45 of the settled front device, which read as small; here
+   *  they are nearer 0.40 and still clear of each other five across. */
+  z: 10,
+  /** Seconds for the line to fold into the ring. */
+  fold: 0.75,
+  /** Lap speed multiplier when the fold begins. 28 x 8°/s = 224°/s, a lap every
+   *  1.6 seconds. The previous 480°/s was a strobe: at that rate the devices
+   *  spend half their time showing backs and edges, and a carousel whose job is
+   *  presenting screens cannot afford that. */
+  boost: 28,
   /** Seconds for that to decay towards 1x. Total extra rotation is
-   *  speed * (boost - 1) * decay ≈ 470°, so about one and a third bonus laps,
-   *  visibly slowing by three seconds and cruising by seven. */
-  decay: 1,
+   *  speed * (boost - 1) * decay ≈ 520°, about one and a half bonus laps. */
+  decay: 2.4,
   /** Below this multiple of the cruising speed the devices become targetable
    *  again. A threshold rather than a timeout, so it tracks `boost` and `decay`
    *  if either is retuned. */
-  grabbable: 6,
+  grabbable: 4,
   /** Clearance beyond the frustum edge, in scene units. A device is 7.15 wide,
-   *  so this puts its trailing edge 3.4 units clear. Where the line starts is
-   *  otherwise derived from the camera each frame rather than tuned, so the
-   *  devices are off-screen at every aspect — a constant that looked right at
-   *  16:9 was still on screen at 32:9. */
+   *  so this puts its trailing edge 3.4 units clear. Where devices enter is
+   *  otherwise derived from the camera each frame rather than tuned, so they
+   *  are off-screen at every aspect — a constant that looked right at 16:9 was
+   *  still on screen at 32:9. */
   margin: 7,
 };
 
-/** The lap begins when the first device lands. */
-const INTRO_SPIN_FROM = INTRO.glide;
+/** When the assembled line starts folding into the ring — and, with it, when
+ *  the lap takes off. Derived: the last device sets off at `(n-1) * stagger`
+ *  and needs `glide` to arrive. */
+const INTRO_FOLD_AT = INTRO.foldAt;
+const INTRO_SPIN_FROM = INTRO_FOLD_AT;
+/** Index of the device that should be dead centre when the fold begins. */
+const INTRO_MID = (APPLICATIONS.length - 1) / 2;
 
-/** Fast in, decelerating — the devices run in and settle onto their slots. */
+/**
+ * Decelerating, but only gently — a device runs in and settles onto the line.
+ *
+ * Quadratic rather than cubic: a cubic ease-out puts 45% of the travel into the
+ * first eighth of a second, which reads as the device appearing in the middle
+ * of the frame rather than arriving from the edge of it. This spends the
+ * distance more evenly, so the run in is something you can actually watch.
+ */
+/**
+ * The fold leaves at speed and decelerates into the ring.
+ *
+ * Ease-out rather than ease-in-out on purpose: the line is already travelling
+ * when the fold begins, and a curve that starts from rest would stall it for a
+ * beat first. Starting fast means the fold picks the motion straight up, so the
+ * conveyor can simply stop and nothing on screen ever pauses.
+ */
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
 /**
  * Lap speed at `t` seconds after the ring appeared, in degrees per second.
@@ -301,14 +343,12 @@ function Device({
     const oy = Math.sin(a) * ORBIT.radius * ORBIT.rise + ORBIT.centreY;
     const oz = Math.cos(a) * ORBIT.radius;
 
-    // This device's own run in, 0 -> 1, offset from the one in front of it.
-    const entry = reduced
-      ? 1
-      : easeOutCubic(
-          Math.min(1, Math.max(0, (clockRef.current - index * INTRO.stagger) / INTRO.glide)),
-        );
+    // Two stages, each 0 -> 1: this device's own run in from off-screen onto
+    // the line, then the whole line folding into the ring.
+    const clock = clockRef.current;
+    const fold = reduced ? 1 : easeOutCubic(clamp01((clock - INTRO_FOLD_AT) / INTRO.fold));
 
-    if (reduced || entry < 1) {
+    if (reduced || fold < 1) {
       // No staging mid-entrance: hovering would blend towards a ring position
       // the device has not reached yet.
       focus.current = 0;
@@ -331,39 +371,53 @@ function Device({
     const ry = oy + (STAGE.y - oy) * e;
     const rz = oz + (STAGE.z - oz) * e;
 
-    // …and where it starts: the same point off the left edge of whatever
-    // frustum this viewport actually has, at the height of the ring's centre
-    // and its mid depth. Every device enters HERE — they are separated in time
-    // by `stagger`, not spaced out along a bar, which is what makes it a
-    // procession. Their slots are already sweeping by the time the later ones
-    // set off, so they curve in behind them.
+    // The line. Every device enters at the SAME point off the left edge of
+    // whatever frustum this viewport actually has — they are separated in time,
+    // not spaced along a bar, which is what makes it a procession — and takes
+    // its own place along a conveyor running left to right at the height of the
+    // ring's centre and its mid depth. One depth for all five means one size
+    // for all five, which is what reads as a line rather than a scatter.
     const tanHalfFov = Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360);
-    const halfWidth = ORBIT.cameraZ * tanHalfFov * (size.width / size.height);
-    const lineX = -(halfWidth + INTRO.margin);
-
+    // Measured on the line's own plane, not the ring's, since that is where
+    // these devices are and where "off the edge of the frame" has to be true.
+    const halfWidth = (ORBIT.cameraZ - INTRO.z) * tanHalfFov * (size.width / size.height);
+    const enterAt = -(halfWidth + INTRO.margin);
+    // A conveyor: every device enters at the same point and travels right at
+    // the same constant speed, so the spacing between them is exactly
+    // speed * stagger and cannot drift, bunch or cross. The speed is not a
+    // tuned number — it is whatever puts the middle device dead centre as the
+    // fold begins, which also centres the line, and it rescales itself with the
+    // viewport because `enterAt` does.
+    const conveyor = -enterAt / (INTRO_FOLD_AT - INTRO.hold - INTRO_MID * INTRO.stagger);
+    // The conveyor stops dead when the fold starts, and that is safe precisely
+    // because the fold is an ease-OUT: it leaves at speed, so it picks the
+    // motion up in the same frame and nothing pauses. Letting the conveyor run
+    // on underneath instead slung the leading device out to the right edge
+    // before the ring had claimed it.
+    const carried = Math.min(clock, INTRO_FOLD_AT - INTRO.hold);
+    const lx = enterAt + conveyor * Math.max(0, carried - index * INTRO.stagger);
+    // Line -> ring. `entry` has always finished before `fold` starts, so these
+    // two stages never fight over the same device.
     g.position.set(
-      lineX + (rx - lineX) * entry,
-      ORBIT.centreY + (ry - ORBIT.centreY) * entry,
-      rz * entry,
+      lx + (rx - lx) * fold,
+      ORBIT.centreY + (ry - ORBIT.centreY) * fold,
+      INTRO.z + (rz - INTRO.z) * fold,
     );
     // Face radially outward — the entire carousel rule in one line. The device
     // nearest the camera therefore presents its screen with no keyframing. The
     // `turnToCamera` term makes that a full revolution ending square to the
     // camera as a device reaches centre stage, and unwinds it on the way back.
     //
-    // Devices fly in square to the camera, screens showing, and turn onto their
-    // radial heading as they take their slots. The turn is weighted late —
-    // `entry` squared rather than `entry` — because the point of the run in is
-    // that you see what is on the screens: measured, a device is still only 35°
-    // off camera at the halfway mark this way, against 69° for a straight
-    // blend.
+    // Square to the camera for the whole of the line — the run in exists so the
+    // screens can be read — and turning onto the radial heading only as the
+    // line folds. Weighted late within the fold as well, so the turn happens on
+    // the way into the ring rather than on the way out of the line.
     //
-    // This uses the UNWRAPPED angle. The lap is already running while the later
-    // devices are still arriving, and `a * turn` would jump by 2π * turn every
-    // time the lap wrapped — a visible snap for any turn below 1. `aTotal`
-    // never wraps, and at turn = 1 the two are identical as far as a rotation
-    // is concerned.
-    const turn = entry * entry;
+    // This uses the UNWRAPPED angle. The lap is running by the time the fold is
+    // under way, and `a * turn` would jump by 2π * turn every time the lap
+    // wrapped — a visible snap for any turn below 1. `aTotal` never wraps, and
+    // at turn = 1 the two are identical as far as a rotation is concerned.
+    const turn = fold * fold;
     g.rotation.set(0, aTotal * turn + (turnToCamera(a) + Math.PI * 2) * e, 0);
 
     // Apparent height from the perspective divide, so a hit area shrinks with
@@ -406,8 +460,7 @@ function Device({
     // And never before the device has arrived, or while the ring is still
     // whipping round — yanking a device to centre stage out of a formation
     // doing better than a lap a second reads as a glitch, not a hover.
-    const inert =
-      entry < 1 || (!reduced && lapSpeed(clockRef.current) > ORBIT.speed * INTRO.grabbable);
+    const inert = fold < 1 || (!reduced && lapSpeed(clock) > ORBIT.speed * INTRO.grabbable);
     const facingAway = (Math.cos(g.rotation.y) < -0.35 && e < 0.02) || inert;
     el.style.pointerEvents = facingAway ? "none" : "auto";
     el.style.opacity = facingAway ? "0" : "1";
