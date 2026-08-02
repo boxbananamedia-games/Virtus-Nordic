@@ -96,77 +96,99 @@ const STAGE = { y: -3, z: 33 };
 const STAGE_TAU = { in: 0.17, out: 0.24 };
 
 /**
- * The entrance: the spiral assembles itself, one phone at a time.
+ * The entrance: a conveyor feeding a whirling ring, one phone at a time.
  *
- * The ring is spinning from its first frame — hard, decaying exponentially to
- * the cruising 8°/s — and the devices join it one by one. Each enters from
- * off-screen left already rotating about its own axis, because from the moment
- * it exists its rotation IS the carousel rule: the ring's spin and the
- * device's own spin are the same number. It then chases its slot, which is
- * sweeping round the whirl, so the flight wraps tighter and tighter onto the
- * ring — each phone is caught by the spiral in turn, nothing ever stands
- * still, and there is no handoff between phases because there are no phases.
- * (Earlier versions had them: a line that composed, held, then folded into the
- * ring. Every seam between stages read as a lurch or a pop on capture.)
+ * Every phone travels the same straight, fixed line: off-screen left to the
+ * GATE, the right-hand side of the ring. It merges at the exact moment its own
+ * slot sweeps through that point — merges are driven by ring rotation, not by
+ * a clock. Between one merge and the next the ring turns exactly `spacing`
+ * degrees (a full lap plus one slot), so each phone hooks on one slot directly
+ * behind the one before it and the queue assembles nose to tail; and because
+ * the boarding speed is constant, the arrival tempo is a metronome by
+ * construction: spacing / boardSpeed seconds per phone, exactly. The earlier
+ * version timed entries with a clock and let each phone chase its own whirling
+ * slot — tempos drifted and the flights wobbled; this one cannot do either.
  *
- * The one non-obvious piece is the dwell fade — see the angle computation in
- * Device. The cruising carousel eases each device to a near-stop at the front,
- * which is the point of a carousel; run at launch speed that same easing
- * swings every device between 0.2x and 1.13x of the lap rate within each lap.
- * Five devices, a lurch five times a lap: the ring read as being propelled in
- * bursts. A fast ring has to turn uniformly, so the dwell's weight is
- * cruise-speed / lap-speed — nothing at take-off, full at cruise, sliding
- * between the two exactly as smoothly as the speed itself decays.
+ * Boarding runs at two laps a second — the blur — and the moment the last
+ * phone merges, the speed decays on one exponential to the cruising 8°/s.
  *
- * The whole thing is timed off one clock, which is why the ring shares ONE
- * Suspense boundary: it must start with every model ready. Affordable now the
- * plates are WebP and everything loads in parallel.
+ * A phone's rotation is the carousel rule from its first frame, so it is
+ * already spinning about its own axis as it crosses. Its flight ends AT the
+ * gate at the exact moment its slot arrives, so position is continuous at the
+ * merge — the velocity change there is deliberate: the spiral snatches it.
  *
- * Tuned against art-source/capture-hero.mjs and probe-hero.mjs rather than by
- * reasoning about the maths — that is how the bunching, the strobing and the
- * bursts were found. Change a number, run them again.
+ * The dwell fade (see the angle computation in Device) is what keeps the fast
+ * ring turning uniformly instead of lurching five times a lap; the dwell
+ * returns as the ring slows. Everything here is tuned against
+ * art-source/capture-hero.mjs and probe-hero.mjs — change a number, run them
+ * again.
  */
 const INTRO = {
-  /** Seconds between successive devices entering. */
-  stagger: 0.38,
-  /** Seconds for one device's flight from off-screen onto the ring. */
+  /** Degrees the ring turns between one merge and the next: one lap plus one
+   *  slot, so every phone joins directly behind the previous one. */
+  spacing: 360 + 360 / APPLICATIONS.length,
+  /** The slot angle at which a phone merges, in degrees — the ring's right
+   *  side, just short of its rightmost point so the slot is still moving
+   *  rightward as it takes the phone. */
+  gate: 80,
+  /** Seconds for one phone's crossing from off-screen to the gate. Longer than
+   *  the tempo on purpose: the next phone sets off while the previous one is
+   *  still crossing, so the line always carries evenly spaced traffic — it is
+   *  the belt, not a queue of solo runs. */
   glide: 0.9,
-  /** Scene units towards the camera at which a device enters, against a ring
-   *  radius of 22.6 — near enough to read as full-size from its first frame. */
-  z: 10,
-  /** Lap speed multiplier at t = 0. 70 x 8°/s = 560°/s, better than one and a
-   *  half laps per second. */
-  boost: 70,
-  /** Seconds for the boost to decay towards 1x. Extra rotation is
-   *  speed * (boost - 1) * decay ≈ 745°, about two bonus laps: visibly slowing
-   *  inside a couple of seconds, cruising by about seven. */
-  decay: 1.35,
+  /** Lap speed while boarding, degrees per second. Constant — that is what
+   *  makes the tempo exact — and two laps a second, which is the blur. */
+  boardSpeed: 720,
+  /** Seconds for the post-boarding decay towards cruise. */
+  decay: 1.0,
   /** Below this multiple of the cruising speed the devices become targetable.
-   *  A threshold rather than a timeout, so it tracks `boost` and `decay` if
-   *  either is retuned. */
+   *  A threshold rather than a timeout, so it tracks the speed curve if it is
+   *  retuned. */
   grabbable: 4,
   /** Clearance beyond the frustum edge, in scene units. A device is 7.15 wide,
    *  so this puts its trailing edge 3.4 units clear — and the frustum is
    *  measured each frame rather than tuned once, so entry is off-screen at
-   *  every aspect. A constant that looked right at 16:9 was still on screen at
-   *  32:9. */
+   *  every aspect. */
   margin: 7,
 };
 
-/** Fast out of the gate, decelerating in — the flight of something arriving. */
-const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+/** Where the conveyor delivers: the gate's fixed position in world space. */
+const GATE = (() => {
+  const a = (INTRO.gate * Math.PI) / 180;
+  return {
+    x: Math.sin(a) * ORBIT.radius,
+    y: Math.sin(a) * ORBIT.radius * ORBIT.rise + ORBIT.centreY,
+    z: Math.cos(a) * ORBIT.radius,
+  };
+})();
+
+/** Boarding order. Slot angles grow with index, so "one slot directly behind
+ *  the previous phone" means descending index: 0, 4, 3, 2, 1. */
+const mergeK = (i: number) => (APPLICATIONS.length - i) % APPLICATIONS.length;
+/** When the k-th merge happens, in seconds. The first flight starts at t = 0 —
+ *  no dead air — and lands `glide` later; each subsequent merge is exactly one
+ *  tempo after the previous. */
+const mergeTime = (k: number) => INTRO.glide + (INTRO.spacing / INTRO.boardSpeed) * k;
+const BOARD_END = mergeTime(APPLICATIONS.length - 1);
+/** Spin at t = 0, chosen so that slot k is at the gate precisely at
+ *  mergeTime(k): spin(t) = SPIN_FROM + boardSpeed * t while boarding, and
+ *  SPIN_FROM + boardSpeed * mergeTime(0) = gate by construction. */
+const SPIN_FROM = INTRO.gate - INTRO.boardSpeed * INTRO.glide;
+
+/** The crossing: gathers speed off-screen, sails, and settles onto the gate. */
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2);
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
 
 /**
  * Lap speed at `t` seconds after the ring appeared, in degrees per second.
  *
- * One continuous exponential decay from the first frame — no gate, no stages.
- * It is the shape a flywheel makes: it never overshoots the cruising speed,
- * and it approaches it closely enough to be indistinguishable long before it
- * arrives.
+ * Constant while the phones board — the tempo depends on it — then one
+ * exponential decay to cruise, starting the instant the last phone merges.
+ * Continuous at the junction: the decay starts FROM the boarding speed.
  */
 function lapSpeed(t: number) {
-  return ORBIT.speed * (1 + (INTRO.boost - 1) * Math.exp(-t / INTRO.decay));
+  if (t <= BOARD_END) return INTRO.boardSpeed;
+  return ORBIT.speed + (INTRO.boardSpeed - ORBIT.speed) * Math.exp(-(t - BOARD_END) / INTRO.decay);
 }
 
 const plateUrl = (id: string) => `/lab-textures/${id}.webp`;
@@ -311,11 +333,14 @@ function Device({
     const oy = Math.sin(a) * ORBIT.radius * ORBIT.rise + ORBIT.centreY;
     const oz = Math.cos(a) * ORBIT.radius;
 
-    // This device's flight in, 0 -> 1 — one device per `stagger`, into a ring
-    // that is already turning.
-    const entry = reduced
-      ? 1
-      : easeOutCubic(clamp01((clock - index * INTRO.stagger) / INTRO.glide));
+    // This device's crossing, 0 -> 1, timed to end at the exact moment its own
+    // slot sweeps through the gate. Past its merge time it is 1 by definition —
+    // the phone belongs to the ring from then on.
+    const tm = mergeTime(mergeK(index));
+    const entry =
+      reduced || clock >= tm
+        ? 1
+        : easeInOutCubic(clamp01((clock - (tm - INTRO.glide)) / INTRO.glide));
 
     if (reduced || entry < 1) {
       // No staging mid-flight: hovering would blend towards a ring position the
@@ -340,22 +365,22 @@ function Device({
     const ry = oy + (STAGE.y - oy) * e;
     const rz = oz + (STAGE.z - oz) * e;
 
-    // Where it enters: off the left edge of whatever frustum this viewport
-    // actually has, at the ring's centre height, slightly towards the camera.
-    // From there it chases its own slot — a moving target, already sweeping
-    // round the whirl — so the flight in IS the spiral: the path wraps onto the
-    // ring as `entry` closes, and because the target's motion survives the
-    // blend, the device arrives already matching the ring's velocity.
     const tanHalfFov = Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360);
-    // Measured on the entry plane, not the ring's, since that is where the
-    // device is when "off the edge of the frame" has to be true.
-    const halfWidth = (ORBIT.cameraZ - INTRO.z) * tanHalfFov * (size.width / size.height);
-    const ex = -(halfWidth + INTRO.margin);
-    g.position.set(
-      ex + (rx - ex) * entry,
-      ORBIT.centreY + (ry - ORBIT.centreY) * entry,
-      INTRO.z + (rz - INTRO.z) * entry,
-    );
+    if (entry < 1) {
+      // The crossing: a straight, fixed line at the gate's own height and
+      // depth, from off the left edge of the frustum to the gate. The target
+      // does not move — the SLOT arrives at the gate as the phone does — which
+      // is what makes the line read as a belt. The earlier version aimed each
+      // phone at its own whirling slot, and the flights wobbled and bunched.
+      //
+      // Frustum width measured on the gate's plane, since that is where the
+      // phone is when "off the edge of the frame" has to be true.
+      const halfWidth = (ORBIT.cameraZ - GATE.z) * tanHalfFov * (size.width / size.height);
+      const ex = -(halfWidth + INTRO.margin);
+      g.position.set(ex + (GATE.x - ex) * entry, GATE.y, GATE.z);
+    } else {
+      g.position.set(rx, ry, rz);
+    }
     // Face radially outward — the entire carousel rule in one line. The device
     // nearest the camera presents its screen with no keyframing, and a device
     // flying in is already rotating about its own axis, because this IS its
@@ -454,9 +479,10 @@ function Ring({
   reduced: boolean;
 }) {
   const easing = useOrbitEasing();
-  /** Total degrees turned. Static but composed under reduce: an arrangement
+  /** Total degrees turned. Starts at SPIN_FROM so slot k reaches the gate at
+   *  exactly mergeTime(k). Static but composed under reduce: an arrangement
    *  where all five are visible rather than stacking behind one another. */
-  const spinRef = useRef(reduced ? 18 : 0);
+  const spinRef = useRef(reduced ? 18 : SPIN_FROM);
   /** Seconds since this component mounted — which, because the whole ring sits
    *  behind one Suspense boundary, is the moment all five devices were ready.
    *  Everything in the entrance is timed off this one value. */
