@@ -167,9 +167,6 @@ function Index() {
         </div>
       </section>
 
-      {/* ═══ CRAFT — the scroll film. ═══ */}
-      <ScrollCraft />
-
       {/* ═══ SERVICES TEASER ═══ */}
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-end">
@@ -260,6 +257,12 @@ function Index() {
           </ol>
         </div>
       </section>
+
+      {/* ═══ CRAFT — the scroll film. ═══
+          Last before the ask. The film ends on the VN logo composited onto a
+          phone screen, which lands better as the closing image of the argument
+          than as an aside between the intro and the services. */}
+      <ScrollCraft />
 
       {/* ═══ CTA BAND ═══ */}
       <InkDivider variant={3} />
