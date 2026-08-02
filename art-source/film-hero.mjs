@@ -24,6 +24,7 @@ import puppeteer from "puppeteer-core";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { renderHeroAudio, toWav } from "./hero-audio.mjs";
 
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const URL_ARG = process.argv[2] ?? "http://localhost:5173/";
@@ -31,8 +32,16 @@ const SECONDS = Number(process.argv[3] ?? 7);
 const LABEL = process.argv[4] ?? "hero";
 const WIDTH = Number(process.argv[5] ?? 1920);
 const HEIGHT = Number(process.argv[6] ?? 1080);
+/** Pass "silent" to omit the soundtrack — the site itself never plays it, and
+ *  a muted cut is the right thing for anywhere it is embedded rather than
+ *  posted. */
+const SILENT = process.argv[7] === "silent";
 /** Output frame rate. The capture is resampled to this. */
 const FPS = 60;
+/** Integrated loudness target. Platforms normalise to roughly -14 LUFS; this
+ *  is an accent track with no voice or music under it, so it sits politely
+ *  below that rather than being turned down on arrival. */
+const LUFS = -16;
 
 const OUT = path.resolve("art-source/capture");
 const FRAMES = path.join(OUT, `.frames-${LABEL}`);
@@ -43,9 +52,17 @@ const run = (cmd, args, cwd) =>
     let err = "";
     p.stderr.on("data", (d) => (err += d));
     p.on("close", (code) =>
-      code === 0 ? resolve() : reject(new Error(`${cmd} exited ${code}\n${err.slice(-2000)}`)),
+      code === 0 ? resolve(err) : reject(new Error(`${cmd} exited ${code}\n${err.slice(-2000)}`)),
     );
   });
+
+/** Integrated loudness of a file, in LUFS. */
+async function measureLoudness(file, cwd) {
+  const out = await run("ffmpeg", ["-hide_banner", "-nostats", "-i", file, "-af", "ebur128", "-f", "null", "-"], cwd);
+  const m = out.match(/I:\s*(-?[\d.]+)\s*LUFS/g);
+  if (!m) throw new Error("could not measure loudness");
+  return Number(m[m.length - 1].match(/(-?[\d.]+)/)[1]);
+}
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
@@ -66,14 +83,25 @@ try {
 
   // The first frame in which a control has been positioned is the first frame
   // after Ring mounted — which is t = 0 for the entrance.
+  // Also watch the hero copy, because the entrance clock does not start when
+  // the ring mounts — the ring holds until the copy has landed. The audio has
+  // to be offset by the same wait or every whoosh lands early.
   await page.evaluateOnNewDocument(() => {
     window.__ringAt = null;
+    window.__copyAt = null;
     const tick = () => {
       const b = document.querySelector(".vn-orbit-hit");
-      if (b && b.getBoundingClientRect().width > 0) {
+      if (b && b.getBoundingClientRect().width > 0 && window.__ringAt === null) {
         window.__ringAt = performance.now();
-        return;
       }
+      if (window.__copyAt === null) {
+        const parts = [...document.querySelectorAll(".vn-hero-copy .enter")];
+        const anims = parts.flatMap((e) => e.getAnimations?.() ?? []);
+        if (anims.length && anims.every((a) => a.playState === "finished")) {
+          window.__copyAt = performance.now();
+        }
+      }
+      if (window.__ringAt !== null && window.__copyAt !== null) return;
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -117,6 +145,10 @@ try {
 
   await new Promise((r) => setTimeout(r, SECONDS * 1000 + 400));
   await client.send("Page.stopScreencast");
+  const { ringAt, copyAt } = await page.evaluate(() => ({
+    ringAt: window.__ringAt,
+    copyAt: window.__copyAt,
+  }));
 
   const shot = frames.filter((f) => f.at >= ringEpoch && f.at <= ringEpoch + SECONDS * 1000);
   if (shot.length < 2) throw new Error(`only ${shot.length} frames captured`);
@@ -141,6 +173,40 @@ try {
   list.push(`file '${shot.length ? `f${String(shot.length - 1).padStart(5, "0")}.jpg` : ""}'`);
   await writeFile(path.join(FRAMES, "frames.txt"), list.join("\n"));
 
+  // Where the entrance clock reaches zero, measured from the video's first
+  // frame: the ring waits for the copy, so this is the same max() the
+  // component itself applies.
+  const entranceAt = Math.max(0, (Math.max(ringAt, copyAt ?? 0) - ringAt) / 1000);
+
+  const audioIn = [];
+  const audioOut = [];
+  if (!SILENT) {
+    // Rendered a second longer than the clip so `-shortest` can trim to the
+    // video rather than the video being trimmed to the audio.
+    await writeFile(
+      path.join(FRAMES, "audio.wav"),
+      toWav(renderHeroAudio(entranceAt, SECONDS + 1)),
+    );
+    // Measure, then apply one static gain. loudnorm's dynamic mode would pump
+    // on material this sparse — five transients over near-silence — and the
+    // whole point of synthesising the envelopes from the animation's own
+    // velocity curves is that the dynamics are already right.
+    const measured = await measureLoudness("audio.wav", FRAMES);
+    const gain = LUFS - measured;
+    console.log(
+      `entrance starts ${entranceAt.toFixed(2)}s into the clip; audio ${measured.toFixed(1)} -> ${LUFS} LUFS (${gain >= 0 ? "+" : ""}${gain.toFixed(1)} dB)`,
+    );
+    audioIn.push("-i", "audio.wav");
+    audioOut.push(
+      // The limiter is insurance, not shaping: the gain above is computed to
+      // land well clear of it.
+      "-filter:a", `volume=${gain.toFixed(2)}dB,alimiter=limit=0.89`,
+      "-c:a", "aac",
+      "-b:a", "192k",
+      "-shortest",
+    );
+  }
+
   const file = path.join(OUT, `${LABEL}.mp4`);
   await run(
     "ffmpeg",
@@ -149,7 +215,9 @@ try {
       "-f", "concat",
       "-safe", "0",
       "-i", "frames.txt",
-      "-an",
+      ...audioIn,
+      ...(SILENT ? ["-an"] : []),
+      ...audioOut,
       // The source frames are JPEG, i.e. full-range colour. Encoding them
       // straight through yields yuvj420p, and anything that assumes the
       // broadcast-range BT.709 every platform actually expects will play the
