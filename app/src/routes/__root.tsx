@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { LanguageProvider } from "../lib/language";
+import { accentProps, useAccent } from "../lib/accent";
+import { InkFilters } from "../components/vn/visuals";
 import { Nav, Footer } from "../components/vn/chrome";
 import { BookingProvider } from "../components/vn/BookingModal";
 // Page metadata (browser <title>/favicon + social og: tags) committed into the
@@ -82,7 +84,12 @@ function buildHead(meta: AppMeta) {
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" as const },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap",
+        // Inter is loaded only for the app screens inside the device glass: it
+        // is the closest licence-clean metric match to SF Pro, which cannot
+        // ship (its licence covers Apple-platform UI only). On Apple hardware
+        // -apple-system wins and Inter is never used. None of the site's own
+        // chrome references it.
+        href: "https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=Jost:wght@300;400;500&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       ...(favicon ? [{ rel: "icon", href: favicon }] : []),
@@ -150,10 +157,21 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body className="paper">
-        {/* progressive enhancement flag: animation initial-hidden states only apply with JS */}
+        {/* Runs before the document body is parsed, so both flags are in place
+            for the very first paint.
+
+            `js` is the progressive-enhancement flag: animation initial-hidden
+            states only apply with JS.
+
+            `data-hero-theme` is the homepage's dusk hero. The route sets it too
+            (for client-side navigation), but an effect only runs after
+            hydration — which is a beat AFTER the server HTML has painted, and
+            that beat was long enough to show the hero in its pre-dusk colours. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: "document.documentElement.classList.add('js');",
+            __html:
+              "document.documentElement.classList.add('js');" +
+              "if(location.pathname==='/')document.documentElement.setAttribute('data-hero-theme','dusk');",
           }}
         />
         {children}
@@ -165,6 +183,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const accent = useAccent();
 
   useEffect(() => {
     if (!__HF_DESIGN_INSPECTOR__) {
@@ -186,8 +205,15 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <BookingProvider>
+        {/* Filter defs for this page's pigment. Must be in the document for
+            `filter: url(#…)` to resolve, and cheap enough to re-render on
+            navigation — it is four <filter> nodes. */}
+        <InkFilters />
         <Nav />
-        <main className="relative z-10">
+        {/* The pigment scopes to the page's own content and its footer. The nav
+            is deliberately left out: it is persistent chrome, and holding it
+            still is what makes the shift between pages legible. */}
+        <main className="relative z-10" {...accentProps(accent)}>
           <Outlet />
         </main>
         <Footer />

@@ -1,21 +1,30 @@
-import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
-import { APPLICATIONS } from "../lib/applications";
-import {
-  Reveal,
-  InkDivider,
-  SERVICE_ICONS,
-  prefersReducedMotion,
-  useSectionProgress,
-} from "../components/vn/visuals";
+import { Reveal, InkDivider, SERVICE_ICONS, useSectionProgress } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
 import { PhoneField } from "../components/vn/apps/PhoneField";
-import { ApplicationsSection } from "../components/vn/apps/ApplicationsSection";
+import { HeroOrbit, canRunOrbit } from "../components/vn/apps/HeroOrbit";
 import { useBooking } from "../components/vn/BookingModal";
 
+/**
+ * Lighting rigs the hero can be viewed under. `aurora` ships and needs no
+ * parameter; the others are reachable at /?look=dusk | noir | gallery for
+ * comparison. `dusk` is the original navy rig, kept so the change is one URL
+ * away from being reviewed rather than one deploy away.
+ */
+const LOOKS = ["aurora", "dusk", "noir", "gallery"] as const;
+type Look = (typeof LOOKS)[number];
+const DEFAULT_LOOK: Look = "aurora";
+
 export const Route = createFileRoute("/")({
+  // The default is stripped from the URL rather than pinned into it, so the
+  // canonical homepage stays "/" and never picks up a redundant ?look=aurora.
+  validateSearch: (search: Record<string, unknown>): { look?: Look } => {
+    const look = LOOKS.find((l) => l === search.look);
+    return look && look !== DEFAULT_LOOK ? { look } : {};
+  },
   head: () => ({
     meta: [
       { title: content.da.meta.home.title },
@@ -27,62 +36,135 @@ export const Route = createFileRoute("/")({
 
 const d = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
+/** useLayoutEffect warns when it runs during SSR, where it does nothing anyway. */
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+/**
+ * The hero's device showcase, in whichever form this browser can support.
+ *
+ * Both live in the DOM together and the choice is structural rather than a
+ * flag: PhoneField (the CSS field / swipeable rail) always renders, and the
+ * WebGL orbit mounts over it only once the client has confirmed a wide
+ * hover-capable viewport with working WebGL — at which point CSS hides the
+ * field. So a phone, a WebGL failure, or JavaScript never running all land on
+ * the original rail with no extra code path.
+ *
+ * The capability check has to run in an effect, not during render: it touches
+ * matchMedia and a probe canvas, and deciding during SSR would either guess
+ * wrong or mismatch on hydration. Until it has run the state is "pending" and
+ * CSS hides the field, so a desktop visitor never sees the flat fallback
+ * flash up before the orbit takes over. A layout effect makes that verdict
+ * land before the browser paints the hydrated tree; with JavaScript off the
+ * `js` class is never added and the field stays visible.
+ *
+ * REVERSIBLE: delete this component and render <PhoneField> directly to go
+ * back to the CSS hero exactly as it was. Nothing else in the hero changed.
+ */
+function HeroDevices({ onSelect, look }: { onSelect: (id: string) => void; look: Look }) {
+  const [orbit, setOrbit] = useState<"pending" | "true" | "false">("pending");
+  useIsoLayoutEffect(() => setOrbit(canRunOrbit() ? "true" : "false"), []);
+
+  // The hero copy is held for the ring's cue (see HERO_CUE_AT in HeroOrbit).
+  // Both escape hatches live here, because this is the component that knows
+  // whether an entrance is going to happen at all:
+  //   - no orbit, so no entrance to wait for: release at once;
+  //   - orbit, but the models never arrive: release anyway on a backstop.
+  // Copy that is late is a blemish; copy that never appears is a dead page.
+  useEffect(() => {
+    if (orbit === "pending") return;
+    const hero = document.querySelector(".vn-hero");
+    if (!hero) return;
+    const release = () => hero.setAttribute("data-hero-cue", "go");
+    if (orbit === "false") {
+      release();
+      return;
+    }
+    const backstop = setTimeout(release, 9000);
+    return () => clearTimeout(backstop);
+  }, [orbit]);
+
+  return (
+    <div className="vn-hero-devices" data-orbit={orbit}>
+      {/* Fallback and mobile rail. Kept mounted so it can take over instantly
+          if the orbit is not viable. */}
+      <PhoneField onSelect={onSelect} />
+      {orbit === "true" && <HeroOrbit onSelect={onSelect} look={look} />}
+    </div>
+  );
+}
+
 function Index() {
   const { t } = useLang();
   const booking = useBooking();
+  const navigate = useNavigate();
   const [processRef, processProgress] = useSectionProgress<HTMLDivElement>();
 
-  /* ── the application showcase: hero devices and #applikationer share one
-        selection, so clicking a floating phone lands on its concept ── */
-  const [selectedApp, setSelectedApp] = useState(APPLICATIONS[0].id);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [tabFocus, setTabFocus] = useState(0);
+  // Selecting a hero device hands off to the concept page with that concept
+  // already open.
+  const openConcept = useCallback(
+    (id: string) => {
+      void navigate({ to: "/applikationer", search: { app: id } });
+    },
+    [navigate],
+  );
 
-  const openConcept = useCallback((id: string) => {
-    setSelectedApp(id);
-    setDetailsOpen(true);
-    setTabFocus((n) => n + 1);
-    document.getElementById("applikationer")?.scrollIntoView({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
-      block: "start",
-    });
+  // The dusk hero needs to restyle the fixed nav, which is rendered outside
+  // this route, so the flag goes on <html>. Removed on unmount so other pages
+  // never inherit it. On a cold load the inline script in __root.tsx has
+  // already set it before first paint — this effect covers client-side
+  // navigation back to the homepage.
+  //
+  // REVERSIBLE: delete this effect (and the CSS keyed off the attribute) to put
+  // the hero back on plain cream.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-hero-theme", "dusk");
+    return () => document.documentElement.removeAttribute("data-hero-theme");
   }, []);
 
-  // Deep link from the navbar on another page (/#applikationer). The router's
-  // scroll restoration resets to the top after the target mounts, so the scroll
-  // is retried across ~700ms to make sure ours runs last. Same approach as
-  // src/routes/ydelser.tsx.
-  const hash = useLocation({ select: (l) => l.hash });
+  // The page has to tell the same story the 3D rig does — the reflections in
+  // the devices come from an environment matched to this gradient, and a
+  // mismatch between them is exactly what makes CGI look pasted on. Set on
+  // <html> rather than the section because the nav, which lives outside this
+  // route, has to move with it.
+  //
+  // Only the ALTERNATIVES need the attribute. Aurora is the base gradient in
+  // CSS, so the default hero is correct on the first painted frame instead of
+  // flashing the old palette until this effect runs.
+  const { look = DEFAULT_LOOK } = Route.useSearch();
   useEffect(() => {
-    const id = (hash ?? "").replace(/^#/, "");
-    if (!id) return;
-    const timers = [80, 250, 500, 750].map((ms) =>
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (Math.abs(el.getBoundingClientRect().top - 96) < 4) return; // already there
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, ms),
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [hash]);
+    if (look === DEFAULT_LOOK) return;
+    document.documentElement.setAttribute("data-hero-look", look);
+    return () => document.documentElement.removeAttribute("data-hero-look");
+  }, [look]);
 
   return (
     <div>
       {/* ═══ HERO ═══ */}
-      <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0">
-        <div className="relative z-10">
+      {/* data-hero-cue: the copy is held here until the ring has finished
+          boarding and cues it. CSS only honours the hold where the orbit
+          actually runs; HeroDevices releases it everywhere else. */}
+      <section
+        className="vn-hero relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-5 pb-28 pt-28 text-center md:pb-0 md:pt-0"
+        data-hero-cue="hold"
+      >
+        <div className="vn-hero-copy relative z-10">
           <span className="vn-hero-scrim" aria-hidden="true" />
           <h1
             className="enter mt-4 font-logo text-[clamp(2.5rem,7.5vw,5.5rem)] font-semibold leading-[1.08] tracking-[0.01em] text-navy"
-            style={d(0.15)}
+            style={d(0)}
           >
             Virtus Nordic
           </h1>
-          <p className="enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]" style={d(0.3)}>
+          <p
+            className="vn-hero-tagline enter mx-auto mt-5 max-w-2xl font-display text-[1.35rem] font-medium leading-snug text-navy md:text-[1.6rem]"
+            style={d(0.2)}
+          >
             {t.hero.tagline}
           </p>
-          <div className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row" style={d(0.45)}>
+          <div
+            className="enter mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row"
+            style={d(0.4)}
+          >
             <button type="button" onClick={booking.open} className="btn btn-outline">
               {t.hero.ctaPrimary}
             </button>
@@ -92,18 +174,13 @@ function Index() {
           </div>
         </div>
 
-        {/* Five concepts drifting around the copy on desktop, one swipeable rail
-            below it on mobile. Same markup, switched in CSS. */}
-        <PhoneField onSelect={openConcept} />
-
-        <div className="enter absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2" style={d(0.7)}>
-          <span className="text-[0.65rem] uppercase tracking-[0.3em] text-navy/50">{t.hero.scroll}</span>
-          <span className="block h-12 w-px bg-gradient-to-b from-teal-1/70 to-transparent" />
-        </div>
+        <HeroDevices onSelect={openConcept} look={look} />
       </section>
 
-      {/* ═══ INTRO ═══ */}
-      <InkDivider />
+      {/* ═══ INTRO ═══
+          No divider here on purpose. The hero now resolves into the page
+          background rather than ending on an edge, and a stroke across that
+          join puts the horizontal rule straight back. */}
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <div className="grid gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
@@ -121,9 +198,6 @@ function Index() {
           </div>
         </div>
       </section>
-
-      {/* ═══ CRAFT — the scroll film. ═══ */}
-      <ScrollCraft />
 
       {/* ═══ SERVICES TEASER ═══ */}
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
@@ -148,7 +222,10 @@ function Index() {
                 className="srv-card block h-full"
                 aria-label={`${item.title} — ${t.servicesTeaser.label}`}
               >
-                {(() => { const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length]; return <Icon className="h-11 w-11" />; })()}
+                {(() => {
+                  const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length];
+                  return <Icon className="h-11 w-11" />;
+                })()}
                 <h3 className="mt-5 font-display text-xl font-semibold text-navy">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-navy/70">{item.teaser}</p>
               </Link>
@@ -157,17 +234,8 @@ function Index() {
         </div>
       </section>
 
-      {/* ═══ APPLIKATIONER ═══ */}
-      <ApplicationsSection
-        selectedId={selectedApp}
-        onSelect={setSelectedApp}
-        detailsOpen={detailsOpen}
-        onDetailsToggle={() => setDetailsOpen((v) => !v)}
-        focusSignal={tabFocus}
-      />
-
       {/* ═══ PROCESS ═══ */}
-      <InkDivider />
+      <InkDivider variant={1} />
       <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
         <Reveal>
           <span className="label-eyebrow">{t.process.label}</span>
@@ -212,7 +280,9 @@ function Index() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                 </div>
-                <h3 className="mt-0 font-display text-xl font-semibold text-navy md:mt-6">{step.title}</h3>
+                <h3 className="mt-0 font-display text-xl font-semibold text-navy md:mt-6">
+                  {step.title}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-navy/70">{step.body}</p>
               </Reveal>
             ))}
@@ -220,8 +290,14 @@ function Index() {
         </div>
       </section>
 
+      {/* ═══ CRAFT — the scroll film. ═══
+          Last before the ask. The film ends on the VN logo composited onto a
+          phone screen, which lands better as the closing image of the argument
+          than as an aside between the intro and the services. */}
+      <ScrollCraft />
+
       {/* ═══ CTA BAND ═══ */}
-      <InkDivider />
+      <InkDivider variant={3} />
       <section className="relative mx-auto max-w-4xl overflow-hidden px-5 py-20 text-center md:px-8 md:py-28">
         <Reveal className="relative">
           <h2 className="font-display text-4xl font-semibold leading-tight text-navy md:text-5xl">

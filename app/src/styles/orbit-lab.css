@@ -1,0 +1,236 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ORBIT BAKE-OFF — PROTOTYPE ONLY
+
+   Phase 0 of the floating-application-worlds rebuild. Two implementations of
+   the same shot, measured side by side so the 3D-vs-CSS call is made on
+   evidence rather than taste. NOT production styling: this file is deleted
+   once the winner is folded into src/styles/applications.css.
+
+   Loaded only by src/routes/lab/orbit.tsx, so nothing here reaches the
+   homepage.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────── shared stage ─────────────────────────────── */
+
+.ol-stage {
+  position: relative;
+  width: 100%;
+  /* Sized to the real target: the hero field spans a min-h-[100svh] section, so
+     judging the composition in a short box would flatter it unfairly. */
+  height: var(--stage-h, 780px);
+  /* The single perspective for the whole formation. One shared vanishing point
+     is what makes five devices read as one scene instead of five stickers. */
+  perspective: var(--persp, 1400px);
+  perspective-origin: 50% 46%;
+  overflow: hidden;
+}
+
+/* The ring carries the whole formation's tilt. Tilting here (rather than
+   per-device) is what turns a flat carousel into an ellipse in screen space. */
+.ol-ring {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt, -14deg));
+}
+
+/* One orbit position.
+
+   --orbit is a unitless degree count written by a single rAF on the ring; every
+   slot inherits it and adds its own 72° share, so five devices ride one clock.
+   --d is the normalised depth, 1 at the front of the orbit and 0 at the back,
+   computed by the style engine from cos() rather than baked into keyframes.
+   That is the whole point of the approach: depth is a live function of angle,
+   so the motion is a real orbit and not an animation of one.
+
+   Scale is deliberately absent. translateZ under a perspective already makes
+   near devices larger and far devices smaller, at the correct rate. Adding a
+   scale() on top would double-apply the projection and break the illusion. */
+/* Transform order is load-bearing and was wrong on the first pass.
+
+   rotateY(a) translateZ(R)      — ride the ring out to the orbit position
+   rotateY(-a)                   — full billboard: orientation is ring-aligned again
+   rotateX(-tilt)                — only valid HERE, once we are ring-aligned, so this
+                                   actually cancels the ring's tilt and stands upright
+   rotateY(a * (1 - face))       — and only then the partial turn, about the true
+                                   world vertical
+
+   Doing the rotateX cancel last (the obvious-looking order) mixes axes: near
+   a = ±90° the preceding rotateY has swung the element's local X axis into the
+   view direction, so the "cancel" rolls the device instead of levelling it and
+   it swings edge-on. */
+.ol-slot {
+  --a: calc((var(--orbit, 0) + var(--i) * 72) * 1deg);
+  --d: calc((1 + cos(var(--a))) / 2);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%) rotateY(var(--a)) translateZ(var(--radius, 420px))
+    rotateY(calc(var(--a) * -1)) rotateX(calc(var(--tilt, -14deg) * -1))
+    rotateY(calc(var(--a) * (1 - var(--face, 0.82))));
+}
+
+/* The device wrapper owns the atmospheric cues. Kept off .ol-slot on purpose:
+   filter and opacity both create a stacking context, and putting either on the
+   slot would flatten the 3D space its transform lives in. The wrapper's own
+   children are flat, so there is nothing left to flatten. */
+.ol-dev {
+  position: relative;
+  display: block;
+  opacity: calc(0.46 + 0.54 * var(--d));
+  transition: opacity 0.4s ease;
+}
+
+/* Depth of field, toggleable — blur is the single most expensive thing in the
+   scene and the bake-off needs to know what it costs. */
+.ol-stage[data-dof="true"] .ol-dev {
+  filter: blur(calc((1 - var(--d)) * var(--dof, 2.2px)));
+}
+
+/* Aerial perspective: a veil tinted to the page ground, strongest at the back
+   of the orbit. Cheaper than blur and does most of the same perceptual work. */
+.ol-stage[data-veil="true"] .ol-dev::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--ground, #f6f1e7);
+  opacity: calc((1 - var(--d)) * 0.55);
+}
+
+/* Hovered or focused: this device stops and comes forward to be read. */
+.ol-slot[data-active="true"] .ol-dev {
+  opacity: 1;
+  filter: none;
+}
+.ol-slot[data-active="true"] .ol-dev::after {
+  opacity: 0;
+}
+
+.ol-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 12%;
+}
+.ol-hit:focus-visible {
+  outline: 2px solid var(--color-teal-1, #2f7d63);
+  outline-offset: 6px;
+}
+
+/* ─────────────────────────── lab chrome only ────────────────────────────── */
+
+.ol-lab {
+  min-height: 100vh;
+  padding: 1.25rem;
+  /* The site's fixed nav overlays the top of every route. In bare mode the
+     stage is clipped for capture, so push it clear rather than shoot through
+     the header. */
+}
+.ol-lab[data-bare="true"] {
+  padding-top: 6rem;
+  background: #f6f1e7;
+  font-family: "Jost", system-ui, sans-serif;
+  color: #1c2835;
+}
+.ol-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  align-items: center;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(28, 40, 53, 0.15);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.8rem;
+}
+.ol-panel label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.ol-panel input[type="range"] {
+  width: 110px;
+}
+.ol-panel output {
+  min-width: 3.2ch;
+  font-variant-numeric: tabular-nums;
+  color: rgba(28, 40, 53, 0.6);
+}
+.ol-fps {
+  margin-left: auto;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #1c2835;
+  color: #f6f1e7;
+  font-variant-numeric: tabular-nums;
+}
+.ol-branch {
+  border: 1px solid rgba(28, 40, 53, 0.15);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+.ol-branch h2 {
+  padding: 0.6rem 1.1rem;
+  border-bottom: 1px solid rgba(28, 40, 53, 0.12);
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(28, 40, 53, 0.65);
+}
+
+/* ─────────────────────────── dusk theme trial ───────────────────────────
+   The page's bottom edge IS the light source: near-navy at the top graduating
+   to the site's cream at the bottom, with a radial glow pooled at the floor.
+   The 3D scene runs the matching rig (Studio.tsx "dusk"), so the reflections
+   on the devices and the page tell one story. */
+
+.ol-lab[data-theme="dusk"] {
+  background:
+    radial-gradient(
+      120% 60% at 50% 102%,
+      rgba(255, 248, 235, 0.95) 0%,
+      rgba(255, 248, 235, 0) 62%
+    ),
+    linear-gradient(
+      180deg,
+      #171f29 0%,
+      #2e3944 30%,
+      #7a7d76 60%,
+      #d8d2c2 82%,
+      #f6f1e7 100%
+    );
+}
+
+/* The fixed site nav sits over the dark top of the gradient, where its navy
+   text would vanish. Per the brief the bar stays white — a solid strip rather
+   than the usual transparency, scoped to the trial so the rest of the site
+   never changes. */
+html[data-lab-theme="dusk"] .nav-shell {
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(28, 40, 53, 0.08);
+}
+
+/* Under reduce the orbit does not run at all: the rAF never starts and the
+   formation holds the composed arrangement the static angle produces. */
+@media (prefers-reduced-motion: reduce) {
+  .ol-dev {
+    transition: none;
+  }
+}

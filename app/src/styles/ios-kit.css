@@ -1,0 +1,528 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   iOS FOUNDATION KIT
+
+   The shared layer every concept screen is built on. Scoped entirely inside
+   .vn-scr (the device glass), so none of it can reach Virtus Nordic's own
+   chrome — same contract as src/styles/applications.css.
+
+   Everything here is authored in POINTS on the 390 x 844 stage, in real iOS
+   metrics, because the phone frame applies one uniform scale afterwards. A
+   17pt body size written here is 17pt on the device, whatever size the device
+   is drawn at on the page.
+
+   The whole point of this file is that the screens stop being drawings of apps
+   and start being built from the same primitives a real app is: a status bar
+   with correct glyph proportions, grouped inset tables with leading-inset
+   separators, a 49pt tab bar over a 34pt home indicator.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.vn-scr {
+  /* ── Apple's type ramp. Sizes and leading are the real values; the negative
+        tracking on the big sizes is what stops large text looking like a web
+        heading rather than a nav title. ── */
+  --ios-large-title: 34px;
+  --ios-large-title-lh: 41px;
+  --ios-title1: 28px;
+  --ios-title1-lh: 34px;
+  --ios-title2: 22px;
+  --ios-title2-lh: 28px;
+  --ios-title3: 20px;
+  --ios-title3-lh: 25px;
+  --ios-headline: 17px;
+  --ios-headline-lh: 22px;
+  --ios-body: 17px;
+  --ios-body-lh: 22px;
+  --ios-callout: 16px;
+  --ios-callout-lh: 21px;
+  --ios-subhead: 15px;
+  --ios-subhead-lh: 20px;
+  --ios-footnote: 13px;
+  --ios-footnote-lh: 18px;
+  --ios-caption1: 12px;
+  --ios-caption1-lh: 16px;
+  --ios-caption2: 11px;
+  --ios-caption2-lh: 13px;
+
+  /* ── Layout metrics ── */
+  --ios-gutter: 16px; /* standard leading/trailing margin */
+  --ios-row-h: 44px; /* minimum tap target, and the default row height */
+  --ios-tabbar-h: 49px;
+  --ios-home-h: 34px;
+  --ios-safe-top: 59px; /* status bar area on a Dynamic Island device */
+  --ios-hairline: 0.5px;
+
+  /* ── System greys, light mode ── */
+  --ios-sep: rgba(60, 60, 67, 0.29);
+  --ios-sep-opaque: #c6c6c8;
+  --ios-label-2: rgba(60, 60, 67, 0.6);
+  --ios-label-3: rgba(60, 60, 67, 0.3);
+  --ios-fill-2: rgba(120, 120, 128, 0.12);
+  --ios-grouped-bg: #f2f2f7;
+
+  /* SF Pro cannot ship — its licence covers Apple-platform UI only. On Apple
+     hardware -apple-system resolves to the genuine face; everywhere else Inter
+     is the closest metric match. */
+  --ios-font:
+    -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", "Segoe UI", sans-serif;
+}
+
+/* ─────────────────────────────── type ──────────────────────────────────── */
+
+/* The site styles headings with the Cormorant display face by element selector.
+   A direct rule beats inheritance, so a heading inside the device glass would
+   render as a serif no matter what --app-font-ui says. Inside .vn-scr the app's
+   own font always wins. */
+.vn-scr h1,
+.vn-scr h2,
+.vn-scr h3,
+.vn-scr h4,
+.vn-scr p,
+.vn-scr b,
+.vn-scr i,
+.vn-scr em {
+  font-family: inherit;
+}
+
+.ios-large-title {
+  font-size: var(--ios-large-title);
+  line-height: var(--ios-large-title-lh);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.ios-title2 {
+  font-size: var(--ios-title2);
+  line-height: var(--ios-title2-lh);
+  font-weight: 700;
+  letter-spacing: -0.26px;
+}
+.ios-title3 {
+  font-size: var(--ios-title3);
+  line-height: var(--ios-title3-lh);
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.ios-headline {
+  font-size: var(--ios-headline);
+  line-height: var(--ios-headline-lh);
+  font-weight: 600;
+  letter-spacing: -0.43px;
+}
+.ios-body {
+  font-size: var(--ios-body);
+  line-height: var(--ios-body-lh);
+  font-weight: 400;
+  letter-spacing: -0.43px;
+}
+.ios-callout {
+  font-size: var(--ios-callout);
+  line-height: var(--ios-callout-lh);
+  letter-spacing: -0.31px;
+}
+.ios-subhead {
+  font-size: var(--ios-subhead);
+  line-height: var(--ios-subhead-lh);
+  letter-spacing: -0.23px;
+}
+.ios-footnote {
+  font-size: var(--ios-footnote);
+  line-height: var(--ios-footnote-lh);
+  letter-spacing: -0.08px;
+}
+.ios-caption {
+  font-size: var(--ios-caption1);
+  line-height: var(--ios-caption1-lh);
+}
+.ios-caption2 {
+  font-size: var(--ios-caption2);
+  line-height: var(--ios-caption2-lh);
+}
+.ios-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────────────────────── status bar ──────────────────────────────── */
+
+/* Real geometry: 54pt tall, clock centred in the left third, glyphs trailing.
+   The centre is deliberately left empty — that is where the Dynamic Island
+   sits, and content running under it is the classic tell of a fake screen. */
+.ios-sb {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--ios-safe-top);
+  padding: 12px var(--ios-gutter) 0;
+  font-family: var(--ios-font);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-ink);
+}
+.ios-sb__time {
+  min-width: 54px;
+  padding-left: 6px;
+}
+.ios-sb__right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Cellular bars: four ascending, 3pt wide, 1pt gap, tallest 10.5pt. */
+.ios-sb__cell {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 10.5px;
+}
+.ios-sb__cell i {
+  width: 3px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.ios-sb__cell i:nth-child(1) {
+  height: 4px;
+}
+.ios-sb__cell i:nth-child(2) {
+  height: 6.2px;
+}
+.ios-sb__cell i:nth-child(3) {
+  height: 8.4px;
+}
+.ios-sb__cell i:nth-child(4) {
+  height: 10.5px;
+}
+
+.ios-sb__wifi {
+  width: 15.3px;
+  height: 11px;
+  color: currentColor;
+}
+
+/* Battery: 25 x 12pt body, 1pt stroke, 1.4pt nub, fill inset by 1.5pt. */
+.ios-sb__batt {
+  position: relative;
+  width: 25px;
+  height: 12px;
+  border: 1px solid currentColor;
+  border-radius: 3.8px;
+  opacity: 0.9;
+}
+.ios-sb__batt::after {
+  content: "";
+  position: absolute;
+  inset: 1.5px;
+  right: calc(1.5px + (100% - 3px) * (1 - var(--level, 0.78)));
+  border-radius: 2px;
+  background: currentColor;
+}
+.ios-sb__batt::before {
+  content: "";
+  position: absolute;
+  right: -3.4px;
+  top: 3.6px;
+  width: 1.7px;
+  height: 4.8px;
+  border-radius: 0 1.6px 1.6px 0;
+  background: currentColor;
+  opacity: 0.45;
+}
+
+/* ────────────────────────────── nav bar ────────────────────────────────── */
+
+.ios-nav {
+  flex: none;
+  padding: 0 var(--ios-gutter);
+}
+.ios-nav__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  gap: 8px;
+}
+.ios-nav__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--app-accent);
+  font-size: var(--ios-body);
+  letter-spacing: -0.43px;
+}
+.ios-nav__action svg {
+  width: 20px;
+  height: 20px;
+}
+.ios-nav__large {
+  padding: 4px 0 8px;
+}
+
+/* Sticky compact header with the material blur iOS uses when content scrolls
+   under it. The saturate() is not decoration: it is what stops the blur going
+   grey over coloured content. */
+.ios-nav--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: color-mix(in srgb, var(--app-bg) 82%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: var(--ios-hairline) solid var(--ios-sep);
+}
+
+/* ──────────────────── grouped inset table views ────────────────────────── */
+
+.ios-group {
+  margin: 0 var(--ios-gutter) 18px;
+  border-radius: 10px;
+  background: var(--app-surface);
+  overflow: hidden;
+}
+/* Header and footer align with the card's text column, not the screen edge:
+   iOS insets them by the gutter plus a few points so they sit under the card's
+   leading text, and gives the header room above. */
+.ios-group__header {
+  margin: 18px var(--ios-gutter) 7px;
+  padding-left: 4px;
+  font-size: var(--ios-footnote);
+  line-height: var(--ios-footnote-lh);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ios-label-2);
+}
+.ios-group__footer {
+  margin: -12px var(--ios-gutter) 18px;
+  padding-left: 4px;
+  font-size: var(--ios-caption1);
+  line-height: var(--ios-caption1-lh);
+  color: var(--ios-label-2);
+}
+
+.ios-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--ios-row-h);
+  padding: 8px var(--ios-gutter) 8px 0;
+  margin-left: var(--ios-gutter);
+}
+/* Separators inset to the leading text edge, never full-bleed, and absent on
+   the final row. Getting this wrong is the single most common tell in a fake
+   iOS screen. */
+.ios-row:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: calc(var(--ios-gutter) * -1);
+  bottom: 0;
+  height: var(--ios-hairline);
+  background: var(--ios-sep);
+}
+/* Rows with a leading icon or avatar indent their separator past it. */
+.ios-row[data-inset="icon"]:not(:last-child)::after {
+  left: 44px;
+}
+.ios-row[data-inset="avatar"]:not(:last-child)::after {
+  left: 52px;
+}
+
+.ios-row__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  background: var(--app-accent);
+  color: #fff;
+}
+.ios-row__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.ios-row__text {
+  flex: 1;
+  min-width: 0;
+}
+/* Both are spans so they can sit inside a span wrapper without invalid
+   nesting, which means they need an explicit block display — otherwise title
+   and subtitle run together on one line. */
+.ios-row__title {
+  display: block;
+  font-size: var(--ios-body);
+  line-height: var(--ios-body-lh);
+  letter-spacing: -0.43px;
+}
+.ios-row__sub {
+  display: block;
+  font-size: var(--ios-footnote);
+  line-height: var(--ios-footnote-lh);
+  color: var(--ios-label-2);
+}
+.ios-row__value {
+  flex: none;
+  font-size: var(--ios-body);
+  color: var(--ios-label-2);
+  letter-spacing: -0.43px;
+}
+.ios-row__chev {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--ios-label-3);
+}
+
+/* ─────────────────────────── controls ──────────────────────────────────── */
+
+.ios-seg {
+  display: flex;
+  gap: 2px;
+  margin: 0 var(--ios-gutter) 16px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--ios-fill-2);
+}
+.ios-seg span {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 7px;
+  text-align: center;
+  font-size: var(--ios-subhead);
+  font-weight: 500;
+  letter-spacing: -0.23px;
+  color: var(--app-ink);
+}
+.ios-seg span[data-on="true"] {
+  background: var(--app-surface);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.12),
+    0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ios-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 var(--ios-gutter) 14px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: var(--ios-fill-2);
+  color: var(--ios-label-2);
+  font-size: var(--ios-body);
+  letter-spacing: -0.43px;
+}
+.ios-search svg {
+  width: 17px;
+  height: 17px;
+}
+
+.ios-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 50px;
+  padding: 0 18px;
+  border-radius: 12px;
+  background: var(--app-accent);
+  color: #fff;
+  font-size: var(--ios-headline);
+  font-weight: 600;
+  letter-spacing: -0.43px;
+}
+.ios-btn[data-variant="tinted"] {
+  background: color-mix(in srgb, var(--app-accent) 15%, transparent);
+  color: var(--app-accent);
+}
+.ios-btn[data-variant="plain"] {
+  background: none;
+  color: var(--app-accent);
+  min-height: 44px;
+}
+
+.ios-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: var(--ios-caption2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ios-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
+  color: var(--app-accent);
+  font-size: var(--ios-caption1);
+  font-weight: 600;
+}
+
+/* ─────────────────────── tab bar and home indicator ────────────────────── */
+
+.ios-tabbar {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  margin-top: auto;
+  height: var(--ios-tabbar-h);
+  padding-top: 6px;
+  border-top: var(--ios-hairline) solid var(--ios-sep);
+  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.ios-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--ios-label-2);
+}
+.ios-tab svg {
+  width: 26px;
+  height: 26px;
+}
+.ios-tab span {
+  font-size: 10px;
+  line-height: 12px;
+  letter-spacing: 0.01px;
+  font-weight: 500;
+}
+.ios-tab[data-on="true"] {
+  color: var(--app-accent);
+}
+
+.ios-home {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: var(--ios-home-h);
+}
+.ios-home::after {
+  content: "";
+  width: 139px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--app-ink);
+  opacity: 0.85;
+}
+
+/* A scroll view whose content is deliberately cut by the tab bar. Real screens
+   are never a tidy full stack with empty space at the bottom; content running
+   under the chrome is what makes it read as a live scroll position. */
+.ios-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

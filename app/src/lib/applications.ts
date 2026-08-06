@@ -14,9 +14,17 @@ import { FysioterapiScreen } from "../components/vn/apps/screens/fysioterapi";
  * every screen is rendered from this array. Nothing about a specific concept is
  * hardcoded in a component.
  *
- * IMPORTANT (legal): these are independent concept studies. No real logo,
- * photograph, website design or other branded asset is reproduced anywhere.
- * Every screen is drawn with original CSS/SVG and typography-led wordmarks.
+ * IMPORTANT (legal): all five businesses are real, and each has given
+ * permission for its business to be used as the basis for a concept study.
+ * There is no ongoing engagement with any of them — the visible disclaimer in
+ * #applikationer says exactly that, in both languages, and must stay.
+ *
+ * Permission means brand assets MAY be used where a business has supplied
+ * them; it does not extend to anyone else's. No third-party logo, photograph
+ * or website design is reproduced. Anything not supplied by the business is
+ * original work: screens are built from the iOS kit in components/vn/apps/ios,
+ * icons come from Material Symbols (Apache-2.0), and imagery is generated
+ * rather than sourced.
  */
 
 /** A string in both site languages. Mirrors the shape of src/lib/content.ts. */

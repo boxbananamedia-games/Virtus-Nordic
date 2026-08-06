@@ -14,10 +14,12 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as OmRouteImport } from './routes/om'
 import { Route as KontaktRouteImport } from './routes/kontakt'
+import { Route as ApplikationerRouteImport } from './routes/applikationer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UnruledIndexRouteImport } from './routes/unruled/index'
 import { Route as UnruledTermsRouteImport } from './routes/unruled/terms'
 import { Route as UnruledPrivacyRouteImport } from './routes/unruled/privacy'
+import { Route as LabOrbitRouteImport } from './routes/lab/orbit'
 import { Route as ApiBookRouteImport } from './routes/api/book'
 
 const YdelserRoute = YdelserRouteImport.update({
@@ -45,6 +47,11 @@ const KontaktRoute = KontaktRouteImport.update({
   path: '/kontakt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplikationerRoute = ApplikationerRouteImport.update({
+  id: '/applikationer',
+  path: '/applikationer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -65,6 +72,11 @@ const UnruledPrivacyRoute = UnruledPrivacyRouteImport.update({
   path: '/unruled/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LabOrbitRoute = LabOrbitRouteImport.update({
+  id: '/lab/orbit',
+  path: '/lab/orbit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBookRoute = ApiBookRouteImport.update({
   id: '/api/book',
   path: '/api/book',
@@ -73,24 +85,28 @@ const ApiBookRoute = ApiBookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/applikationer': typeof ApplikationerRoute
   '/kontakt': typeof KontaktRoute
   '/om': typeof OmRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/lab/orbit': typeof LabOrbitRoute
   '/unruled/privacy': typeof UnruledPrivacyRoute
   '/unruled/terms': typeof UnruledTermsRoute
   '/unruled/': typeof UnruledIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/applikationer': typeof ApplikationerRoute
   '/kontakt': typeof KontaktRoute
   '/om': typeof OmRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/lab/orbit': typeof LabOrbitRoute
   '/unruled/privacy': typeof UnruledPrivacyRoute
   '/unruled/terms': typeof UnruledTermsRoute
   '/unruled': typeof UnruledIndexRoute
@@ -98,12 +114,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/applikationer': typeof ApplikationerRoute
   '/kontakt': typeof KontaktRoute
   '/om': typeof OmRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/lab/orbit': typeof LabOrbitRoute
   '/unruled/privacy': typeof UnruledPrivacyRoute
   '/unruled/terms': typeof UnruledTermsRoute
   '/unruled/': typeof UnruledIndexRoute
@@ -112,36 +130,42 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/applikationer'
     | '/kontakt'
     | '/om'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/lab/orbit'
     | '/unruled/privacy'
     | '/unruled/terms'
     | '/unruled/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/applikationer'
     | '/kontakt'
     | '/om'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/lab/orbit'
     | '/unruled/privacy'
     | '/unruled/terms'
     | '/unruled'
   id:
     | '__root__'
     | '/'
+    | '/applikationer'
     | '/kontakt'
     | '/om'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/lab/orbit'
     | '/unruled/privacy'
     | '/unruled/terms'
     | '/unruled/'
@@ -149,12 +173,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApplikationerRoute: typeof ApplikationerRoute
   KontaktRoute: typeof KontaktRoute
   OmRoute: typeof OmRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   YdelserRoute: typeof YdelserRoute
   ApiBookRoute: typeof ApiBookRoute
+  LabOrbitRoute: typeof LabOrbitRoute
   UnruledPrivacyRoute: typeof UnruledPrivacyRoute
   UnruledTermsRoute: typeof UnruledTermsRoute
   UnruledIndexRoute: typeof UnruledIndexRoute
@@ -197,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KontaktRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/applikationer': {
+      id: '/applikationer'
+      path: '/applikationer'
+      fullPath: '/applikationer'
+      preLoaderRoute: typeof ApplikationerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -225,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnruledPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lab/orbit': {
+      id: '/lab/orbit'
+      path: '/lab/orbit'
+      fullPath: '/lab/orbit'
+      preLoaderRoute: typeof LabOrbitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/book': {
       id: '/api/book'
       path: '/api/book'
@@ -237,12 +277,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApplikationerRoute: ApplikationerRoute,
   KontaktRoute: KontaktRoute,
   OmRoute: OmRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   YdelserRoute: YdelserRoute,
   ApiBookRoute: ApiBookRoute,
+  LabOrbitRoute: LabOrbitRoute,
   UnruledPrivacyRoute: UnruledPrivacyRoute,
   UnruledTermsRoute: UnruledTermsRoute,
   UnruledIndexRoute: UnruledIndexRoute,

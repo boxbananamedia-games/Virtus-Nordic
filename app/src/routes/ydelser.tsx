@@ -51,7 +51,7 @@ function Services() {
       <div className="mx-auto max-w-5xl px-5 md:px-8">
         {t.services.items.map((item, i) => (
           <div key={item.title} id={`service-${i}`} className="scroll-mt-28">
-            <InkDivider />
+            <InkDivider variant={i} />
             <Reveal className="py-10 md:py-14">
               <article className={`grid gap-8 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-14 ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
                 <div className="md:[direction:ltr]">
@@ -80,7 +80,7 @@ function Services() {
         ))}
       </div>
 
-      <InkDivider />
+      <InkDivider variant={t.services.items.length} />
       <section className="mx-auto max-w-3xl px-5 py-16 pb-24 text-center md:px-8 md:py-24">
         <Reveal>
           <h2 className="font-display text-3xl font-semibold leading-tight text-navy md:text-4xl">

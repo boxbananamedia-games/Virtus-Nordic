@@ -11,9 +11,9 @@ export type ServiceItem = { title: string; teaser: string; paras: string[] };
 type PageMeta = { title: string; description: string };
 
 export type Content = {
-  meta: { home: PageMeta; about: PageMeta; services: PageMeta; contact: PageMeta };
+  meta: { home: PageMeta; about: PageMeta; services: PageMeta; apps: PageMeta; contact: PageMeta };
   nav: { home: string; about: string; services: string; apps: string; contact: string; cta: string };
-  hero: { tagline: string; ctaPrimary: string; ctaSecondary: string; scroll: string };
+  hero: { tagline: string; ctaPrimary: string; ctaSecondary: string };
   intro: { quote: string; p1: string; p2: string };
   craft: { label: string; headline: string; body: string; captions: string[] };
   servicesTeaser: { label: string; headline: string; sub: string };
@@ -89,7 +89,10 @@ export type Content = {
     form: { name: string; company: string; email: string; phone: string; message: string; send: string; note: string };
     mailSubject: string;
   };
-  footer: { rights: string; tagline: string };
+  /** `modelCredit` is a licence obligation, not decoration: the 3D device model
+   *  used in the hero is licensed from Meshy on condition of attribution. It
+   *  must stay visible on the site. */
+  footer: { rights: string; tagline: string; modelCredit: string };
 };
 
 export const content: Record<Lang, Content> = {
@@ -108,6 +111,11 @@ export const content: Record<Lang, Content> = {
         title: "Ydelser · Virtus Nordic",
         description: "Skræddersyede apps, systemintegration, AI-agenter og løbende optimering.",
       },
+      apps: {
+        title: "Applikationer · Virtus Nordic",
+        description:
+          "Fem konceptstudier for fem rigtige nordjyske virksomheder. Fem applikationer der intet har til fælles.",
+      },
       contact: {
         title: "Kontakt · Virtus Nordic",
         description: "Book et møde med Virtus Nordic i Aalborg. Ingen forpligtelser, bare en snak.",
@@ -125,7 +133,6 @@ export const content: Record<Lang, Content> = {
       tagline: "Mobilapplikationer og redskaber der får din forretning til at vokse",
       ctaPrimary: "Book et møde",
       ctaSecondary: "Se mine ydelser",
-      scroll: "Scroll",
     },
     intro: {
       quote: "“Jeg bygger de applikationer, din forretning fortjener. Præcise, gennemtænkte og bygget til at holde.”",
@@ -192,7 +199,7 @@ export const content: Record<Lang, Content> = {
       headline: "Fem virksomheder. Fem applikationer der intet har til fælles.",
       sub: "Virtus Nordic har én identitet. Produkterne har ikke. Hver applikation her er tegnet omkring kundens forretning, kundens brugere og kundens marked, ikke omkring min egen smag. Det er derfor de fem skærme ser ud som om de kommer fra fem forskellige studier.",
       disclaimer:
-        "Uafhængige konceptstudier inspireret af lokale virksomheder. Ikke eksisterende kundesamarbejder.",
+        "Alle fem virksomheder er virkelige og har givet tilladelse til, at deres forretning bruges som udgangspunkt for disse konceptstudier. Der er ikke et igangværende samarbejde mellem Virtus Nordic og virksomhederne.",
       selectLabel: "Vælg et koncept",
       heroHint: "Peg på en telefon, eller klik for hele konceptet",
       openConcept: "Åbn konceptet.",
@@ -291,6 +298,8 @@ export const content: Record<Lang, Content> = {
     footer: {
       rights: "Alle rettigheder forbeholdes",
       tagline: "Mobilapplikationer og redskaber der får din forretning til at vokse",
+      // Reads with the linked "Meshy" appended: "3D-model af enheden fra Meshy".
+      modelCredit: "3D-model af enheden fra",
     },
   },
   en: {
@@ -307,6 +316,11 @@ export const content: Record<Lang, Content> = {
       services: {
         title: "Services · Virtus Nordic",
         description: "Custom mobile applications, system integration, agentic automations and ongoing optimisation.",
+      },
+      apps: {
+        title: "Applications · Virtus Nordic",
+        description:
+          "Five concept studies for five real North Jutland businesses. Five applications with nothing in common.",
       },
       contact: {
         title: "Contact · Virtus Nordic",
@@ -325,7 +339,6 @@ export const content: Record<Lang, Content> = {
       tagline: "Mobile Applications for Business Growth",
       ctaPrimary: "Book a Meeting",
       ctaSecondary: "View Services",
-      scroll: "Scroll",
     },
     intro: {
       quote: "“I build the applications your business deserves. Precise, purposeful, and built to last.”",
@@ -392,7 +405,7 @@ export const content: Record<Lang, Content> = {
       headline: "Five businesses. Five applications with nothing in common.",
       sub: "Virtus Nordic has one identity. The products do not. Every application here is drawn around the client's business, the client's users and the client's market, not around my own taste. That is why these five screens look like they came from five different studios.",
       disclaimer:
-        "Independent concept studies inspired by local businesses. Not existing client engagements.",
+        "All five businesses are real and have given permission for their business to be used as the basis for these concept studies. There is no ongoing engagement between Virtus Nordic and the businesses.",
       selectLabel: "Choose a concept",
       heroHint: "Hover a phone, or click for the full concept",
       openConcept: "Open the concept.",
@@ -491,6 +504,7 @@ export const content: Record<Lang, Content> = {
     footer: {
       rights: "All rights reserved",
       tagline: "Mobile Applications for Business Growth",
+      modelCredit: "Device 3D model by",
     },
   },
 };

@@ -247,248 +247,130 @@
 
 /* ══════════════════════════ 1 · GUF & KUGLER ════════════════════════════ */
 
+/* Screen-specific rules only. Everything structural — status bar, nav bar,
+   grouped rows, tab bar — now comes from the iOS kit in src/styles/ios-kit.css,
+   which is why this section is a fraction of its former size. */
+
 .gk {
-  --gk-pad: 26px;
+  --app-font-ui: var(--ios-font);
 }
 
-.gk-head {
-  padding: 6px var(--gk-pad) 0;
-}
-.gk-brand {
-  margin: 0;
-  font-family: var(--app-font-display);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--app-accent);
-}
-.gk-amp {
-  color: var(--app-accent-2);
-}
-.gk-h1 {
-  max-width: 260px;
-  margin: 12px 0 0;
-  font-family: var(--app-font-display);
-  font-size: 33px;
-  font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -0.015em;
-  color: var(--app-ink);
-}
-
-.gk-list {
-  list-style: none;
-  margin: 22px 0 0;
-  padding: 0 var(--gk-pad);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.gk-flav {
-  display: flex;
+/* Open/closed state in the nav bar's trailing slot. The live dot is the detail
+   that makes it read as a status rather than a label. */
+.gk-open {
+  display: inline-flex;
   align-items: center;
-  gap: 14px;
-  padding: 13px 15px;
-  border-radius: var(--app-radius);
-  background: var(--app-surface);
-  box-shadow: 0 10px 20px -16px rgba(58, 33, 24, 0.55);
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-accent-2) 16%, transparent);
+  color: color-mix(in srgb, var(--app-accent-2) 82%, #000);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.08px;
 }
+.gk-open i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--app-accent-2);
+}
+
+/* A scoop, drawn: a lit sphere rather than a flat disc. The off-centre
+   highlight and the darker contact shadow at the base are what stop it reading
+   as a coloured circle. Generated photography replaces this in Phase 3. */
 .gk-scoop {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.85), transparent 42%),
+    radial-gradient(circle at 68% 78%, rgba(0, 0, 0, 0.22), transparent 55%),
+    var(--scoop, #ddd);
   box-shadow:
-    inset 0 -7px 11px -7px rgba(0, 0, 0, 0.3),
-    0 5px 9px -6px rgba(0, 0, 0, 0.4);
+    inset 0 -2px 4px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(58, 33, 24, 0.18);
 }
 .gk-scoop--berry {
-  background: radial-gradient(circle at 32% 26%, #f9c2d6 0%, #e0568c 46%, #9c1149 100%);
+  --scoop: linear-gradient(150deg, #e84a7f 0%, #c2185b 100%);
+  background-color: #c2185b;
 }
 .gk-scoop--pistachio {
-  background: radial-gradient(circle at 32% 26%, #e6f3c8 0%, #a8cf72 46%, #5a8a30 100%);
+  --scoop: linear-gradient(150deg, #a8d07a 0%, #7cb342 100%);
+  background-color: #7cb342;
 }
 .gk-scoop--lemon {
-  background: radial-gradient(circle at 32% 26%, #fff4bd 0%, #f6d045 46%, #c99503 100%);
+  --scoop: linear-gradient(150deg, #ffd95e 0%, #f2b705 100%);
+  background-color: #f2b705;
 }
-.gk-flav-text {
-  flex: 1 1 auto;
-  min-width: 0;
+.gk-scoop--vanilla {
+  --scoop: linear-gradient(150deg, #f7ecd2 0%, #e8d3a8 100%);
+  background-color: #e8d3a8;
+}
+.gk-scoop--cocoa {
+  --scoop: linear-gradient(150deg, #7b4a33 0%, #4a2a1c 100%);
+  background-color: #4a2a1c;
+}
+
+/* Price column: a stacked "n left" note above the price, right-aligned so the
+   numbers line up down the list. */
+.gk-price {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: flex-end;
+  gap: 1px;
 }
-.gk-flav-text b {
-  font-size: 15.5px;
+.gk-price b {
+  font-size: var(--ios-body);
   font-weight: 600;
-}
-.gk-flav-text i {
-  font-style: normal;
-  font-size: 12px;
-  color: var(--app-ink-soft);
-}
-.gk-flav-price {
-  flex: none;
-  font-size: 14.5px;
-  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.43px;
   color: var(--app-accent);
+}
+.gk-price em {
+  font-style: normal;
+  font-size: var(--ios-caption2);
+  font-weight: 600;
+  color: var(--app-accent-3);
 }
 
 .gk-loyal {
-  margin: 20px var(--gk-pad) 0;
-  padding: 15px 17px;
-  border-radius: var(--app-radius);
-  background: linear-gradient(135deg, rgba(194, 24, 91, 0.1), rgba(124, 179, 66, 0.14));
+  padding: 12px var(--ios-gutter) 14px;
 }
 .gk-loyal-top {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-}
-.gk-loyal-label {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--app-ink-soft);
-}
-.gk-pts,
-.gk-total {
-  position: relative;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  font-size: 16px;
-  font-weight: 600;
-}
-.gk-pts i {
-  font-style: normal;
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--app-ink-soft);
-}
-.gk-swap-b {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
+  gap: 10px;
 }
 .gk-bar {
   display: block;
-  margin-top: 11px;
-  height: 7px;
+  height: 8px;
+  margin: 9px 0 7px;
   border-radius: 999px;
-  background: rgba(58, 33, 24, 0.12);
+  background: var(--ios-fill-2);
   overflow: hidden;
 }
 .gk-bar i {
   display: block;
-  width: 62%;
+  width: 68%;
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--app-accent-2), var(--app-accent-3));
 }
 .gk-loyal-note {
-  margin: 9px 0 0;
-  font-size: 12px;
-  color: var(--app-ink-soft);
+  color: var(--ios-label-2);
 }
 
-.gk-build {
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 132px;
-  margin: 18px var(--gk-pad) 0;
-  padding: 16px 17px;
-  border-radius: var(--app-radius);
-  background: var(--app-surface);
-  box-shadow: 0 10px 20px -16px rgba(58, 33, 24, 0.55);
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  overflow: hidden;
+.gk-cta-wrap {
+  padding: 0 var(--ios-gutter) 20px;
 }
-/* The drops are positioned against the cup, not the card, so the card is free
-   to absorb whatever vertical slack the screen has left. */
-.gk-cup-wrap {
-  position: relative;
-  flex: none;
-  width: 58px;
-}
-.gk-cup {
-  position: relative;
-  display: block;
-  width: 58px;
-  height: 68px;
-  border-radius: 7px 7px 26px 26px;
-  border: 1.5px solid rgba(58, 33, 24, 0.18);
-  background: linear-gradient(180deg, #fff 0%, #f4e8dd 100%);
-  overflow: hidden;
-}
-.gk-cup-fill {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 48%;
-  transform: scaleY(0);
-  transform-origin: bottom;
-  background: linear-gradient(180deg, #e0568c, #a3124d);
-}
-.gk-drop {
-  --end: 24px;
-  position: absolute;
-  top: -34px;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  opacity: 0;
-}
-.gk-drop--1 {
-  --end: 20px;
-  left: 11px;
-  background: radial-gradient(circle at 32% 26%, #f9c2d6, #e0568c 55%, #9c1149);
-}
-.gk-drop--2 {
-  --end: -6px;
-  left: 20px;
-  background: radial-gradient(circle at 32% 26%, #e6f3c8, #a8cf72 55%, #5a8a30);
-}
-.gk-build-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: 4px;
-}
-.gk-build-text b {
-  font-size: 17px;
-  font-weight: 600;
-}
-.gk-build-text i {
-  font-style: normal;
-  font-size: 12.5px;
-  color: var(--app-ink-soft);
-}
-.gk-pickup {
-  margin-top: 6px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--app-accent-2);
-}
-
-.gk-cta {
-  margin: 16px var(--gk-pad) 0;
-  padding: 16px 22px;
-  border-radius: 999px;
-  background: var(--app-accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
+.gk-cta-wrap .ios-btn {
   justify-content: space-between;
-  font-size: 15.5px;
-  font-weight: 600;
-  box-shadow: 0 14px 24px -16px rgba(194, 24, 91, 0.95);
+  box-shadow: 0 14px 24px -16px color-mix(in srgb, var(--app-accent) 95%, transparent);
 }
+
 
 /* ═══════════════════════════ 2 · BARBER CLUB ════════════════════════════ */
 
@@ -1735,7 +1617,7 @@
   cursor: pointer;
 }
 .vn-app-phone__hit:focus-visible {
-  outline: 2px solid var(--color-teal-2);
+  outline: 2px solid var(--vn-accent);
   outline-offset: 7px;
 }
 
@@ -1792,7 +1674,7 @@
   font-weight: 400;
   letter-spacing: 0.26em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 .vn-app-phone__label i {
   display: block;
@@ -1931,7 +1813,7 @@
   right: 0;
   bottom: -1px;
   height: 1px;
-  background: var(--color-teal-1);
+  background: var(--vn-accent);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1963,11 +1845,11 @@
 .vn-app-cat {
   display: inline-block;
   padding: 0.4rem 0.85rem;
-  border: 1px solid rgba(27, 107, 107, 0.32);
+  border: 1px solid color-mix(in srgb, var(--vn-accent) 32%, transparent);
   font-size: 0.66rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 
 .vn-app-journey {
@@ -1991,7 +1873,7 @@
   font-family: var(--font-display);
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
 }
 
 .vn-app-features,
@@ -2024,7 +1906,7 @@
   background: var(--color-sand);
 }
 .vn-app-tech li::before {
-  background: var(--color-teal-3);
+  background: color-mix(in srgb, var(--vn-accent) 55%, transparent);
 }
 
 .vn-app-value > div {
@@ -2057,7 +1939,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-teal-1);
+  color: var(--vn-accent);
   transition: color 0.3s ease;
 }
 .vn-app-more:hover {
@@ -2211,65 +2093,10 @@
     }
   }
 
-  /* ── 1 · Guf & Kugler: scoops drop, total and points tick up ── */
-  .vn-screen[data-play="true"] .gk-drop--1 {
-    animation: gk-fall 0.8s cubic-bezier(0.34, 1.16, 0.64, 1) 0.1s both;
-  }
-  .vn-screen[data-play="true"] .gk-drop--2 {
-    animation: gk-fall 0.8s cubic-bezier(0.34, 1.16, 0.64, 1) 0.5s both;
-  }
-  @keyframes gk-fall {
-    0% {
-      opacity: 0;
-      transform: translateY(-16px) scale(0.84);
-    }
-    16% {
-      opacity: 1;
-    }
-    70% {
-      transform: translateY(calc(var(--end) + 6px)) scale(1);
-    }
-    84% {
-      transform: translateY(calc(var(--end) - 5px)) scale(1.04);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(var(--end)) scale(1);
-    }
-  }
-  .vn-screen[data-play="true"] .gk-cup-fill {
-    animation: gk-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.55s both;
-  }
-  @keyframes gk-fill {
-    from {
-      transform: scaleY(0);
-    }
-    to {
-      transform: scaleY(1);
-    }
-  }
-  .vn-screen[data-play="true"] .gk-swap-a {
-    animation: gk-swap-out 0.4s ease 1s both;
-  }
-  .vn-screen[data-play="true"] .gk-swap-b {
-    animation: gk-swap-in 0.4s ease 1s both;
-  }
-  @keyframes gk-swap-out {
-    to {
-      opacity: 0;
-      transform: translateY(-7px);
-    }
-  }
-  @keyframes gk-swap-in {
-    from {
-      opacity: 0;
-      transform: translateY(7px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
+  /* Guf & Kugler has no play-state animation for now: the screen was rebuilt
+     on the iOS kit and the elements the old scoop-drop keyframes targeted
+     (.gk-drop, .gk-cup-fill, .gk-swap-*) no longer exist. A new one lands with
+     the three-screen flow in Phase 2. */
 
   /* ── 2 · Barber Club: the card turns, benefits and slots take its place ── */
   .vn-screen[data-play="true"] .bc-card {
@@ -2549,5 +2376,320 @@
   }
   .bc-card {
     transition: none !important;
+  }
+}
+
+/* ═════════════════════════ THE HERO ORBIT (WebGL) ════════════════════════
+   Mounts only on a wide, hover-capable viewport with working WebGL. The CSS
+   field above stays in the DOM as the fallback and is hidden by
+   .vn-hero-devices[data-orbit="true"], so a phone, a WebGL failure or no JS
+   at all still gets the original swipeable rail.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Fills the hero so the absolutely-positioned field and canvas inside it have
+   the section as their box. pointer-events pass through; the phones and the
+   orbit's buttons opt back in, so the hero copy and CTAs stay clickable. */
+.vn-hero-devices {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Below the breakpoint the wrapper must disappear from layout entirely.
+   .vn-app-field becomes the swipeable rail there using `align-self: stretch`,
+   which only works while it is a direct flex child of the hero section —
+   `display: contents` gives it that back, so every existing mobile rule keeps
+   working untouched. The orbit never mounts at this width anyway. */
+@media (max-width: 767px) {
+  .vn-hero-devices {
+    display: contents;
+  }
+}
+
+/* Hidden once the orbit has taken over, and hidden while the verdict is still
+   pending so the flat fallback never flashes up on a desktop cold load. The
+   `.js` guard is what keeps that safe: with JavaScript off the class is never
+   added, the state never leaves "pending", and the field stays visible. */
+.vn-hero-devices[data-orbit="true"] .vn-app-field,
+.js .vn-hero-devices[data-orbit="pending"] .vn-app-field {
+  display: none;
+}
+
+.vn-orbit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.vn-orbit canvas {
+  display: block;
+}
+
+/* The accessible layer: real buttons, positioned by the render loop. Sits above
+   the canvas but only the buttons themselves take pointer events, so the hero
+   copy and its CTAs stay clickable. */
+.vn-orbit-hits {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+/* The slot a staged device left behind. Invisible, and live only while its
+   device is actually away from it — see the Hit type in HeroOrbit for why it
+   has to exist. Transform, size, z-index and pointer-events are all written per
+   frame, exactly as for the control above. */
+.vn-orbit-berth {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  pointer-events: none;
+}
+
+/* Transform, width, height, z-index, opacity and pointer-events are all written
+   per frame from Device — declaring them here too would be overwritten. */
+.vn-orbit-hit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* The device's own corner radius, so the focus ring traces the phone. */
+  border-radius: 13.5% / 6.5%;
+  transition: opacity 0.3s ease;
+}
+.vn-orbit-hit:focus-visible {
+  outline: 2px solid var(--vn-accent);
+  outline-offset: 8px;
+}
+
+/* Category + value line, revealed on hover or focus. Anchored under the device
+   and centred on it; the button is the positioned ancestor, so this follows the
+   orbit for free. */
+.vn-orbit-label {
+  position: absolute;
+  top: calc(100% + 0.85rem);
+  left: 50%;
+  width: max-content;
+  max-width: 20rem;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: center;
+  opacity: 0;
+  transition:
+    opacity 0.35s ease,
+    translate 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vn-orbit-hit[data-active="true"] .vn-orbit-label {
+  opacity: 1;
+  translate: -50% 0.3rem;
+}
+.vn-orbit-label b {
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--vn-accent);
+}
+.vn-orbit-label i {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-navy);
+}
+
+/* Under reduce the orbit holds a static composed arrangement (the rAF never
+   advances), so only the label transition needs silencing. */
+@media (prefers-reduced-motion: reduce) {
+  .vn-orbit-hit,
+  .vn-orbit-label {
+    transition: none;
+  }
+}
+
+/* ─────────────────── the dusk hero (default look) ────────────────────────
+   The page's lower edge reads as the light source, and the 3D rig in
+   device/Studio.tsx lights the devices to match. Both have to change together:
+   dusk lighting on a cream page is the exact mismatch that made the devices
+   look wrong before.
+
+   REVERSIBLE: drop the `data-hero-theme` attribute set in routes/index.tsx and
+   the hero returns to plain cream. Nothing here touches any other section. */
+
+/* The gradient has to LAND on the page background, not merely near it: the hero
+   is a painted box on top of body cream, so any difference at its bottom edge
+   reads as a ruled line across the page. Both the warm pool and the ramp are
+   therefore fully resolved to var(--color-cream) before 100%, leaving a flat
+   cream band at the bottom of the hero that is indistinguishable from the
+   section below it.
+
+   The pool's vertical radius (30%) and centre (70%) are chosen so it reaches
+   zero at 70 + 30 = 100%… and its transparent stop at 72% of that radius brings
+   it to zero by 92%. It is contained on purpose.
+
+   NOTE ON THE ATTRIBUTE NAME: `data-hero-theme="dusk"` now means "the dark
+   hero treatment" — dark top, cream copy, cream nav, 114svh — rather than a
+   particular palette. The palette below is `aurora`. Renaming the attribute
+   would mean touching the pre-paint script in __root.tsx, which is the one
+   piece of this that has to be right on the very first frame, so the name has
+   been left alone and this comment carries the truth instead. */
+html[data-hero-theme="dusk"] .vn-hero {
+  background:
+    radial-gradient(
+      80% 30% at 50% 70%,
+      rgba(252, 238, 216, 0.52) 0%,
+      rgba(252, 238, 216, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      #03151a 0%,
+      #0b2a30 24%,
+      #2c625f 46%,
+      #8b9b8d 66%,
+      #d6d0c2 84%,
+      var(--color-cream) 93%,
+      var(--color-cream) 100%
+    );
+}
+
+/* The hero copy sits on the dark upper half, so it inverts there. */
+html[data-hero-theme="dusk"] .vn-hero h1,
+html[data-hero-theme="dusk"] .vn-hero .vn-hero-tagline {
+  color: #f6f1e7;
+}
+html[data-hero-theme="dusk"] .vn-hero .btn-outline {
+  border-color: rgba(246, 241, 231, 0.5);
+  color: #f6f1e7;
+}
+html[data-hero-theme="dusk"] .vn-hero .btn-outline:hover {
+  background: rgba(246, 241, 231, 0.1);
+  border-color: rgba(246, 241, 231, 0.8);
+}
+/* The scrim exists to keep copy legible over the devices; on the dark ground it
+   would be a pale smear. */
+html[data-hero-theme="dusk"] .vn-hero .vn-hero-scrim {
+  display: none;
+}
+
+/* ═══════════════ THE ALTERNATIVE LOOKS ══════════════════════════════════
+   Aurora ships, and it is the base gradient above rather than an override —
+   the hero's palette has to be right on the very first painted frame, and an
+   override applied from an effect would flash the old one first.
+
+   What is left here are the alternatives, reachable at
+   /?look=dusk | noir | gallery. Each repaints the page as well as the rig,
+   because they have to agree: the devices are metal, so they mirror an
+   environment cubemap built to match this gradient. Light the phones one way
+   and paint the page another and they stop looking like they are in the same
+   room.
+
+   Every one lands on var(--color-cream) before 100%, which is the rule that
+   keeps the hero from ending on a ruled line across the page.
+
+   REVERSIBLE: to put dusk back as the default, move its gradient below into
+   the `data-hero-theme="dusk"` rule above and change the two `aurora`
+   defaults in routes/index.tsx and HeroOrbit.tsx.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* The original: navy sky, warm floor, no rim on the devices. */
+html[data-hero-look="dusk"] .vn-hero {
+  background:
+    radial-gradient(85% 28% at 50% 68%, rgba(255, 248, 235, 0.8) 0%, rgba(255, 248, 235, 0) 72%),
+    linear-gradient(
+      180deg,
+      #171f29 0%,
+      #2b3641 22%,
+      #6f736d 48%,
+      #b3ad9f 66%,
+      #dcd6ca 80%,
+      var(--color-cream) 90%,
+      var(--color-cream) 100%
+    );
+}
+
+/* Near-black room, one tight warm pool under the devices. */
+html[data-hero-look="noir"] .vn-hero {
+  background:
+    radial-gradient(70% 26% at 50% 70%, rgba(255, 226, 186, 0.55) 0%, rgba(255, 226, 186, 0) 72%),
+    linear-gradient(
+      180deg,
+      #03050a 0%,
+      #080d16 26%,
+      #2a2a2c 52%,
+      #8e8578 72%,
+      #d6cfc1 86%,
+      var(--color-cream) 94%,
+      var(--color-cream) 100%
+    );
+}
+
+/* No rule for `aurora`: it is the base gradient above, so /?look=aurora simply
+   falls through to the default. */
+
+/* High key. The copy has to invert with it — cream text on a pale hero is
+   unreadable, and the whole reason the dusk hero can use cream text is that its
+   top half is nearly black. */
+html[data-hero-look="gallery"] .vn-hero {
+  background:
+    radial-gradient(90% 34% at 50% 66%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 74%),
+    linear-gradient(180deg, #c9d3dd 0%, #dfe4e6 34%, #ece7dd 68%, var(--color-cream) 92%, var(--color-cream) 100%);
+}
+html[data-hero-look="gallery"] .vn-hero h1,
+html[data-hero-look="gallery"] .vn-hero .vn-hero-tagline {
+  color: var(--color-navy);
+}
+html[data-hero-look="gallery"] .vn-hero .btn-outline {
+  border-color: rgba(28, 40, 53, 0.45);
+  color: var(--color-navy);
+}
+html[data-hero-look="gallery"] .vn-hero .btn-outline:hover {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: var(--color-cream);
+}
+/* On a pale hero the nav no longer needs a solid ground to stay legible. */
+html[data-hero-look="gallery"] .nav-shell {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The fixed nav crosses the dark top of the gradient, where its navy text would
+   vanish, so it needs a solid ground here rather than the transparent-until-
+   scrolled treatment. Cream, not white: white is a colour the site does not use
+   anywhere else, and the bar reads as a foreign element against every other
+   page's off-white chrome. */
+html[data-hero-theme="dusk"] .nav-shell {
+  background: var(--color-cream);
+  box-shadow: 0 1px 0 rgba(28, 40, 53, 0.08);
+}
+
+/* A hero cannot hold vertically-centred copy AND a full carousel below it — the
+   nearest device is the tallest thing on screen and lands straight on the CTA
+   row. On desktop the copy is therefore anchored to the top instead of centred,
+   which hands the whole lower band to the orbit and, unlike the translate it
+   replaces, puts the copy in the same place at every viewport height rather
+   than sliding down as the viewport grows.
+ *
+ * The hero also runs 14svh past the fold, which is the room the devices at the
+ * low point of their arc need: they used to be sliced off by the hero's own
+ * bottom edge, with the next section starting on the cut. Camera framing in
+ * HeroOrbit.tsx is derived against this height.
+ *
+ * Mobile keeps the original centred hero above the swipeable rail. */
+@media (min-width: 768px) {
+  html[data-hero-theme="dusk"] .vn-hero {
+    min-height: 114svh;
+    justify-content: flex-start;
+    padding-top: clamp(6.5rem, 15svh, 13rem);
+    padding-bottom: 14svh;
   }
 }
