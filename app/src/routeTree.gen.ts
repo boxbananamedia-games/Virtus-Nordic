@@ -15,6 +15,9 @@ import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as OmRouteImport } from './routes/om'
 import { Route as KontaktRouteImport } from './routes/kontakt'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UnruledIndexRouteImport } from './routes/unruled/index'
+import { Route as UnruledTermsRouteImport } from './routes/unruled/terms'
+import { Route as UnruledPrivacyRouteImport } from './routes/unruled/privacy'
 import { Route as ApiBookRouteImport } from './routes/api/book'
 
 const YdelserRoute = YdelserRouteImport.update({
@@ -47,6 +50,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnruledIndexRoute = UnruledIndexRouteImport.update({
+  id: '/unruled/',
+  path: '/unruled/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnruledTermsRoute = UnruledTermsRouteImport.update({
+  id: '/unruled/terms',
+  path: '/unruled/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnruledPrivacyRoute = UnruledPrivacyRouteImport.update({
+  id: '/unruled/privacy',
+  path: '/unruled/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBookRoute = ApiBookRouteImport.update({
   id: '/api/book',
   path: '/api/book',
@@ -61,6 +79,9 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/unruled/privacy': typeof UnruledPrivacyRoute
+  '/unruled/terms': typeof UnruledTermsRoute
+  '/unruled/': typeof UnruledIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +91,9 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/unruled/privacy': typeof UnruledPrivacyRoute
+  '/unruled/terms': typeof UnruledTermsRoute
+  '/unruled': typeof UnruledIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +104,9 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/unruled/privacy': typeof UnruledPrivacyRoute
+  '/unruled/terms': typeof UnruledTermsRoute
+  '/unruled/': typeof UnruledIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +118,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/unruled/privacy'
+    | '/unruled/terms'
+    | '/unruled/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +130,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/unruled/privacy'
+    | '/unruled/terms'
+    | '/unruled'
   id:
     | '__root__'
     | '/'
@@ -109,6 +142,9 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/unruled/privacy'
+    | '/unruled/terms'
+    | '/unruled/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +155,9 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   YdelserRoute: typeof YdelserRoute
   ApiBookRoute: typeof ApiBookRoute
+  UnruledPrivacyRoute: typeof UnruledPrivacyRoute
+  UnruledTermsRoute: typeof UnruledTermsRoute
+  UnruledIndexRoute: typeof UnruledIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +204,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/unruled/': {
+      id: '/unruled/'
+      path: '/unruled'
+      fullPath: '/unruled/'
+      preLoaderRoute: typeof UnruledIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unruled/terms': {
+      id: '/unruled/terms'
+      path: '/unruled/terms'
+      fullPath: '/unruled/terms'
+      preLoaderRoute: typeof UnruledTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unruled/privacy': {
+      id: '/unruled/privacy'
+      path: '/unruled/privacy'
+      fullPath: '/unruled/privacy'
+      preLoaderRoute: typeof UnruledPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/book': {
       id: '/api/book'
       path: '/api/book'
@@ -183,6 +243,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   YdelserRoute: YdelserRoute,
   ApiBookRoute: ApiBookRoute,
+  UnruledPrivacyRoute: UnruledPrivacyRoute,
+  UnruledTermsRoute: UnruledTermsRoute,
+  UnruledIndexRoute: UnruledIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
