@@ -362,6 +362,40 @@ html:not(.js) .ink-art { opacity: 1; }
 .step-num[data-lit="true"] { background: var(--vn-accent); border-color: var(--vn-accent); color: var(--color-cream); }
 
 /* ---------- scroll film ---------- */
+
+/* The film has no frame, so its raw top and bottom edges met the paper as two
+   hard horizontal lines. Instead it dissolves: a soft alpha mask at whichever
+   edge is currently on screen, sized by the scroll handler and collapsing to
+   0 once that edge clears the viewport — so the pinned film still runs edge to
+   edge and only the entrance and exit are feathered. The intermediate stops
+   ease the ramp; a straight linear alpha kinks visibly at both ends. */
+.film-stage {
+  --film-fade-top: 0vh;
+  --film-fade-bottom: 0vh;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0.12) calc(var(--film-fade-top) * 0.35),
+    rgba(0, 0, 0, 0.55) calc(var(--film-fade-top) * 0.68),
+    #000 var(--film-fade-top),
+    #000 calc(100% - var(--film-fade-bottom)),
+    rgba(0, 0, 0, 0.55) calc(100% - var(--film-fade-bottom) * 0.68),
+    rgba(0, 0, 0, 0.12) calc(100% - var(--film-fade-bottom) * 0.35),
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0.12) calc(var(--film-fade-top) * 0.35),
+    rgba(0, 0, 0, 0.55) calc(var(--film-fade-top) * 0.68),
+    #000 var(--film-fade-top),
+    #000 calc(100% - var(--film-fade-bottom)),
+    rgba(0, 0, 0, 0.55) calc(100% - var(--film-fade-bottom) * 0.68),
+    rgba(0, 0, 0, 0.12) calc(100% - var(--film-fade-bottom) * 0.35),
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
 .film-caption {
   position: absolute;
   z-index: 2;

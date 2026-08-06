@@ -43,6 +43,7 @@ const framePath = (i: number) => `/scroll/f${String(i).padStart(3, "0")}.webp`;
 export function ScrollCraft() {
   const { t } = useLang();
   const outerRef = useRef<HTMLElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const loadedRef = useRef<boolean[]>([]);
@@ -136,6 +137,19 @@ export function ScrollCraft() {
       raf = requestAnimationFrame(() => {
         const rect = outer.getBoundingClientRect();
         const vh = window.innerHeight || 1;
+
+        // Feather whichever edge of the film is currently mid-viewport, so it
+        // dissolves out of the paper on the way in and back into it on the way
+        // out rather than meeting it at a hard line. Both collapse to 0 once
+        // the edge is off screen — the pinned film is untouched.
+        const stage = stageRef.current;
+        if (stage) {
+          const top = Math.min(1, Math.max(0, rect.top / vh));
+          const bottom = Math.min(1, Math.max(0, (vh - rect.bottom) / vh));
+          stage.style.setProperty("--film-fade-top", `${(top * 50).toFixed(2)}vh`);
+          stage.style.setProperty("--film-fade-bottom", `${(bottom * 50).toFixed(2)}vh`);
+        }
+
         const scrollable = rect.height - vh;
         if (scrollable <= 0) return;
         const p = Math.min(1, Math.max(0, -rect.top / scrollable));
@@ -191,25 +205,30 @@ export function ScrollCraft() {
       ) : (
         <section ref={outerRef} className="relative" style={{ height: "600vh" }}>
           <div className="sticky top-0 h-screen w-full overflow-hidden">
-            <canvas
-              ref={canvasRef}
-              width={CRAFT_FRAME_W}
-              height={CRAFT_FRAME_H}
-              className="h-full w-full"
-              style={{ objectFit: "cover" }}
-              aria-hidden="true"
-            />
-            <div aria-live="polite">
-              {t.craft.captions.map((c, i) => (
-                <p
-                  key={i}
-                  className="film-caption"
-                  data-on={caption === i && !(i === t.craft.captions.length - 1 && finaleFaded) ? "true" : "false"}
-                  style={CAPTION_POS[i]}
-                >
-                  {c}
-                </p>
-              ))}
+            {/* The mask lives on this inner layer, not on the sticky element —
+                same box, so caption offsets are unchanged, but nothing is
+                stacked onto the thing doing the pinning. */}
+            <div ref={stageRef} className="film-stage absolute inset-0">
+              <canvas
+                ref={canvasRef}
+                width={CRAFT_FRAME_W}
+                height={CRAFT_FRAME_H}
+                className="h-full w-full"
+                style={{ objectFit: "cover" }}
+                aria-hidden="true"
+              />
+              <div aria-live="polite">
+                {t.craft.captions.map((c, i) => (
+                  <p
+                    key={i}
+                    className="film-caption"
+                    data-on={caption === i && !(i === t.craft.captions.length - 1 && finaleFaded) ? "true" : "false"}
+                    style={CAPTION_POS[i]}
+                  >
+                    {c}
+                  </p>
+                ))}
+              </div>
             </div>
             <noscript>
               <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 text-center font-display text-2xl italic text-navy/85">
