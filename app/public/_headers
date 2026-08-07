@@ -1,0 +1,26 @@
+# Cache policy for the heavy static art.
+#
+# Everything was being served `max-age=0, must-revalidate`, so the hero's 3.6MB
+# of device models and the scroll film's frames paid a revalidation round-trip
+# on every single view — including the parse-time warm-up, which is only worth
+# doing if the answer can actually be reused.
+#
+# These files are art, not code: they change on a deploy, not on a whim. An
+# hour of freshness with a day of stale-while-revalidate means a repeat visitor
+# gets them instantly and still picks up a new cut within the hour, in the
+# background, without ever waiting for it.
+#
+# Deliberately NOT immutable — unlike the hashed JS and CSS, these paths are
+# stable across deploys, so a wrong answer here would be sticky.
+
+/lab-models/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/lab-textures/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/scroll/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/art/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
