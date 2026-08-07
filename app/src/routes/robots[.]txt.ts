@@ -1,10 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { SITE_ORIGIN } from '../lib/site'
 
 export const Route = createFileRoute('/robots.txt')({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const origin = new URL(request.url).origin
+      GET: async () => {
+        // Point every host at the one sitemap on the canonical domain.
+        const origin = SITE_ORIGIN
         const body = [
           'User-agent: *',
           'Allow: /',

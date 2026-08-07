@@ -1,10 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { SITE_ORIGIN } from '../lib/site'
 
 export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const origin = new URL(request.url).origin
+      GET: async () => {
+        // The canonical host, not the requesting one. A sitemap that lists URLs
+        // which then canonicalise somewhere else is a contradiction, and search
+        // engines resolve it by trusting neither.
+        const origin = SITE_ORIGIN
         const today = new Date().toISOString().split('T')[0]
         const xml = [
           '<?xml version="1.0" encoding="UTF-8"?>',

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { LanguageProvider } from "../lib/language";
 import { CONTACT } from "../lib/content";
+import { SITE_ORIGIN, canonicalUrl } from "../lib/site";
 import { accentProps, useAccent } from "../lib/accent";
 import { InkFilters } from "../components/vn/visuals";
 import { Nav, Footer } from "../components/vn/chrome";
@@ -62,9 +63,9 @@ function toOwnAssetUrl(value: string | null | undefined): string | null {
  * bare path, so every share to LinkedIn, Slack, iMessage or WhatsApp rendered
  * the card without its image.
  *
- * The origin comes from the request rather than a constant on purpose: the
- * site answers on its higgsfield.app deploy URL and on its own domain, and
- * hardcoding either one breaks the other.
+ * Assets resolve against the REQUEST origin, not the canonical host: this is a
+ * URL something has to fetch, and the request origin is the one host we know
+ * is serving the file right now.
  */
 function absolute(origin: string, value: string | null): string | null {
   if (!value) return null;
@@ -78,7 +79,8 @@ function buildHead(meta: AppMeta, origin: string, pathname: string) {
   const ogImage = absolute(origin, toOwnAssetUrl(meta.og_image_url));
   const favicon = toOwnAssetUrl(meta.favicon_url);
   const ogVideo = absolute(origin, toOwnAssetUrl(meta.og_video_url));
-  const canonical = origin ? origin + pathname : null;
+  // Identity, unlike assets, is pinned to the site's own domain — see lib/site.
+  const canonical = canonicalUrl(pathname);
 
   return {
     meta: [
@@ -112,7 +114,7 @@ function buildHead(meta: AppMeta, origin: string, pathname: string) {
           "@type": "ProfessionalService",
           name: "Virtus Nordic",
           description,
-          ...(origin ? { url: origin } : {}),
+          url: SITE_ORIGIN,
           ...(ogImage ? { image: ogImage, logo: ogImage } : {}),
           email: CONTACT.EMAIL,
           telephone: CONTACT.PHONE,
