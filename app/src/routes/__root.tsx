@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { LanguageProvider } from "../lib/language";
+import { CONTACT } from "../lib/content";
 import { accentProps, useAccent } from "../lib/accent";
 import { InkFilters } from "../components/vn/visuals";
 import { Nav, Footer } from "../components/vn/chrome";
@@ -53,12 +54,31 @@ function toOwnAssetUrl(value: string | null | undefined): string | null {
   }
 }
 
-function buildHead(meta: AppMeta) {
+/**
+ * Absolute URL for a same-origin asset path.
+ *
+ * Open Graph and Twitter cards require absolute URLs — a scraper has no
+ * document base to resolve `/og-image.png` against. The site was emitting the
+ * bare path, so every share to LinkedIn, Slack, iMessage or WhatsApp rendered
+ * the card without its image.
+ *
+ * The origin comes from the request rather than a constant on purpose: the
+ * site answers on its higgsfield.app deploy URL and on its own domain, and
+ * hardcoding either one breaks the other.
+ */
+function absolute(origin: string, value: string | null): string | null {
+  if (!value) return null;
+  if (!origin || !value.startsWith("/")) return value;
+  return origin + value;
+}
+
+function buildHead(meta: AppMeta, origin: string, pathname: string) {
   const title = meta.og_title ?? DEFAULT_TITLE;
   const description = meta.og_description ?? DEFAULT_DESCRIPTION;
-  const ogImage = toOwnAssetUrl(meta.og_image_url);
+  const ogImage = absolute(origin, toOwnAssetUrl(meta.og_image_url));
   const favicon = toOwnAssetUrl(meta.favicon_url);
-  const ogVideo = toOwnAssetUrl(meta.og_video_url);
+  const ogVideo = absolute(origin, toOwnAssetUrl(meta.og_video_url));
+  const canonical = origin ? origin + pathname : null;
 
   return {
     meta: [
@@ -78,8 +98,43 @@ function buildHead(meta: AppMeta) {
           ]
         : []),
       ...(ogVideo ? [{ property: "og:video", content: ogVideo }] : []),
+      ...(canonical ? [{ property: "og:url", content: canonical }] : []),
+    ],
+    scripts: [
+      // Organisation identity for search engines. A named studio trading from
+      // one city is exactly what this markup is for, and it was the missing
+      // half of the local-SEO story — the StructuredData component existed but
+      // nothing ever rendered it.
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ProfessionalService",
+          name: "Virtus Nordic",
+          description,
+          ...(origin ? { url: origin } : {}),
+          ...(ogImage ? { image: ogImage, logo: ogImage } : {}),
+          email: CONTACT.EMAIL,
+          telephone: CONTACT.PHONE,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Aalborg",
+            addressRegion: "Nordjylland",
+            addressCountry: "DK",
+          },
+          areaServed: { "@type": "Country", name: "Denmark" },
+          knowsLanguage: ["da", "en"],
+          serviceType: [
+            "Mobile application development",
+            "System integration",
+            "AI agent automation",
+            "Growth and optimisation",
+          ],
+        }),
+      },
     ],
     links: [
+      ...(canonical ? [{ rel: "canonical", href: canonical }] : []),
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" as const },
       {
@@ -143,7 +198,23 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => buildHead(appMeta),
+  /**
+   * The request's own origin and path, so head() can emit absolute URLs.
+   *
+   * Read from the request on the server and from `location` on the client. The
+   * `import.meta.env.SSR` branch is statically replaced at build time, so the
+   * server-only import is eliminated from the client bundle rather than
+   * shipped and skipped.
+   */
+  loader: async (): Promise<{ origin: string; pathname: string }> => {
+    if (import.meta.env.SSR) {
+      const { getRequestUrl } = await import("@tanstack/react-start/server");
+      const url = new URL(getRequestUrl());
+      return { origin: url.origin, pathname: url.pathname };
+    }
+    return { origin: window.location.origin, pathname: window.location.pathname };
+  },
+  head: ({ loaderData }) => buildHead(appMeta, loaderData?.origin ?? "", loaderData?.pathname ?? "/"),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
