@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type CSSProperties } from "react";
 import { useLang } from "../../lib/language";
 import { CONTACT } from "../../lib/content";
+import { counterpartPath, pathFor, type SitePath } from "../../lib/site";
 import { accentProps, useAccent } from "../../lib/accent";
 import { InkDivider } from "./visuals";
 import { useBooking } from "./BookingModal";
@@ -11,7 +12,7 @@ function unusedBookHref(subject: string) {
 }
 
 export function Nav() {
-  const { lang, t, setLang } = useLang();
+  const { lang, t } = useLang();
   const booking = useBooking();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -38,25 +39,46 @@ export function Nav() {
   // Five items no longer fit beside the logo, language toggle and CTA below
   // ~1024px, so the full nav starts at lg and tablets get the same menu button
   // phones do.
-  const links: { to: string; label: string }[] = [
-    { to: "/", label: t.nav.home },
-    { to: "/om", label: t.nav.about },
-    { to: "/ydelser", label: t.nav.services },
-    { to: "/applikationer", label: t.nav.apps },
-    { to: "/kontakt", label: t.nav.contact },
+  // Paths come from the route table so the nav always points at the current
+  // language's URLs — the English nav links to /en/services, not /ydelser.
+  const links: { to: SitePath; label: string }[] = [
+    { to: pathFor("home", lang), label: t.nav.home },
+    { to: pathFor("about", lang), label: t.nav.about },
+    { to: pathFor("services", lang), label: t.nav.services },
+    { to: pathFor("apps", lang), label: t.nav.apps },
+    { to: pathFor("contact", lang), label: t.nav.contact },
   ];
 
-  const isActive = (l: { to: string }) => pathname === l.to;
+  const isActive = (l: { to: string }) => pathname.replace(/(.)\/$/, "$1") === l.to;
 
+  /**
+   * Switching language is a navigation, not a state change.
+   *
+   * These are real links, so the counterpart URL is visible on hover, opens in
+   * a new tab, and — the point of the whole exercise — is something a search
+   * engine can follow to discover the other language.
+   */
   const LangToggle = (
     <div className="flex items-center" aria-label="Language">
-      <button type="button" className="lang-btn" data-on={lang === "da"} onClick={() => setLang("da")}>
+      <Link
+        to={counterpartPath(pathname, "da")}
+        className="lang-btn"
+        data-on={lang === "da"}
+        hrefLang="da"
+        aria-current={lang === "da" ? "true" : undefined}
+      >
         DA
-      </button>
+      </Link>
       <span className="text-[0.7rem] text-navy/30">·</span>
-      <button type="button" className="lang-btn" data-on={lang === "en"} onClick={() => setLang("en")}>
+      <Link
+        to={counterpartPath(pathname, "en")}
+        className="lang-btn"
+        data-on={lang === "en"}
+        hrefLang="en"
+        aria-current={lang === "en" ? "true" : undefined}
+      >
         EN
-      </button>
+      </Link>
     </div>
   );
 
@@ -64,7 +86,11 @@ export function Nav() {
     <>
       <header className={`nav-shell ${scrolled ? "scrolled" : ""}`}>
         <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-5 md:px-8">
-          <Link to="/" className="flex items-baseline gap-3" aria-label="Virtus Nordic">
+          <Link
+            to={pathFor("home", lang)}
+            className="flex items-baseline gap-3"
+            aria-label="Virtus Nordic"
+          >
             <span className="font-logo text-2xl font-semibold leading-none text-navy">VN</span>
           </Link>
 

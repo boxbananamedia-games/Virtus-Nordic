@@ -14,7 +14,7 @@ export const Route = createFileRoute("/ydelser")({
   component: Services,
 });
 
-function Services() {
+export function Services() {
   const { t } = useLang();
   const book = `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(t.contact.mailSubject)}`;
   const hash = useLocation({ select: (l) => l.hash });

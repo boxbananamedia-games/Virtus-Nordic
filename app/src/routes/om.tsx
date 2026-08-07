@@ -13,7 +13,7 @@ export const Route = createFileRoute("/om")({
   component: About,
 });
 
-function About() {
+export function About() {
   const { t } = useLang();
   return (
     <div className="relative overflow-hidden">

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import {
   Suspense,
   lazy,
@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import { useLang } from "../lib/language";
+import { pathFor } from "../lib/site";
 import { CONTACT, content } from "../lib/content";
 import { Reveal, InkDivider, SERVICE_ICONS, useSectionProgress } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
@@ -41,9 +42,9 @@ const HeroOrbit = lazy(() =>
  * comparison. `dusk` is the original navy rig, kept so the change is one URL
  * away from being reviewed rather than one deploy away.
  */
-const LOOKS = ["aurora", "dusk", "noir", "gallery"] as const;
-type Look = (typeof LOOKS)[number];
-const DEFAULT_LOOK: Look = "aurora";
+export const LOOKS = ["aurora", "dusk", "noir", "gallery"] as const;
+export type Look = (typeof LOOKS)[number];
+export const DEFAULT_LOOK: Look = "aurora";
 
 export const Route = createFileRoute("/")({
   // The default is stripped from the URL rather than pinned into it, so the
@@ -124,8 +125,8 @@ function HeroDevices({ onSelect, look }: { onSelect: (id: string) => void; look:
   );
 }
 
-function Index() {
-  const { t } = useLang();
+export function Index() {
+  const { t, lang } = useLang();
   const booking = useBooking();
   const navigate = useNavigate();
   // Four process steps. The continuous parts of this section read
@@ -137,9 +138,9 @@ function Index() {
   // already open.
   const openConcept = useCallback(
     (id: string) => {
-      void navigate({ to: "/applikationer", search: { app: id } });
+      void navigate({ to: pathFor("apps", lang), search: { app: id } });
     },
-    [navigate],
+    [navigate, lang],
   );
 
   // The dusk hero needs to restyle the fixed nav, which is rendered outside
@@ -164,7 +165,10 @@ function Index() {
   // Only the ALTERNATIVES need the attribute. Aurora is the base gradient in
   // CSS, so the default hero is correct on the first painted frame instead of
   // flashing the old palette until this effect runs.
-  const { look = DEFAULT_LOOK } = Route.useSearch();
+  // `strict: false` reads the search of whichever route matched, rather than
+  // binding to "/" — this component also serves /en, where Route.useSearch()
+  // would be asking a route that is not in the current match tree.
+  const { look = DEFAULT_LOOK } = useSearch({ strict: false }) as { look?: Look };
   useEffect(() => {
     if (look === DEFAULT_LOOK) return;
     document.documentElement.setAttribute("data-hero-look", look);
@@ -202,7 +206,7 @@ function Index() {
             <button type="button" onClick={booking.open} className="btn btn-outline">
               {t.hero.ctaPrimary}
             </button>
-            <Link to="/ydelser" className="btn btn-outline">
+            <Link to={pathFor("services", lang)} className="btn btn-outline">
               {t.hero.ctaSecondary}
             </Link>
           </div>
@@ -251,7 +255,7 @@ function Index() {
           {t.services.items.map((item, i) => (
             <Reveal key={item.title} delay={0.08 * i}>
               <Link
-                to="/ydelser"
+                to={pathFor("services", lang)}
                 hash={`service-${i}`}
                 className="srv-card block h-full"
                 aria-label={`${item.title} — ${t.servicesTeaser.label}`}

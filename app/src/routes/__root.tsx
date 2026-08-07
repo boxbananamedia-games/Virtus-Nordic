@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,7 +14,7 @@ import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { LanguageProvider } from "../lib/language";
 import { CONTACT } from "../lib/content";
-import { SITE_ORIGIN, canonicalUrl } from "../lib/site";
+import { SITE_ORIGIN, alternatesFor, canonicalUrl, langFromPath } from "../lib/site";
 import { accentProps, useAccent } from "../lib/accent";
 import { InkFilters } from "../components/vn/visuals";
 import { Nav, Footer } from "../components/vn/chrome";
@@ -81,6 +82,8 @@ function buildHead(meta: AppMeta, origin: string, pathname: string) {
   const ogVideo = absolute(origin, toOwnAssetUrl(meta.og_video_url));
   // Identity, unlike assets, is pinned to the site's own domain — see lib/site.
   const canonical = canonicalUrl(pathname);
+  const alternates = alternatesFor(pathname);
+  const lang = langFromPath(pathname);
 
   return {
     meta: [
@@ -101,6 +104,10 @@ function buildHead(meta: AppMeta, origin: string, pathname: string) {
         : []),
       ...(ogVideo ? [{ property: "og:video", content: ogVideo }] : []),
       ...(canonical ? [{ property: "og:url", content: canonical }] : []),
+      { property: "og:locale", content: lang === "en" ? "en_GB" : "da_DK" },
+      ...(alternates
+        ? [{ property: "og:locale:alternate", content: lang === "en" ? "da_DK" : "en_GB" }]
+        : []),
     ],
     scripts: [
       // Organisation identity for search engines. A named studio trading from
@@ -150,6 +157,20 @@ function buildHead(meta: AppMeta, origin: string, pathname: string) {
       },
       { rel: "stylesheet", href: appCss },
       ...(favicon ? [{ rel: "icon", href: favicon }] : []),
+      // hreflang: tell search engines these two URLs are the same page in
+      // different languages, so they rank the right one per audience instead
+      // of treating them as duplicates competing with each other. Emitted only
+      // where a translation actually exists — /unruled/* and /lab/* are
+      // Danish-only, and pointing at a URL that 404s is worse than silence.
+      // x-default sends anyone we have no language match for to the Danish
+      // original, which is the primary edition.
+      ...(alternates
+        ? [
+            { rel: "alternate", hrefLang: "da", href: alternates.da },
+            { rel: "alternate", hrefLang: "en", href: alternates.en },
+            { rel: "alternate", hrefLang: "x-default", href: alternates.da },
+          ]
+        : []),
     ],
   };
 }
@@ -224,8 +245,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // The document's own language has to be right in the server HTML: it is what
+  // screen readers pick a voice from and what search engines read before any
+  // hreflang tag. It used to be hardcoded to Danish even once the UI had
+  // switched to English.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const lang = langFromPath(pathname);
   return (
-    <html lang="da" style={{ colorScheme: "light" }}>
+    <html lang={lang} style={{ colorScheme: "light" }}>
       <head>
         <HeadContent />
       </head>
@@ -244,7 +271,9 @@ function RootShell({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{
             __html:
               "document.documentElement.classList.add('js');" +
-              "if(location.pathname==='/')document.documentElement.setAttribute('data-hero-theme','dusk');",
+              // Both editions of the home page get the dusk hero.
+              "if(location.pathname==='/'||location.pathname==='/en'||location.pathname==='/en/')" +
+              "document.documentElement.setAttribute('data-hero-theme','dusk');",
           }}
         />
         {children}
@@ -257,6 +286,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const accent = useAccent();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const lang = langFromPath(pathname);
 
   useEffect(() => {
     if (!__HF_DESIGN_INSPECTOR__) {
@@ -276,7 +307,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
+      <LanguageProvider lang={lang}>
         <BookingProvider>
         {/* Filter defs for this page's pigment. Must be in the document for
             `filter: url(#…)` to resolve, and cheap enough to re-render on

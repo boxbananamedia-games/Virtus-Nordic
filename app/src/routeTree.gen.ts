@@ -17,9 +17,14 @@ import { Route as KontaktRouteImport } from './routes/kontakt'
 import { Route as ApplikationerRouteImport } from './routes/applikationer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UnruledIndexRouteImport } from './routes/unruled/index'
+import { Route as EnIndexRouteImport } from './routes/en/index'
 import { Route as UnruledTermsRouteImport } from './routes/unruled/terms'
 import { Route as UnruledPrivacyRouteImport } from './routes/unruled/privacy'
 import { Route as LabOrbitRouteImport } from './routes/lab/orbit'
+import { Route as EnServicesRouteImport } from './routes/en/services'
+import { Route as EnContactRouteImport } from './routes/en/contact'
+import { Route as EnApplicationsRouteImport } from './routes/en/applications'
+import { Route as EnAboutRouteImport } from './routes/en/about'
 import { Route as ApiBookRouteImport } from './routes/api/book'
 
 const YdelserRoute = YdelserRouteImport.update({
@@ -62,6 +67,11 @@ const UnruledIndexRoute = UnruledIndexRouteImport.update({
   path: '/unruled/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnIndexRoute = EnIndexRouteImport.update({
+  id: '/en/',
+  path: '/en/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnruledTermsRoute = UnruledTermsRouteImport.update({
   id: '/unruled/terms',
   path: '/unruled/terms',
@@ -75,6 +85,26 @@ const UnruledPrivacyRoute = UnruledPrivacyRouteImport.update({
 const LabOrbitRoute = LabOrbitRouteImport.update({
   id: '/lab/orbit',
   path: '/lab/orbit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnServicesRoute = EnServicesRouteImport.update({
+  id: '/en/services',
+  path: '/en/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnContactRoute = EnContactRouteImport.update({
+  id: '/en/contact',
+  path: '/en/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnApplicationsRoute = EnApplicationsRouteImport.update({
+  id: '/en/applications',
+  path: '/en/applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnAboutRoute = EnAboutRouteImport.update({
+  id: '/en/about',
+  path: '/en/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiBookRoute = ApiBookRouteImport.update({
@@ -92,9 +122,14 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/en/about': typeof EnAboutRoute
+  '/en/applications': typeof EnApplicationsRoute
+  '/en/contact': typeof EnContactRoute
+  '/en/services': typeof EnServicesRoute
   '/lab/orbit': typeof LabOrbitRoute
   '/unruled/privacy': typeof UnruledPrivacyRoute
   '/unruled/terms': typeof UnruledTermsRoute
+  '/en/': typeof EnIndexRoute
   '/unruled/': typeof UnruledIndexRoute
 }
 export interface FileRoutesByTo {
@@ -106,9 +141,14 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/en/about': typeof EnAboutRoute
+  '/en/applications': typeof EnApplicationsRoute
+  '/en/contact': typeof EnContactRoute
+  '/en/services': typeof EnServicesRoute
   '/lab/orbit': typeof LabOrbitRoute
   '/unruled/privacy': typeof UnruledPrivacyRoute
   '/unruled/terms': typeof UnruledTermsRoute
+  '/en': typeof EnIndexRoute
   '/unruled': typeof UnruledIndexRoute
 }
 export interface FileRoutesById {
@@ -121,9 +161,14 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/en/about': typeof EnAboutRoute
+  '/en/applications': typeof EnApplicationsRoute
+  '/en/contact': typeof EnContactRoute
+  '/en/services': typeof EnServicesRoute
   '/lab/orbit': typeof LabOrbitRoute
   '/unruled/privacy': typeof UnruledPrivacyRoute
   '/unruled/terms': typeof UnruledTermsRoute
+  '/en/': typeof EnIndexRoute
   '/unruled/': typeof UnruledIndexRoute
 }
 export interface FileRouteTypes {
@@ -137,9 +182,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/en/about'
+    | '/en/applications'
+    | '/en/contact'
+    | '/en/services'
     | '/lab/orbit'
     | '/unruled/privacy'
     | '/unruled/terms'
+    | '/en/'
     | '/unruled/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,9 +201,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/en/about'
+    | '/en/applications'
+    | '/en/contact'
+    | '/en/services'
     | '/lab/orbit'
     | '/unruled/privacy'
     | '/unruled/terms'
+    | '/en'
     | '/unruled'
   id:
     | '__root__'
@@ -165,9 +220,14 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/en/about'
+    | '/en/applications'
+    | '/en/contact'
+    | '/en/services'
     | '/lab/orbit'
     | '/unruled/privacy'
     | '/unruled/terms'
+    | '/en/'
     | '/unruled/'
   fileRoutesById: FileRoutesById
 }
@@ -180,9 +240,14 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   YdelserRoute: typeof YdelserRoute
   ApiBookRoute: typeof ApiBookRoute
+  EnAboutRoute: typeof EnAboutRoute
+  EnApplicationsRoute: typeof EnApplicationsRoute
+  EnContactRoute: typeof EnContactRoute
+  EnServicesRoute: typeof EnServicesRoute
   LabOrbitRoute: typeof LabOrbitRoute
   UnruledPrivacyRoute: typeof UnruledPrivacyRoute
   UnruledTermsRoute: typeof UnruledTermsRoute
+  EnIndexRoute: typeof EnIndexRoute
   UnruledIndexRoute: typeof UnruledIndexRoute
 }
 
@@ -244,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnruledIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/en/': {
+      id: '/en/'
+      path: '/en'
+      fullPath: '/en/'
+      preLoaderRoute: typeof EnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unruled/terms': {
       id: '/unruled/terms'
       path: '/unruled/terms'
@@ -265,6 +337,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LabOrbitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/en/services': {
+      id: '/en/services'
+      path: '/en/services'
+      fullPath: '/en/services'
+      preLoaderRoute: typeof EnServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en/contact': {
+      id: '/en/contact'
+      path: '/en/contact'
+      fullPath: '/en/contact'
+      preLoaderRoute: typeof EnContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en/applications': {
+      id: '/en/applications'
+      path: '/en/applications'
+      fullPath: '/en/applications'
+      preLoaderRoute: typeof EnApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en/about': {
+      id: '/en/about'
+      path: '/en/about'
+      fullPath: '/en/about'
+      preLoaderRoute: typeof EnAboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/book': {
       id: '/api/book'
       path: '/api/book'
@@ -284,9 +384,14 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   YdelserRoute: YdelserRoute,
   ApiBookRoute: ApiBookRoute,
+  EnAboutRoute: EnAboutRoute,
+  EnApplicationsRoute: EnApplicationsRoute,
+  EnContactRoute: EnContactRoute,
+  EnServicesRoute: EnServicesRoute,
   LabOrbitRoute: LabOrbitRoute,
   UnruledPrivacyRoute: UnruledPrivacyRoute,
   UnruledTermsRoute: UnruledTermsRoute,
+  EnIndexRoute: EnIndexRoute,
   UnruledIndexRoute: UnruledIndexRoute,
 }
 export const routeTree = rootRouteImport

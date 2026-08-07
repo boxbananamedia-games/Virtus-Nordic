@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { content } from "../lib/content";
 import { APPLICATIONS } from "../lib/applications";
 import { ApplicationsSection } from "../components/vn/apps/ApplicationsSection";
@@ -29,8 +29,10 @@ export const Route = createFileRoute("/applikationer")({
   component: Applications,
 });
 
-function Applications() {
-  const { app } = Route.useSearch();
+export function Applications() {
+  // Not Route.useSearch(): this component also serves /en/applications, which
+  // is a different route and would not match a lookup bound to this one.
+  const { app } = useSearch({ strict: false }) as { app?: string };
   const [selectedId, setSelectedId] = useState(app ?? APPLICATIONS[0].id);
   const [detailsOpen, setDetailsOpen] = useState(false);
 

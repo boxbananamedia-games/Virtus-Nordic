@@ -14,7 +14,7 @@ export const Route = createFileRoute("/kontakt")({
   component: Contact,
 });
 
-function Contact() {
+export function Contact() {
   const { t } = useLang();
   const [form, setForm] = useState({ name: "", company: "", email: "", phone: "", message: "" });
 
