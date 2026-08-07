@@ -40,11 +40,20 @@ export function PhoneField({ onSelect }: { onSelect: (id: string) => void }) {
       field.style.setProperty("--my", my.toFixed(3));
     };
 
+    // The hero's rect only moves on scroll or resize, but reading it inside
+    // pointermove forced a synchronous layout on every one of them — well over
+    // a hundred a second on a high-refresh mouse — to recompute a value that
+    // had not changed. Cache it and invalidate on the events that can.
+    let rect: DOMRect | null = null;
+    const invalidate = () => {
+      rect = null;
+    };
+
     const onMove = (e: PointerEvent) => {
-      const r = zone.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      mx = ((e.clientX - r.left) / r.width) * 2 - 1;
-      my = ((e.clientY - r.top) / r.height) * 2 - 1;
+      if (!rect) rect = zone.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      mx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      my = ((e.clientY - rect.top) / rect.height) * 2 - 1;
       if (!raf) raf = requestAnimationFrame(apply);
     };
 
@@ -56,9 +65,13 @@ export function PhoneField({ onSelect }: { onSelect: (id: string) => void }) {
 
     zone.addEventListener("pointermove", onMove, { passive: true });
     zone.addEventListener("pointerleave", onLeave);
+    window.addEventListener("scroll", invalidate, { passive: true });
+    window.addEventListener("resize", invalidate, { passive: true });
     return () => {
       zone.removeEventListener("pointermove", onMove);
       zone.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("scroll", invalidate);
+      window.removeEventListener("resize", invalidate);
       cancelAnimationFrame(raf);
     };
   }, []);

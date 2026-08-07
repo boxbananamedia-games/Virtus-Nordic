@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { INK_VARIANTS, inkFilterId, useAccent } from "../../lib/accent";
+import { onScrollFrame } from "../../lib/scroll-sync";
 
 /** True when the visitor has asked the OS for less animation. Safe on the
  *  server, where there is no matchMedia to ask. */
@@ -309,34 +310,56 @@ export function Reveal({
 /* useSectionProgress — 0..1 scroll progress through a section          */
 /* ------------------------------------------------------------------ */
 
-export function useSectionProgress<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
+/**
+ * Scroll progress through a section, published as a CSS custom property.
+ *
+ * This used to hold progress in React state, and it is called from the
+ * homepage's root component — so every scroll frame set state on the root and
+ * reconciled the entire page: the hero, the WebGL canvas, the phone field and
+ * five device cards of screen markup, none of it memoized, all of it to move
+ * one connector line. That is the bulk of the scripting cost of scrolling the
+ * homepage.
+ *
+ * Continuous readouts now ride `--section-progress` on the tracked element and
+ * never touch React. What does come back is `lit` — how many steps have been
+ * passed — because a threshold crossing genuinely is a discrete change worth a
+ * render. With `steps = 4` that is at most five renders across the section
+ * instead of one per frame.
+ */
+export function useSectionProgress<T extends HTMLElement>(
+  steps = 0,
+): [React.RefObject<T | null>, number] {
   const ref = useRef<T | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [lit, setLit] = useState(0);
+  const litRef = useRef(0);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    let raf = 0;
-    const measure = () => {
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const total = rect.height + vh * 0.25;
-      const passed = Math.min(Math.max(vh * 0.88 - rect.top, 0), total);
-      setProgress(Math.min(1, Math.max(0, passed / total)));
-    };
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
 
-  return [ref, progress];
+    let progress = 0;
+    return onScrollFrame({
+      measure: () => {
+        const rect = el.getBoundingClientRect();
+        const vh = window.innerHeight || 1;
+        const total = rect.height + vh * 0.25;
+        const passed = Math.min(Math.max(vh * 0.88 - rect.top, 0), total);
+        progress = Math.min(1, Math.max(0, passed / total));
+      },
+      mutate: () => {
+        el.style.setProperty("--section-progress", progress.toFixed(4));
+        if (!steps) return;
+        // Same thresholds the markup used to test inline: step i lights at its
+        // midpoint, (i + 0.5) / steps.
+        let next = 0;
+        while (next < steps && progress > (next + 0.5) / steps) next += 1;
+        if (next !== litRef.current) {
+          litRef.current = next;
+          setLit(next);
+        }
+      },
+    });
+  }, [steps]);
+
+  return [ref, lit];
 }

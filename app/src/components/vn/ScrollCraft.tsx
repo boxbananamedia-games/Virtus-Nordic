@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLang } from "../../lib/language";
+import { onScrollFrame } from "../../lib/scroll-sync";
 
 /**
  * ScrollCraft — "The reality" scroll film.
@@ -13,9 +14,22 @@ import { useLang } from "../../lib/language";
  * Fallbacks: prefers-reduced-motion and no-JS both show the final still.
  */
 
-export const CRAFT_FRAME_COUNT = 191;
-export const CRAFT_FRAME_W = 1568;
-export const CRAFT_FRAME_H = 882;
+/**
+ * 96 frames at 1120x630, halved from the 191 at 1568x882 the sequence was
+ * baked at. Both dimensions matter and for different reasons: the count is
+ * bytes over the wire, the resolution is bitmap memory. At the old size a
+ * single decoded frame was 5.3MB, so holding the sequence cost about a
+ * gigabyte; at this one it is 2.8MB, and only a window of them is ever
+ * resident (see the cache below).
+ *
+ * 96 frames across the section's ~5460px of scrub is one frame per ~57px,
+ * which is under a scroll notch — the film reads as continuous. Caption
+ * timings are fractions of scroll progress, not frame indices, so they land on
+ * the same beats regardless of the count.
+ */
+export const CRAFT_FRAME_COUNT = 96;
+export const CRAFT_FRAME_W = 1120;
+export const CRAFT_FRAME_H = 630;
 
 /* Scroll-progress at which each caption BEGINS (share of total scrub). The
    first clip (cafe) plays caption-free — nothing shows until p passes
@@ -45,8 +59,6 @@ export function ScrollCraft() {
   const outerRef = useRef<HTMLElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
-  const loadedRef = useRef<boolean[]>([]);
   const lastDrawnRef = useRef(-1);
   const targetRef = useRef(0);
   const captionIdxRef = useRef(-1);
@@ -70,92 +82,196 @@ export function ScrollCraft() {
       return;
     }
 
-    imagesRef.current = new Array<HTMLImageElement | null>(CRAFT_FRAME_COUNT).fill(null);
-    loadedRef.current = new Array<boolean>(CRAFT_FRAME_COUNT).fill(false);
+    /**
+     * Frames are held in a window around the playhead, not all at once.
+     *
+     * Every frame is CRAFT_FRAME_W x CRAFT_FRAME_H of RGBA once decoded, so
+     * retaining the whole sequence — which is what an array of every loaded
+     * Image amounts to — reserved the better part of a gigabyte of bitmap.
+     * Machines without a discrete GPU pay that out of system memory, evict
+     * under pressure, and then re-decode mid-scrub, which is precisely when
+     * they can least afford it.
+     *
+     * FETCH is how far ahead and behind frames are pulled in; KEEP is how far
+     * they survive. The gap between them is hysteresis: without it, a playhead
+     * resting on a boundary would drop and re-fetch the same frame every few
+     * pixels of scroll.
+     */
+    const FETCH = 12;
+    const KEEP = 18;
 
-    const draw = (index: number) => {
-      // draw the nearest loaded frame at or below the target so scrubbing
-      // never blanks while frames stream in
-      let i = Math.min(CRAFT_FRAME_COUNT - 1, Math.max(0, index));
-      while (i > 0 && !loadedRef.current[i]) i--;
-      const img = imagesRef.current[i];
-      if (!img || !loadedRef.current[i] || i === lastDrawnRef.current) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      lastDrawnRef.current = i;
+    type Frame = ImageBitmap | HTMLImageElement;
+    const cache = new Map<number, Frame>();
+    const inflight = new Map<number, AbortController>();
+    /** Frames the server would not give us. Remembered because a completed
+     *  fetch re-runs syncWindow, and a frame that is neither cached nor in
+     *  flight looks exactly like one that has not been asked for yet — so
+     *  without this, one 404 becomes an unbounded retry loop. */
+    const failed = new Set<number>();
+
+    const release = (frame: Frame) => {
+      // ImageBitmap frees on demand; an <img> only when nothing references it,
+      // and dropping the src is what lets the decoded copy go early.
+      if (typeof ImageBitmap !== "undefined" && frame instanceof ImageBitmap) frame.close();
+      else (frame as HTMLImageElement).src = "";
     };
 
-    const loadFrame = (i: number) =>
-      new Promise<void>((resolve) => {
-        const img = new Image();
-        img.decoding = "async";
-        img.onload = () => {
-          loadedRef.current[i] = true;
-          imagesRef.current[i] = img;
-          // repaint if the user is already waiting on/near this frame
-          if (Math.abs(targetRef.current - i) < 4 || lastDrawnRef.current < i) {
-            draw(targetRef.current);
-          }
-          resolve();
-        };
-        img.onerror = () => resolve();
-        img.src = framePath(i);
-      });
-
-    let started = false;
-    const startLoading = async () => {
-      if (started) return;
-      started = true;
-      await loadFrame(0);
-      draw(0);
-      // stream the rest with limited concurrency
-      const queue = Array.from({ length: CRAFT_FRAME_COUNT - 1 }, (_, k) => k + 1);
-      const workers = Array.from({ length: 6 }, async () => {
-        while (queue.length) {
-          const i = queue.shift();
-          if (i === undefined) break;
-          await loadFrame(i);
+    const draw = (index: number) => {
+      const want = Math.min(CRAFT_FRAME_COUNT - 1, Math.max(0, index));
+      // Nearest resident frame in EITHER direction. The old code walked
+      // downwards on the assumption that everything below the playhead was
+      // loaded; with a window that no longer holds, and the nearest frame is
+      // as likely to be above as below.
+      let best = -1;
+      let bestDist = Infinity;
+      for (const i of cache.keys()) {
+        const d = Math.abs(i - want);
+        if (d < bestDist) {
+          bestDist = d;
+          best = i;
         }
-      });
-      await Promise.all(workers);
+      }
+      if (best < 0 || best === lastDrawnRef.current) return;
+      const frame = cache.get(best);
+      if (!frame) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      lastDrawnRef.current = best;
+    };
+
+    let disposed = false;
+
+    const fetchFrame = async (i: number) => {
+      if (cache.has(i) || inflight.has(i) || failed.has(i)) return;
+      const ac = new AbortController();
+      inflight.set(i, ac);
+      try {
+        const res = await fetch(framePath(i), { signal: ac.signal });
+        if (!res.ok) {
+          failed.add(i);
+          return;
+        }
+        const blob = await res.blob();
+        let frame: Frame;
+        if (typeof createImageBitmap === "function") {
+          frame = await createImageBitmap(blob);
+        } else {
+          const img = new Image();
+          img.decoding = "async";
+          img.src = framePath(i);
+          await img.decode().catch(() => {});
+          frame = img;
+        }
+        if (disposed || Math.abs(i - targetRef.current) > KEEP) {
+          release(frame);
+          return;
+        }
+        cache.set(i, frame);
+        // Repaint if this is a better answer than what is on the canvas.
+        if (Math.abs(targetRef.current - i) < Math.abs(targetRef.current - lastDrawnRef.current)) {
+          draw(targetRef.current);
+        }
+      } catch {
+        // Abort is expected when the window moves on; anything else means the
+        // frame is not coming, and retrying it in a loop helps nobody.
+        if (!ac.signal.aborted) failed.add(i);
+      } finally {
+        inflight.delete(i);
+        // Top the window back up. Without this the window only advanced when
+        // the playhead moved, so coming to rest left it holding just the few
+        // frames the last tick had room to start — and the next flick had
+        // nothing buffered to scrub through.
+        syncWindow();
+      }
+    };
+
+    /** Pull in what the window wants, nearest first, and drop what it doesn't. */
+    const syncWindow = () => {
+      if (disposed) return;
+      const centre = targetRef.current;
+
+      for (const [i, frame] of cache) {
+        if (Math.abs(i - centre) > KEEP) {
+          cache.delete(i);
+          release(frame);
+        }
+      }
+      for (const [i, ac] of inflight) {
+        if (Math.abs(i - centre) > KEEP) {
+          ac.abort();
+          inflight.delete(i);
+        }
+      }
+
+      // Nearest-first so a fast scrub gets the frame under the playhead before
+      // it gets the edges of the window.
+      const wanted: number[] = [];
+      for (let d = 0; d <= FETCH; d += 1) {
+        for (const i of d === 0 ? [centre] : [centre - d, centre + d]) {
+          if (
+            i >= 0 &&
+            i < CRAFT_FRAME_COUNT &&
+            !cache.has(i) &&
+            !inflight.has(i) &&
+            !failed.has(i)
+          ) {
+            wanted.push(i);
+          }
+        }
+      }
+      // Cap concurrency; the rest arrive on the next scroll tick.
+      for (const i of wanted.slice(0, Math.max(0, 6 - inflight.size))) void fetchFrame(i);
     };
 
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          void startLoading();
+          syncWindow();
           io.disconnect();
         }
       },
-      { rootMargin: "120% 0px" },
+      // Was 120%, which started the whole sequence more than a viewport early
+      // and put it in contention with the hero's own assets. The window only
+      // needs a little runway now.
+      { rootMargin: "25% 0px" },
     );
     io.observe(outer);
 
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
+    // Split read from write and hand both to the shared scroll scheduler, so
+    // this and the process section's progress produce one layout per frame
+    // between them instead of each forcing its own.
+    let fadeTop = 0;
+    let fadeBottom = 0;
+    let p = 0;
+    let scrubbable = false;
+
+    const unsubscribe = onScrollFrame({
+      measure: () => {
         const rect = outer.getBoundingClientRect();
         const vh = window.innerHeight || 1;
-
+        fadeTop = Math.min(1, Math.max(0, rect.top / vh));
+        fadeBottom = Math.min(1, Math.max(0, (vh - rect.bottom) / vh));
+        const scrollable = rect.height - vh;
+        scrubbable = scrollable > 0;
+        if (scrubbable) p = Math.min(1, Math.max(0, -rect.top / scrollable));
+      },
+      mutate: () => {
         // Feather whichever edge of the film is currently mid-viewport, so it
         // dissolves out of the paper on the way in and back into it on the way
         // out rather than meeting it at a hard line. Both collapse to 0 once
         // the edge is off screen — the pinned film is untouched.
         const stage = stageRef.current;
         if (stage) {
-          const top = Math.min(1, Math.max(0, rect.top / vh));
-          const bottom = Math.min(1, Math.max(0, (vh - rect.bottom) / vh));
-          stage.style.setProperty("--film-fade-top", `${(top * 50).toFixed(2)}vh`);
-          stage.style.setProperty("--film-fade-bottom", `${(bottom * 50).toFixed(2)}vh`);
+          stage.style.setProperty("--film-fade-top", `${(fadeTop * 50).toFixed(2)}vh`);
+          stage.style.setProperty("--film-fade-bottom", `${(fadeBottom * 50).toFixed(2)}vh`);
         }
+        if (!scrubbable) return;
 
-        const scrollable = rect.height - vh;
-        if (scrollable <= 0) return;
-        const p = Math.min(1, Math.max(0, -rect.top / scrollable));
         const frame = Math.round(p * (CRAFT_FRAME_COUNT - 1));
+        const moved = frame !== targetRef.current;
         targetRef.current = frame;
         draw(frame);
+        if (moved) syncWindow();
         // -1 = no caption yet (first clip runs clean); otherwise the last
         // caption whose start threshold we've passed.
         let ci = -1;
@@ -172,17 +288,17 @@ export function ScrollCraft() {
           finaleFadeRef.current = faded;
           setFinaleFaded(faded);
         }
-      });
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+      },
+    });
 
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      disposed = true;
+      unsubscribe();
       io.disconnect();
+      for (const ac of inflight.values()) ac.abort();
+      inflight.clear();
+      for (const frame of cache.values()) release(frame);
+      cache.clear();
     };
   }, []);
 

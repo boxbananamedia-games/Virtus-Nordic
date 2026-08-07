@@ -1,4 +1,4 @@
-import { useCallback, useRef, type CSSProperties, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, type CSSProperties, type PointerEvent } from "react";
 import type { Lang } from "../../../lib/content";
 import { pick, type AppConcept } from "../../../lib/applications";
 import { PhoneFrame } from "./PhoneFrame";
@@ -37,8 +37,29 @@ export function PhoneCard({
   const rafRef = useRef(0);
   const nextTilt = useRef({ x: 0, y: 0 });
 
+  /** The hit area's box, good for one frame. It sits inside the drift
+   *  animation so it really is moving, but re-reading it on every pointermove
+   *  forced a synchronous layout per event — over a hundred a second on a
+   *  high-refresh mouse. Once per frame is as fresh as the tilt can be applied
+   *  anyway; applyTilt drops it as it runs. */
+  const hitRect = useRef<DOMRect | null>(null);
+
+  /** matchMedia allocates a MediaQueryList on every call, so it is answered
+   *  once here rather than inside the pointermove handler. */
+  const reduced = useRef(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => {
+      reduced.current = mq.matches;
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   const applyTilt = useCallback(() => {
     rafRef.current = 0;
+    hitRect.current = null;
     const el = tiltRef.current;
     if (!el) return;
     el.style.setProperty("--tilt-x", `${nextTilt.current.x.toFixed(2)}deg`);
@@ -55,8 +76,9 @@ export function PhoneCard({
 
   const onPointerMove = (e: PointerEvent<HTMLButtonElement>) => {
     if (e.pointerType === "touch") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const r = e.currentTarget.getBoundingClientRect();
+    if (reduced.current) return;
+    const r = (hitRect.current ??= e.currentTarget.getBoundingClientRect());
+    if (!r.width || !r.height) return;
     const dx = (e.clientX - r.left) / r.width - 0.5;
     const dy = (e.clientY - r.top) / r.height - 0.5;
     // Tilt *towards* the cursor: the edge under the pointer leans away from the

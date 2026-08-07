@@ -68,8 +68,11 @@ body {
   border: 1px solid var(--color-navy);
   transition: background-color 0.4s cubic-bezier(0.32, 0.72, 0, 1), color 0.4s cubic-bezier(0.32, 0.72, 0, 1),
     transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-  will-change: transform;
 }
+/* Promote on approach, not for the whole session. `will-change` is a hint for
+   the moment before a transition; left on unconditionally it held a composited
+   layer alive for every button on the page from first paint. */
+.btn:hover, .btn:focus-visible { will-change: transform; }
 .btn:active { transform: translateY(0) scale(0.98); transition-duration: 0.12s; }
 .btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--vn-accent);
@@ -332,9 +335,9 @@ html:not(.js) .ink-art { opacity: 1; }
   padding: 2.2rem 1.9rem;
   transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.5s cubic-bezier(0.32, 0.72, 0, 1),
     border-color 0.5s ease, background-color 0.5s ease;
-  will-change: transform;
 }
 .srv-card:hover {
+  will-change: transform;
   transform: translateY(-5px) scale(1.005);
   border-color: color-mix(in srgb, var(--vn-accent) 45%, transparent);
   background: rgba(255, 255, 255, 0.42);

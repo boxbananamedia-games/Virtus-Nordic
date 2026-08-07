@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { APPLICATIONS, pick } from "../../../lib/applications";
@@ -570,6 +570,58 @@ export function HeroOrbit({
   const reduced =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  /**
+   * Render only while the hero is actually on screen and the tab is in front.
+   *
+   * R3F's default is `always`, which meant this scene — five PBR bodies under
+   * image-based lighting, through a bloom chain — kept rendering for the whole
+   * life of the page. The hero is `min-height: 114svh`, so that is the entire
+   * rest of the homepage spent driving the GPU for something nobody is looking
+   * at, and every scroll after it competed with a loop that had no reason to be
+   * running.
+   *
+   * `never` rather than `demand` while away: this is a continuous animation, so
+   * there is no invalidation to respond to — the honest state is "stopped". The
+   * clocks are refs advanced by delta (see Ring), and `useFrame` deltas are
+   * already clamped to 0.1s at :380 and :521, so coming back resumes rather
+   * than jumping.
+   *
+   * Under reduced motion the scene is static by construction — Ring's useFrame
+   * returns early and spinRef holds a composed arrangement — so `demand` is
+   * exactly right: React commits (models resolving out of Suspense) invalidate
+   * and draw, and nothing loops.
+   */
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [frameloop, setFrameloop] = useState<"always" | "demand" | "never">(
+    reduced ? "demand" : "always",
+  );
+
+  useEffect(() => {
+    if (reduced) return;
+    const el = wrapRef.current;
+    if (!el) return;
+
+    let onScreen = true;
+    const sync = () => setFrameloop(onScreen && !document.hidden ? "always" : "never");
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        onScreen = entries.some((e) => e.isIntersecting);
+        sync();
+      },
+      // A little margin so the ring is already moving by the time it is looked
+      // at, rather than starting from a freeze-frame at the edge of the screen.
+      { rootMargin: "15% 0px" },
+    );
+    io.observe(el);
+    document.addEventListener("visibilitychange", sync);
+
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [reduced]);
+
   const stage = (index: number | null) => {
     if (stagedRef.current === index) return;
     stagedRef.current = index;
@@ -600,11 +652,18 @@ export function HeroOrbit({
   };
 
   return (
-    <div className="vn-orbit" data-active={activeId ? "true" : "false"}>
+    <div className="vn-orbit" data-active={activeId ? "true" : "false"} ref={wrapRef}>
       <Canvas
-        dpr={[1, 2]}
+        frameloop={frameloop}
+        dpr={[1, 1.5]}
         camera={{ position: [0, 0, ORBIT.cameraZ], fov: ORBIT.fov, near: 1, far: 400 }}
-        gl={{ antialias: true, alpha: true }}
+        // `antialias` is off deliberately. StudioLighting mounts an
+        // EffectComposer, so the scene renders into offscreen targets and only
+        // the final fullscreen quad reaches the default framebuffer — where
+        // there are no geometry edges left to resolve. Leaving it on allocated
+        // an MSAA backbuffer and paid a resolve every frame for no antialiasing
+        // at all (the composer's own targets are `multisampling={0}`).
+        gl={{ antialias: false, alpha: true }}
         style={{ background: "transparent" }}
         // Decorative: the accessible content is the button list below.
         aria-hidden="true"
@@ -666,19 +725,5 @@ export function HeroOrbit({
   );
 }
 
-/** Whether this browser can actually run the orbit. Checked before mounting so
- *  a failure falls back to the CSS field instead of an empty canvas. */
-export function canRunOrbit() {
-  if (typeof window === "undefined") return false;
-  // A phone cannot show a five-device orbit usefully, and hover-less pointers
-  // have no way to reach the reveal — the CSS rail is the better answer there.
-  if (!window.matchMedia("(hover: hover) and (min-width: 768px)").matches) return false;
-  try {
-    const canvas = document.createElement("canvas");
-    return Boolean(
-      canvas.getContext("webgl2") ?? (canvas.getContext("webgl") as WebGLRenderingContext | null),
-    );
-  } catch {
-    return false;
-  }
-}
+// canRunOrbit lives in ./can-run-orbit so the homepage can ask the question
+// without importing this module — see the note there.

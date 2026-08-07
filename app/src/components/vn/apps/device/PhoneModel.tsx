@@ -109,6 +109,11 @@ export function PhoneModel({
       if (!mesh.isMesh) return;
       const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
       mat.envMapIntensity = envIntensity;
+      // The GLBs declare doubleSided, so three.js gives every body material
+      // THREE.DoubleSide. These are closed shells — no backface is ever
+      // visible — and shading both sides doubled the fragment work on the most
+      // expensive material in the scene for nothing.
+      mat.side = THREE.FrontSide;
       // Grazing-angle sharpness for the atlas; spatially neutral.
       if (mat.map) mat.map.anisotropy = 8;
       mesh.material = mat;
@@ -119,8 +124,11 @@ export function PhoneModel({
   useEffect(() => {
     map.colorSpace = THREE.SRGBColorSpace;
     // Without anisotropy the screen smears badly once the device turns away
-    // from head-on, which is most of the orbit.
-    map.anisotropy = 16;
+    // from head-on, which is most of the orbit. 16 taps per fragment on the
+    // largest quads in frame was more than the difference is worth on
+    // integrated graphics, though — 4 holds the angled sharpness at a quarter
+    // of the sampling cost.
+    map.anisotropy = 4;
     map.needsUpdate = true;
   }, [map]);
 

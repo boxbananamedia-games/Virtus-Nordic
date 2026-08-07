@@ -1,12 +1,39 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
 import { Reveal, InkDivider, SERVICE_ICONS, useSectionProgress } from "../components/vn/visuals";
 import { ScrollCraft } from "../components/vn/ScrollCraft";
 import { PhoneField } from "../components/vn/apps/PhoneField";
-import { HeroOrbit, canRunOrbit } from "../components/vn/apps/HeroOrbit";
+import { canRunOrbit } from "../components/vn/apps/can-run-orbit";
 import { useBooking } from "../components/vn/BookingModal";
+
+/**
+ * The orbit is fetched, not bundled.
+ *
+ * It was a static import, which put three.js, drei and the postprocessing
+ * chain — 292KB gzipped — plus 3.7MB of GLB and screen plates from
+ * PhoneModel's module-scope preload into the homepage's eager graph. The
+ * `canRunOrbit()` gate below has always been correct, but it decides in a
+ * layout effect, long after a static import has already committed the bytes:
+ * every phone paid for a canvas it would never mount.
+ *
+ * Deferring it costs desktop nothing that was not already being waited on. The
+ * ring is behind a Suspense boundary for its models regardless, so the hero
+ * device area is empty until those land — the chunk fetch happens inside that
+ * same window rather than adding a new one.
+ */
+const HeroOrbit = lazy(() =>
+  import("../components/vn/apps/HeroOrbit").then((m) => ({ default: m.HeroOrbit })),
+);
 
 /**
  * Lighting rigs the hero can be viewed under. `aurora` ships and needs no
@@ -88,7 +115,11 @@ function HeroDevices({ onSelect, look }: { onSelect: (id: string) => void; look:
       {/* Fallback and mobile rail. Kept mounted so it can take over instantly
           if the orbit is not viable. */}
       <PhoneField onSelect={onSelect} />
-      {orbit === "true" && <HeroOrbit onSelect={onSelect} look={look} />}
+      {orbit === "true" && (
+        <Suspense fallback={null}>
+          <HeroOrbit onSelect={onSelect} look={look} />
+        </Suspense>
+      )}
     </div>
   );
 }
@@ -97,7 +128,10 @@ function Index() {
   const { t } = useLang();
   const booking = useBooking();
   const navigate = useNavigate();
-  const [processRef, processProgress] = useSectionProgress<HTMLDivElement>();
+  // Four process steps. The continuous parts of this section read
+  // --section-progress straight from CSS; only the step count comes back into
+  // React, and only when one is crossed.
+  const [processRef, litSteps] = useSectionProgress<HTMLDivElement>(4);
 
   // Selecting a hero device hands off to the concept page with that concept
   // already open.
@@ -262,13 +296,15 @@ function Index() {
               opacity="0.5"
               pathLength={1}
               strokeDasharray={1}
-              strokeDashoffset={1 - processProgress}
+              // Driven by CSS rather than a prop so scrolling never re-renders
+              // the page; the custom property is written by useSectionProgress.
+              style={{ strokeDashoffset: "calc(1 - var(--section-progress, 0))" }}
             />
           </svg>
           {/* growing connector — vertical on mobile */}
           <span
             className="absolute left-[1.55rem] top-0 block w-px bg-teal-1/50 md:hidden"
-            style={{ height: `${processProgress * 100}%` }}
+            style={{ height: "calc(var(--section-progress, 0) * 100%)" }}
             aria-hidden="true"
           />
 
@@ -276,7 +312,7 @@ function Index() {
             {t.process.steps.map((step, i) => (
               <Reveal as="li" key={step.title} delay={0.1 * i} className="relative pl-16 md:pl-0">
                 <div className="absolute left-0 top-0 md:relative">
-                  <span className="step-num" data-lit={processProgress > (i + 0.5) / 4}>
+                  <span className="step-num" data-lit={i < litSteps}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
                 </div>
