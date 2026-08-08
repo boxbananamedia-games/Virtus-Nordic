@@ -37,6 +37,25 @@ import { useRoundedScreenGeometry } from "./RoundedScreen";
 /** The five finishes, one per concept. */
 export type Finish = "graphite" | "copper" | "silver" | "green" | "navy";
 
+/**
+ * Draco's decoder, served from this origin.
+ *
+ * The five bodies carry identical geometry at 640KB each, and geometry is 87%
+ * of every file. Draco compresses only that — textures stay embedded and
+ * GLTFLoader keeps owning every texture semantic, which is the constraint the
+ * comment above is about. Position quantization is set high (16 bits) when the
+ * files are baked, so the silhouette survives a mesh that was already
+ * quantized once by Meshy.
+ *
+ * drei defaults this path to a Google CDN. Self-hosting keeps the hero off a
+ * third party and lets our own cache headers cover it. The decoder is ~250KB of
+ * wasm, fetched once and then cached — against 2.27MB saved on the models.
+ *
+ * REVERSIBLE: drop this call and restore the uncompressed GLBs from git; the
+ * loader reads plain glTF without any of this.
+ */
+useGLTF.setDecoderPath("/draco/");
+
 const FINISH_GLB: Record<Finish, string> = {
   graphite: "/lab-models/opt/graphite.glb",
   copper: "/lab-models/opt/copper.glb",

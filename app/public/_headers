@@ -24,3 +24,8 @@
 
 /art/*
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+# The Draco decoder is versioned with three.js and only changes on upgrade, so
+# it can be cached hard — it is fetched once per visitor and never again.
+/draco/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
