@@ -16,6 +16,7 @@ import { LanguageProvider } from "../lib/language";
 import { CONTACT } from "../lib/content";
 import { SITE_ORIGIN, alternatesFor, canonicalUrl, langFromPath } from "../lib/site";
 import { ORBIT_WARM_SCRIPT } from "../lib/orbit-warm";
+import { reportPageview } from "../lib/analytics";
 import { accentProps, useAccent } from "../lib/accent";
 import { InkFilters } from "../components/vn/visuals";
 import { Nav, Footer } from "../components/vn/chrome";
@@ -292,6 +293,13 @@ function RootComponent() {
   const accent = useAccent();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const lang = langFromPath(pathname);
+
+  // One row per page view, to the site's own endpoint. Keyed on pathname so
+  // client-side navigations count too, not just cold loads.
+  // REVERSIBLE: delete this effect, lib/analytics.ts and routes/api/hit.ts.
+  useEffect(() => {
+    reportPageview(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     if (!__HF_DESIGN_INSPECTOR__) {

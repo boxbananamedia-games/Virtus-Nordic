@@ -25,6 +25,7 @@ import { Route as EnServicesRouteImport } from './routes/en/services'
 import { Route as EnContactRouteImport } from './routes/en/contact'
 import { Route as EnApplicationsRouteImport } from './routes/en/applications'
 import { Route as EnAboutRouteImport } from './routes/en/about'
+import { Route as ApiHitRouteImport } from './routes/api/hit'
 import { Route as ApiBookRouteImport } from './routes/api/book'
 
 const YdelserRoute = YdelserRouteImport.update({
@@ -107,6 +108,11 @@ const EnAboutRoute = EnAboutRouteImport.update({
   path: '/en/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHitRoute = ApiHitRouteImport.update({
+  id: '/api/hit',
+  path: '/api/hit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBookRoute = ApiBookRouteImport.update({
   id: '/api/book',
   path: '/api/book',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/api/hit': typeof ApiHitRoute
   '/en/about': typeof EnAboutRoute
   '/en/applications': typeof EnApplicationsRoute
   '/en/contact': typeof EnContactRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/api/hit': typeof ApiHitRoute
   '/en/about': typeof EnAboutRoute
   '/en/applications': typeof EnApplicationsRoute
   '/en/contact': typeof EnContactRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/ydelser': typeof YdelserRoute
   '/api/book': typeof ApiBookRoute
+  '/api/hit': typeof ApiHitRoute
   '/en/about': typeof EnAboutRoute
   '/en/applications': typeof EnApplicationsRoute
   '/en/contact': typeof EnContactRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/api/hit'
     | '/en/about'
     | '/en/applications'
     | '/en/contact'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/api/hit'
     | '/en/about'
     | '/en/applications'
     | '/en/contact'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/ydelser'
     | '/api/book'
+    | '/api/hit'
     | '/en/about'
     | '/en/applications'
     | '/en/contact'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   YdelserRoute: typeof YdelserRoute
   ApiBookRoute: typeof ApiBookRoute
+  ApiHitRoute: typeof ApiHitRoute
   EnAboutRoute: typeof EnAboutRoute
   EnApplicationsRoute: typeof EnApplicationsRoute
   EnContactRoute: typeof EnContactRoute
@@ -365,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EnAboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/hit': {
+      id: '/api/hit'
+      path: '/api/hit'
+      fullPath: '/api/hit'
+      preLoaderRoute: typeof ApiHitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/book': {
       id: '/api/book'
       path: '/api/book'
@@ -384,6 +404,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   YdelserRoute: YdelserRoute,
   ApiBookRoute: ApiBookRoute,
+  ApiHitRoute: ApiHitRoute,
   EnAboutRoute: EnAboutRoute,
   EnApplicationsRoute: EnApplicationsRoute,
   EnContactRoute: EnContactRoute,
