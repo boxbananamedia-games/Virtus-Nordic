@@ -319,18 +319,22 @@ export function ScrollCraft() {
           </p>
         </div>
       ) : (
-        <section ref={outerRef} className="relative" style={{ height: "600vh" }}>
+        // Height lives in CSS, not an inline style, so a phone can be given a
+        // shorter scrub — six screens of scrolling is a long way to drag a
+        // thumb. See .film-scroll.
+        <section ref={outerRef} className="film-scroll relative">
           <div className="sticky top-0 h-screen w-full overflow-hidden">
             {/* The mask lives on this inner layer, not on the sticky element —
                 same box, so caption offsets are unchanged, but nothing is
                 stacked onto the thing doing the pinning. */}
             <div ref={stageRef} className="film-stage absolute inset-0">
+              {/* object-fit is set in CSS so the portrait case can override it:
+                  cropping a 16:9 frame to a phone's shape hid 75% of it. */}
               <canvas
                 ref={canvasRef}
                 width={CRAFT_FRAME_W}
                 height={CRAFT_FRAME_H}
-                className="h-full w-full"
-                style={{ objectFit: "cover" }}
+                className="film-frame h-full w-full"
                 aria-hidden="true"
               />
               <div aria-live="polite">

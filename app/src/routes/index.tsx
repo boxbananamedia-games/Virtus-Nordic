@@ -219,7 +219,7 @@ export function Index() {
           No divider here on purpose. The hero now resolves into the page
           background rather than ending on an edge, and a stroke across that
           join puts the horizontal rule straight back. */}
-      <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+      <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-16">
         <div className="grid gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
             <p className="font-display text-2xl font-medium italic leading-snug text-navy md:text-[1.75rem]">
@@ -238,7 +238,7 @@ export function Index() {
       </section>
 
       {/* ═══ SERVICES TEASER ═══ */}
-      <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+      <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-16">
         <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-end">
           <Reveal>
             <span className="label-eyebrow">{t.servicesTeaser.label}</span>
@@ -274,7 +274,7 @@ export function Index() {
 
       {/* ═══ PROCESS ═══ */}
       <InkDivider variant={1} />
-      <section className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+      <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-16">
         <Reveal>
           <span className="label-eyebrow">{t.process.label}</span>
           <h2 className="mt-3 max-w-2xl font-display text-4xl font-semibold leading-tight text-navy md:text-5xl">

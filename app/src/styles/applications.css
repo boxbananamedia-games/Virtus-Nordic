@@ -1995,6 +1995,34 @@
     }
   }
 
+  /**
+   * Phones got no drift at all, so the mobile hero was five dead slabs.
+   *
+   * The desktop paths are not reusable here: they translate sideways by up to
+   * 14px, and these devices sit in a horizontal scroll-snap rail where lateral
+   * movement fights the swipe. This is vertical only, and smaller — enough to
+   * read as alive, not enough to look restless or to drag a snap point around.
+   *
+   * Each device already carries its own --dur and --delay, so the five bob out
+   * of phase with each other for free. Transform-only, so it composites on the
+   * GPU and costs the weakest devices almost nothing.
+   */
+  @media (max-width: 767px) {
+    .vn-app-phone__drift {
+      animation: vn-drift-mobile var(--dur) ease-in-out var(--delay) infinite;
+    }
+  }
+
+  @keyframes vn-drift-mobile {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -9px, 0);
+    }
+  }
+
   @keyframes vn-drift-1 {
     0%,
     100% {

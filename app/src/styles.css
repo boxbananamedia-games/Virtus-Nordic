@@ -366,6 +366,27 @@ html:not(.js) .ink-art { opacity: 1; }
 
 /* ---------- scroll film ---------- */
 
+/* Six screens of scrub on a desktop, where a wheel covers it quickly. */
+.film-scroll { height: 600vh; }
+.film-frame { object-fit: cover; }
+
+/**
+ * Portrait screens get the whole frame, not a slice of it.
+ *
+ * The sequence is 16:9. Cropping that to a phone's tall box with `cover` left
+ * only 25% of each frame visible — a narrow vertical strip through the middle
+ * of a wide scene, which read as a random zoom rather than a film. `contain`
+ * shows all of it, letterboxed onto the paper, and the caption moves into the
+ * space below instead of sitting on top of the picture. It reads as a film
+ * still with a line under it, which is a composition rather than an accident.
+ *
+ * The scrub is shortened too: 600vh of thumb-dragging is a lot on a phone.
+ */
+@media (max-width: 767px) {
+  .film-scroll { height: 340vh; }
+  .film-frame { object-fit: contain; }
+}
+
 /* The film has no frame, so its raw top and bottom edges met the paper as two
    hard horizontal lines. Instead it dissolves: a soft alpha mask at whichever
    edge is currently on screen, sized by the scroll handler and collapsing to
@@ -427,6 +448,28 @@ html:not(.js) .ink-art { opacity: 1; }
    not static. Drift uses `transform` — independent of the `translate` above
    that powers the entrance — so the two never fight. */
 .film-caption[data-on="true"] { opacity: 1; translate: 0 0; animation: caption-drift 7s ease-in-out 0.7s infinite; }
+/**
+ * On a phone the caption moves out of the picture and under it.
+ *
+ * The per-caption offsets are inline styles, chosen to sit clear of each
+ * scene's subject in a full-bleed 16:9 composition. With the frame letterboxed
+ * those coordinates are meaningless — so they are overridden here, which is the
+ * one thing !important is actually for. Every caption lands in the same place:
+ * centred in the paper below the frame.
+ */
+@media (max-width: 767px) {
+  .film-caption {
+    left: 1.1rem !important;
+    right: 1.1rem !important;
+    top: auto !important;
+    bottom: 12% !important;
+    margin: 0 !important;
+    max-width: none !important;
+    text-align: center !important;
+    font-size: clamp(1.35rem, 5.6vw, 1.9rem);
+  }
+}
+
 @keyframes caption-drift {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
