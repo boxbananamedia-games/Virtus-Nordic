@@ -6,7 +6,25 @@ const PHONE_HREF = "tel:+4541369000";
 
 export const CONTACT = { EMAIL, PHONE, PHONE_HREF };
 
-export type ServiceItem = { title: string; teaser: string; paras: string[] };
+export type ServiceItem = {
+  title: string;
+  teaser: string;
+  paras: string[];
+  /**
+   * Starting price, shown on /ydelser.
+   *
+   * A "from" figure rather than a rate card: it filters out the enquiries that
+   * were never going to land without pretending a bespoke build has a fixed
+   * shelf price. `note` carries the qualifier (typical range, or what the
+   * retainer covers) so the number never stands alone and get misread as the
+   * whole cost.
+   *
+   * DRAFT — these figures were derived from 2026 Danish market data, not set by
+   * Alexander. Confirm before the real domain goes live.
+   */
+  priceFrom: string;
+  priceNote: string;
+};
 
 type PageMeta = { title: string; description: string };
 
@@ -166,6 +184,8 @@ export const content: Record<Lang, Content> = {
           paras: [
             "iOS- og Android-applikationer bygget helt fra bunden efter din faktiske arbejdsgang. Ingen overflødige skabeloner, ingen unødvendige funktioner. Bare den app, din forretning har brug for, for at fungere bedre.",
           ],
+          priceFrom: "Fra 95.000 kr.",
+          priceNote: "Typisk 150.000–350.000 kr. for en færdig løsning. Fast pris efter afdækning.",
         },
         {
           title: "Integration med dine systemer",
@@ -173,6 +193,8 @@ export const content: Record<Lang, Content> = {
           paras: [
             "Din app skal tale sammen med de værktøjer, du allerede bruger: bookingsystemer, lager, CRM og betaling. Jeg bygger forbindelserne, så informationen flyder automatisk, uden manuel indtastning og uden huller mellem systemerne.",
           ],
+          priceFrom: "Fra 35.000 kr.",
+          priceNote: "Afhænger af hvor mange systemer der skal tale sammen. Fast pris efter afdækning.",
         },
         {
           title: "Agentic Automations",
@@ -182,6 +204,8 @@ export const content: Record<Lang, Content> = {
             "Forestil dig: en kunde skriver en mail klokken 23:47 og spørger, om du har tid næste tirsdag. Normalt ville den mail ligge, til du tjekker den næste morgen, og til da har kunden måske allerede booket et andet sted. Med en agent, der overvåger din indbakke, bliver beskeden læst på sekunder, tjekket op mod din faktiske kalender, besvaret på kundens eget sprog, og booket ind, inden du overhovedet er vågnet. Intet mistet kundeemne, ingen morgenstress.",
             "Det er det tætteste, du kommer på at ansætte ekstra personale, der arbejder hele døgnet, aldrig melder sig syge, og koster prisen på softwaren, ikke endnu en lønseddel.",
           ],
+          priceFrom: "Fra 45.000 kr.",
+          priceNote: "Pr. automatisering. Fast pris efter afdækning, plus drift efter forbrug.",
         },
         {
           title: "Vækst & optimering",
@@ -189,6 +213,8 @@ export const content: Record<Lang, Content> = {
           paras: [
             "Lancering er begyndelsen, ikke slutningen. Jeg følger den faktiske brug, finder friktionspunkter, og fortsætter med at forbedre appen, så den vokser i takt med din forretning.",
           ],
+          priceFrom: "Fra 7.500 kr./md.",
+          priceNote: "Løbende aftale. Overvågning, småforbedringer og udvikling i takt med forretningen.",
         },
       ],
       closing: "Er du i tvivl om, hvilken af disse der passer til din forretning?",
@@ -372,6 +398,8 @@ export const content: Record<Lang, Content> = {
           paras: [
             "Purpose-built iOS and Android applications, designed from the ground up around your actual workflow. No bloated templates, no unnecessary features. Just the app your business needs to run better.",
           ],
+          priceFrom: "From DKK 95,000",
+          priceNote: "Typically DKK 150,000–350,000 for a finished product. Fixed price after discovery.",
         },
         {
           title: "Business System Integration",
@@ -379,6 +407,8 @@ export const content: Record<Lang, Content> = {
           paras: [
             "Your app should talk to the tools you already use: booking systems, inventory, CRM and payment processing. I build the connections so information flows automatically, with no manual re-entry and no gaps between systems.",
           ],
+          priceFrom: "From DKK 35,000",
+          priceNote: "Depends on how many systems have to talk to each other. Fixed price after discovery.",
         },
         {
           title: "Agentic Automations",
@@ -388,6 +418,8 @@ export const content: Record<Lang, Content> = {
             "Picture this: a customer emails at midnight asking about availability next week. With an agent watching your inbox, that message is read in seconds, checked against your real calendar, replied to in the customer's own language, and booked, all before you've even woken up. No missed lead, no 9am scramble.",
             "It's the closest thing to hiring extra staff who work every hour of the day, never call in sick, and cost the price of the software, not another salary.",
           ],
+          priceFrom: "From DKK 45,000",
+          priceNote: "Per automation. Fixed price after discovery, plus usage-based running costs.",
         },
         {
           title: "Growth & Optimisation",
@@ -395,6 +427,8 @@ export const content: Record<Lang, Content> = {
           paras: [
             "Launch is the beginning, not the finish line. I monitor real usage, identify friction points, and continue improving the app, so it keeps getting better as your business grows.",
           ],
+          priceFrom: "From DKK 7,500/mo",
+          priceNote: "Ongoing engagement. Monitoring, small improvements and development as the business moves.",
         },
       ],
       closing: "Not sure which of these fits your business?",

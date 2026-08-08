@@ -73,6 +73,18 @@ export function Services() {
                       {p}
                     </p>
                   ))}
+                  {/* A starting figure, not a rate card. It answers "can I
+                      afford to ask?" — the question that otherwise makes people
+                      leave instead of enquiring — while the note keeps the
+                      number from being read as the whole cost. */}
+                  <p className="mt-7 border-t border-navy/12 pt-5">
+                    <span className="font-display text-2xl font-semibold text-navy">
+                      {item.priceFrom}
+                    </span>
+                    <span className="mt-1 block text-sm leading-relaxed text-navy/60">
+                      {item.priceNote}
+                    </span>
+                  </p>
                 </div>
               </article>
             </Reveal>
