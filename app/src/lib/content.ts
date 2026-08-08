@@ -38,6 +38,8 @@ export type Content = {
   services: {
     label: string;
     headline: string;
+    /** Eyebrow above each service's worked example. */
+    exampleLabel: string;
     items: ServiceItem[];
     closing: string;
     closingCta: string;
@@ -177,6 +179,7 @@ export const content: Record<Lang, Content> = {
     services: {
       label: "Det jeg laver",
       headline: "Fire måder, jeg hjælper din forretning med at vokse",
+      exampleLabel: "Et eksempel",
       items: [
         {
           title: "Skræddersyede apps",
@@ -391,6 +394,7 @@ export const content: Record<Lang, Content> = {
     services: {
       label: "What I do",
       headline: "Four ways I help your business grow",
+      exampleLabel: "An example",
       items: [
         {
           title: "Custom Mobile Applications",

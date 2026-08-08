@@ -364,6 +364,42 @@ html:not(.js) .ink-art { opacity: 1; }
 }
 .step-num[data-lit="true"] { background: var(--vn-accent); border-color: var(--vn-accent); color: var(--color-cream); }
 
+/* ---------- service examples ---------- */
+
+/**
+ * A worked example, set apart from the service description without becoming a
+ * card. The site has no boxed panels anywhere else, so this is a rule and a
+ * tint rather than a border — the same restraint as the rest of the page.
+ */
+.svc-example {
+  border-left: 1px solid rgba(28, 40, 53, 0.12);
+  padding-left: 1.5rem;
+}
+
+/** The flow. Numbered, tight, and readable as a sequence rather than a list. */
+.svc-flow {
+  display: grid;
+  gap: 0.7rem;
+}
+.svc-flow > li {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr;
+  align-items: baseline;
+  gap: 0.15rem;
+}
+.svc-flow-n {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--vn-accent);
+}
+.svc-flow-t {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(28, 40, 53, 0.8);
+}
+
 /* ---------- scroll film ---------- */
 
 /* Six screens of scrub on a desktop, where a wheel covers it quickly. */

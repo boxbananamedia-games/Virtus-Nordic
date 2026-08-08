@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useLang } from "../lib/language";
 import { CONTACT, content } from "../lib/content";
+import { pick } from "../lib/applications";
+import { exampleFor } from "../lib/service-examples";
 import { InkDivider, Reveal, SERVICE_ICONS } from "../components/vn/visuals";
 
 export const Route = createFileRoute("/ydelser")({
@@ -15,7 +17,7 @@ export const Route = createFileRoute("/ydelser")({
 });
 
 export function Services() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const book = `mailto:${CONTACT.EMAIL}?subject=${encodeURIComponent(t.contact.mailSubject)}`;
   const hash = useLocation({ select: (l) => l.hash });
 
@@ -85,6 +87,42 @@ export function Services() {
                       {item.priceNote}
                     </span>
                   </p>
+
+                  {/* A worked example, for the services that are hardest to
+                      picture. The app build has five concept studies at
+                      /applikationer instead, so it has none here. */}
+                  {(() => {
+                    const ex = exampleFor(i);
+                    if (!ex) return null;
+                    return (
+                      <div className="svc-example mt-8">
+                        <span className="label-eyebrow">{t.services.exampleLabel}</span>
+                        <h3 className="mt-2 font-display text-xl font-semibold leading-snug text-navy md:text-2xl">
+                          {pick(ex.title, lang)}
+                        </h3>
+                        <p className="mt-1 text-sm italic text-navy/55">{pick(ex.who, lang)}</p>
+                        <p className="mt-4 text-sm leading-relaxed text-navy/80">
+                          {pick(ex.problem, lang)}
+                        </p>
+                        <ol className="svc-flow mt-5">
+                          {ex.steps.map((s, k) => (
+                            <li key={k}>
+                              <span className="svc-flow-n">{String(k + 1).padStart(2, "0")}</span>
+                              <span className="svc-flow-t">{pick(s, lang)}</span>
+                            </li>
+                          ))}
+                        </ol>
+                        <p className="mt-5 border-l-2 border-teal-2/40 pl-4">
+                          <span className="block font-display text-base font-semibold text-teal-1">
+                            {pick(ex.effect, lang)}
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-navy/50">
+                            {pick(ex.effectNote, lang)}
+                          </span>
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </article>
             </Reveal>
