@@ -15,7 +15,6 @@ import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
 import { LanguageProvider } from "../lib/language";
 import { CONTACT } from "../lib/content";
 import { SITE_ORIGIN, alternatesFor, canonicalUrl, langFromPath } from "../lib/site";
-import { ORBIT_WARM_SCRIPT } from "../lib/orbit-warm";
 import { reportPageview } from "../lib/analytics";
 import { accentProps, useAccent } from "../lib/accent";
 import { InkFilters } from "../components/vn/visuals";
@@ -273,12 +272,9 @@ function RootShell({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{
             __html:
               "document.documentElement.classList.add('js');" +
-              // Both editions of the home page get the dusk hero, and both
-              // start pulling the orbit's models immediately — see orbit-warm.
-              "if(location.pathname==='/'||location.pathname==='/en'||location.pathname==='/en/'){" +
-              "document.documentElement.setAttribute('data-hero-theme','dusk');" +
-              ORBIT_WARM_SCRIPT +
-              "}",
+              // Both editions of the home page get the dusk hero.
+              "if(location.pathname==='/'||location.pathname==='/en'||location.pathname==='/en/')" +
+              "document.documentElement.setAttribute('data-hero-theme','dusk');",
           }}
         />
         {children}
